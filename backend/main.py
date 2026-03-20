@@ -82,6 +82,24 @@ def recommend_crop_get(temperature: float, humidity: float, ph: float, rainfall:
     return {"crop": prediction}
 
 
+@app.get("/irrigation-suggestion")
+def irrigation_suggestion(soil_moisture: float):
+    """
+    Returns an irrigation suggestion based on the soil moisture level.
+    """
+    if soil_moisture < 30.0:
+        status = "ON"
+        message = "irrigation ON"
+    elif soil_moisture <= 60.0:
+        status = "MODERATE"
+        message = "moderate irrigation"
+    else:
+        status = "OFF"
+        message = "no irrigation"
+        
+    return {"status": status, "message": message}
+
+
 @app.post("/recommend-crop")
 def recommend_crop_post(payload: dict):
     """
