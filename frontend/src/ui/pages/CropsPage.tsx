@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // Helper to get crop emoji
 const getCropEmoji = (cropName: string) => {
@@ -59,6 +60,15 @@ export default function CropsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [recommendation, setRecommendation] = useState<string | null>(null);
 
+  type AICrop = {
+    name: string; emoji: string; reason: string;
+    water_needed: string; best_season: string; profit_potential: string;
+  };
+  const [aiCrops, setAiCrops] = useState<AICrop[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setInputs(prev => ({ ...prev, [name]: parseFloat(value) }));
@@ -79,6 +89,33 @@ export default function CropsPage() {
       console.error(err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const getAIRecommendation = async () => {
+    setAiLoading(true);
+    setAiCrops([]);
+    setAiError(null);
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/v1/crops", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nitrogen: inputs.N, phosphorus: inputs.P, potassium: inputs.K,
+          temperature: inputs.temperature, humidity: inputs.humidity,
+          ph: inputs.ph, rainfall: inputs.rainfall
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Request failed");
+      }
+      const data = await res.json();
+      setAiCrops(data.crops || []);
+    } catch (err: any) {
+      setAiError(err.message || "Failed to get AI recommendations. Please try again.");
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -301,6 +338,24 @@ export default function CropsPage() {
               >
                 {isLoading ? "Analyzing..." : "Get ML Recommendation"}
               </button>
+
+              <button
+                onClick={getAIRecommendation}
+                disabled={aiLoading}
+                style={{
+                  marginTop: "10px", padding: "16px",
+                  backgroundColor: aiLoading ? "#9ca3af" : "#16a34a",
+                  color: "white", border: "none", borderRadius: "8px",
+                  fontSize: "18px", fontWeight: "bold",
+                  cursor: aiLoading ? "not-allowed" : "pointer",
+                  transition: "background-color 0.2s", width: "100%",
+                  fontFamily: "inherit"
+                }}
+                onMouseEnter={(e) => { if (!aiLoading) e.currentTarget.style.backgroundColor = "#15803d"; }}
+                onMouseLeave={(e) => { if (!aiLoading) e.currentTarget.style.backgroundColor = "#16a34a"; }}
+              >
+                {aiLoading ? "🤖 AI Thinking..." : "🤖 Get AI Recommendation (Top 3 Crops)"}
+              </button>
             </div>
 
             {/* Right Column: Result Card */}
@@ -389,6 +444,94 @@ export default function CropsPage() {
               )}
             </div>
           </div>
+
+          {/* AI CROP RESULT CARDS */}
+          {(aiLoading || aiCrops.length > 0 || aiError) && (
+            <div style={{ marginBottom: "32px" }}>
+              <h2 style={{ fontSize: "22px", color: "#111827", marginBottom: "16px" }}>
+                🤖 AI Crop Recommendations
+              </h2>
+
+              {aiError && (
+                <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: "12px", padding: "20px", color: "#991b1b" }}>
+                  ⚠️ {aiError}
+                </div>
+              )}
+
+              {aiLoading && (
+                <div style={{ display: "flex", gap: "20px" }}>
+                  {[1,2,3].map(i => (
+                    <div key={i} style={{ flex: 1, background: "white", borderRadius: "16px", padding: "28px", border: "1px solid #e5e7eb" }}>
+                      <div style={{ height: "24px", background: "#f3f4f6", borderRadius: "8px", marginBottom: "12px" }} />
+                      <div style={{ height: "16px", background: "#f3f4f6", borderRadius: "6px", marginBottom: "8px", width: "80%" }} />
+                      <div style={{ height: "16px", background: "#f3f4f6", borderRadius: "6px", width: "60%" }} />
+                    </div>
+                  ))}
+                  <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }`}</style>
+                </div>
+              )}
+
+              {!aiLoading && aiCrops.length > 0 && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px" }}>
+                  {aiCrops.map((cropItem, idx) => {
+                    const profitColor = cropItem.profit_potential === "High"
+                      ? { bg: "#dcfce7", text: "#166534" }
+                      : cropItem.profit_potential === "Medium"
+                      ? { bg: "#fef9c3", text: "#854d0e" }
+                      : { bg: "#f3f4f6", text: "#374151" };
+                    return (
+                      <div key={idx} style={{
+                        background: "white", borderRadius: "16px", padding: "28px",
+                        border: "1px solid #e5e7eb", boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+                        borderTop: "4px solid #16a34a", display: "flex", flexDirection: "column", gap: "14px",
+                        transition: "transform 0.2s, box-shadow 0.2s"
+                      }}
+                        onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.1)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.06)"; }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                          <div>
+                            <span style={{ fontSize: "40px" }}>{cropItem.emoji}</span>
+                            <h3 style={{ margin: "8px 0 0 0", fontSize: "22px", color: "#111827", fontWeight: "700" }}>{cropItem.name}</h3>
+                          </div>
+                          <span style={{ background: profitColor.bg, color: profitColor.text, padding: "4px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "700", whiteSpace: "nowrap" }}>
+                            {cropItem.profit_potential} Profit
+                          </span>
+                        </div>
+
+                        <p style={{ margin: 0, fontSize: "14px", color: "#4b5563", lineHeight: "1.5" }}>{cropItem.reason}</p>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: "8px", background: "#f9fafb", borderRadius: "10px", padding: "14px" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                            <span style={{ color: "#6b7280", fontWeight: "600" }}>💧 Water</span>
+                            <span style={{ color: "#1f2937", fontWeight: "500" }}>{cropItem.water_needed}</span>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                            <span style={{ color: "#6b7280", fontWeight: "600" }}>📅 Season</span>
+                            <span style={{ color: "#1f2937", fontWeight: "500" }}>{cropItem.best_season}</span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => navigate('/chat', { state: { prefill: `Tell me more about growing ${cropItem.name} — best practices, diseases to watch for, and fertilizer tips.` } })}
+                          style={{
+                            background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0",
+                            borderRadius: "8px", padding: "10px 14px", fontSize: "14px",
+                            fontWeight: "600", cursor: "pointer", textAlign: "left",
+                            transition: "background 0.2s", fontFamily: "inherit"
+                          }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#dcfce7"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "#f0fdf4"; }}
+                        >
+                          🤖 Ask AI about {cropItem.name} →
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* 4. HOW IT WORKS SECTION */}
           <h2 style={{ textAlign: "center", marginBottom: "30px", color: "#333", fontSize: "28px", fontWeight: "bold" }}>How It Works</h2>
