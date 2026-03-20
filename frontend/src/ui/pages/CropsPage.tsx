@@ -156,36 +156,48 @@ export default function CropsPage() {
     <div style={{ fontFamily: "system-ui, -apple-system, sans-serif", paddingBottom: "40px" }}>
       
       {/* TABS HEADER */}
-      <div style={{ display: "flex", borderBottom: "2px solid #e5e7eb", marginBottom: "30px", backgroundColor: "white", padding: "0 20px" }}>
+      <div style={{ display: "flex", borderBottom: "2px solid #e5e7eb", marginBottom: "30px", gap: "8px" }}>
         <button 
           onClick={() => setActiveTab('crop')}
           style={{
-            background: "none",
-            border: "none",
-            borderBottom: activeTab === 'crop' ? "3px solid #16a34a" : "3px solid transparent",
+            backgroundColor: activeTab === 'crop' ? "#f0fdf4" : "white",
+            border: "1px solid",
+            borderColor: activeTab === 'crop' ? "#16a34a #16a34a transparent #16a34a" : "transparent transparent transparent transparent",
+            borderTopLeftRadius: "12px",
+            borderTopRightRadius: "12px",
             color: activeTab === 'crop' ? "#16a34a" : "#6b7280",
             fontSize: "18px",
             fontWeight: "bold",
-            padding: "20px 25px",
+            padding: "16px 25px",
             cursor: "pointer",
-            transition: "all 0.2s ease-in-out"
+            transition: "all 0.2s ease-in-out",
+            position: "relative",
+            bottom: activeTab === 'crop' ? "-2px" : "0"
           }}
+          onMouseEnter={(e) => { if (activeTab !== 'crop') e.currentTarget.style.color = "#16a34a"; }}
+          onMouseLeave={(e) => { if (activeTab !== 'crop') e.currentTarget.style.color = "#6b7280"; }}
         >
           🌾 ML Crop Recommendation
         </button>
         <button 
           onClick={() => setActiveTab('fertilizer')}
           style={{
-            background: "none",
-            border: "none",
-            borderBottom: activeTab === 'fertilizer' ? "3px solid #16a34a" : "3px solid transparent",
+            backgroundColor: activeTab === 'fertilizer' ? "#f0fdf4" : "white",
+            border: "1px solid",
+            borderColor: activeTab === 'fertilizer' ? "#16a34a #16a34a transparent #16a34a" : "transparent transparent transparent transparent",
+            borderTopLeftRadius: "12px",
+            borderTopRightRadius: "12px",
             color: activeTab === 'fertilizer' ? "#16a34a" : "#6b7280",
             fontSize: "18px",
             fontWeight: "bold",
-            padding: "20px 25px",
+            padding: "16px 25px",
             cursor: "pointer",
-            transition: "all 0.2s ease-in-out"
+            transition: "all 0.2s ease-in-out",
+            position: "relative",
+            bottom: activeTab === 'fertilizer' ? "-2px" : "0"
           }}
+          onMouseEnter={(e) => { if (activeTab !== 'fertilizer') e.currentTarget.style.color = "#16a34a"; }}
+          onMouseLeave={(e) => { if (activeTab !== 'fertilizer') e.currentTarget.style.color = "#6b7280"; }}
         >
           🧪 Fertilizer Recommendation
         </button>
@@ -210,13 +222,14 @@ export default function CropsPage() {
           <div style={{ display: "flex", gap: "30px", flexWrap: "wrap", marginBottom: "40px" }}>
             
             {/* Left Column: Input Form */}
-            <div style={{
-              ...cardStyle,
-              flex: "1 1 500px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "20px"
-            }}>
+        <div style={{
+          ...cardStyle,
+          flex: "1 1 500px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px",
+          borderTop: "4px solid #16a34a"
+        }}>
               <h2 style={{ margin: "0 0 10px 0", color: "#333", fontSize: "24px" }}>Farm Parameters</h2>
               
               <div style={{ display: "flex", flexDirection: "column", gap: "25px" }}>

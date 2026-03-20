@@ -22,6 +22,37 @@ export default function HomePage() {
   const [recommendedCrop, setRecommendedCrop] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [soilInputs, setSoilInputs] = useState({ ph: "", nitrogen: "", moisture: "" });
+  const [soilAnalysisResult, setSoilAnalysisResult] = useState<{score: number, tips: string[]} | null>(null);
+
+  const analyzeSoil = () => {
+    let score = 0;
+    const tips: string[] = [];
+    const ph = parseFloat(soilInputs.ph);
+    const n = parseFloat(soilInputs.nitrogen);
+    const m = parseFloat(soilInputs.moisture);
+
+    if (isNaN(ph) || isNaN(n) || isNaN(m)) return;
+
+    // Evaluate pH
+    if (ph >= 6 && ph <= 7.5) score += 4;
+    if (ph < 5.5) tips.push("Add lime to increase pH");
+    if (ph > 7.5) tips.push("Add sulfur to reduce pH");
+
+    // Evaluate Nitrogen
+    if (n > 40) score += 3;
+    if (n < 40) tips.push("Apply urea fertilizer");
+
+    // Evaluate Moisture
+    if (m >= 30 && m <= 70) score += 3;
+    if (m < 30) tips.push("Increase irrigation");
+    if (m > 70) tips.push("Improve field drainage");
+
+    if (tips.length === 0) tips.push("Your soil is healthy — maintain current practices");
+
+    setSoilAnalysisResult({ score, tips });
+  };
+
   useEffect(() => {
     // Fetch all data
     const fetchData = async () => {
@@ -61,9 +92,11 @@ export default function HomePage() {
       
       {/* 1. HERO SECTION */}
       <section style={{
-        background: "linear-gradient(135deg, #15803d 0%, #16a34a 100%)",
+        backgroundColor: "#15803d",
+        backgroundImage: "linear-gradient(135deg, rgba(21, 128, 61, 0.9) 0%, rgba(22, 163, 74, 0.9) 100%), radial-gradient(#ffffff33 2px, transparent 2px)",
+        backgroundSize: "100% 100%, 30px 30px",
         borderRadius: "16px",
-        padding: "60px 30px",
+        padding: "80px 30px",
         color: "white",
         textAlign: "center",
         marginBottom: "40px",
@@ -106,6 +139,58 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* 1A. WEATHER CARD */}
+      <section style={{
+        backgroundColor: "#eff6ff",
+        borderRadius: "12px",
+        padding: "30px",
+        marginBottom: "40px",
+        boxShadow: "0 4px 6px rgba(0,0,0,0.05)",
+        border: "1px solid #bfdbfe"
+      }}>
+        <h2 style={{ fontSize: "24px", color: "#1e3a8a", margin: "0 0 25px 0" }}>🌤️ Today's Weather & Farming Advice</h2>
+        
+        <div style={{ display: "flex", gap: "30px", alignItems: "center", flexWrap: "wrap", marginBottom: "25px" }}>
+          <div style={{ minWidth: "200px" }}>
+            <span style={{ fontSize: "64px", fontWeight: "900", color: "#1e3a8a", lineHeight: 1 }}>
+              {isLoading ? "—" : sensorData?.temperature !== undefined ? `${sensorData.temperature}°C` : "N/A"}
+            </span>
+            <p style={{ margin: "5px 0 0 0", color: "#3b82f6", fontWeight: "bold", fontSize: "20px" }}>
+              {isLoading ? "Loading..." : 
+                (sensorData?.temperature || 0) > 35 ? "Hot Day ☀️" : 
+                (sensorData?.temperature || 0) < 20 ? "Cool Day 🌥️" : "Pleasant Day 🌤️"}
+            </p>
+          </div>
+          
+          <div style={{ display: "flex", gap: "20px", flex: 1, flexWrap: "wrap" }}>
+            <div style={{ backgroundColor: "white", padding: "15px 20px", borderRadius: "10px", flex: "1 1 120px", textAlign: "center", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
+              <p style={{ margin: "0 0 5px 0", color: "#6b7280", fontSize: "16px", fontWeight: "600" }}>Humidity</p>
+              <p style={{ margin: 0, fontWeight: "bold", color: "#333", fontSize: "22px" }}>
+                {isLoading ? "—" : sensorData?.humidity !== undefined ? `${sensorData.humidity}%` : "N/A"}
+              </p>
+            </div>
+            <div style={{ backgroundColor: "white", padding: "15px 20px", borderRadius: "10px", flex: "1 1 120px", textAlign: "center", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
+              <p style={{ margin: "0 0 5px 0", color: "#6b7280", fontSize: "16px", fontWeight: "600" }}>Wind</p>
+              <p style={{ margin: 0, fontWeight: "bold", color: "#333", fontSize: "22px" }}>12 km/h</p>
+            </div>
+            <div style={{ backgroundColor: "white", padding: "15px 20px", borderRadius: "10px", flex: "1 1 120px", textAlign: "center", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
+              <p style={{ margin: "0 0 5px 0", color: "#6b7280", fontSize: "16px", fontWeight: "600" }}>UV Index</p>
+              <p style={{ margin: 0, fontWeight: "bold", color: "#333", fontSize: "22px" }}>6</p>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ borderTop: "2px solid #bfdbfe", paddingTop: "20px" }}>
+          <p style={{ margin: 0, color: "#15803d", fontStyle: "italic", fontWeight: "bold", fontSize: "18px" }}>
+            {isLoading ? "Analyzing farm conditions..." : 
+              (sensorData?.temperature || 0) > 35 ? "💡 Water crops early morning to avoid heat stress" :
+              (sensorData?.humidity || 0) > 80 ? "💡 High humidity — watch for fungal diseases" :
+              "💡 Good farming conditions today"
+            }
+          </p>
+        </div>
+      </section>
+
       {/* 2. STATS ROW */}
       <section style={{ marginBottom: "40px" }}>
         <h2 style={{ fontSize: "24px", color: "#333", marginBottom: "20px", paddingLeft: "5px" }}>Live Farm Data</h2>
@@ -115,7 +200,7 @@ export default function HomePage() {
           gap: "20px"
         }}>
           {/* Card: Temp */}
-          <div style={cardStyle}>
+          <div style={{ ...cardStyle, borderTop: "4px solid #ef4444" }}>
             <div style={iconContainerStyle("#fff3e0")}>
               <span style={{ fontSize: "24px" }}>🌡️</span>
             </div>
@@ -126,7 +211,7 @@ export default function HomePage() {
           </div>
           
           {/* Card: Humidity */}
-          <div style={cardStyle}>
+          <div style={{ ...cardStyle, borderTop: "4px solid #3b82f6" }}>
             <div style={iconContainerStyle("#e1f5fe")}>
               <span style={{ fontSize: "24px" }}>💧</span>
             </div>
@@ -137,7 +222,7 @@ export default function HomePage() {
           </div>
           
           {/* Card: Soil Moisture */}
-          <div style={cardStyle}>
+          <div style={{ ...cardStyle, borderTop: "4px solid #22c55e" }}>
             <div style={iconContainerStyle("#efebe9")}>
               <span style={{ fontSize: "24px" }}>🌱</span>
             </div>
@@ -148,7 +233,7 @@ export default function HomePage() {
           </div>
 
           {/* Card: Irrigation */}
-          <div style={cardStyle}>
+          <div style={{ ...cardStyle, borderTop: "4px solid #f97316" }}>
             <div style={iconContainerStyle("#e8f5e9")}>
               <span style={{ fontSize: "24px" }}>🚰</span>
             </div>
@@ -232,6 +317,109 @@ export default function HomePage() {
           </div>
         </section>
       </div>
+
+      {/* 5. SOIL ANALYSIS */}
+      <section style={{ marginBottom: "40px", marginTop: "40px" }}>
+        <h2 style={{ fontSize: "28px", color: "#333", margin: "0 0 5px 0", paddingLeft: "5px", fontWeight: "bold" }}>
+          🧪 Soil Analysis
+        </h2>
+        <p style={{ paddingLeft: "5px", margin: "0 0 25px 0", color: "#6b7280", fontSize: "18px" }}>Quick soil health check</p>
+        
+        <div style={cardStyle}>
+          <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "20px" }}>
+            <div style={{ flex: "1 1 200px" }}>
+              <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", color: "#4b5563" }}>Soil pH</label>
+              <input 
+                type="number" 
+                step="0.1"
+                min="0" max="14"
+                placeholder="e.g. 6.5"
+                value={soilInputs.ph}
+                onChange={(e) => setSoilInputs({...soilInputs, ph: e.target.value})}
+                style={{ width: "100%", padding: "14px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "16px", boxSizing: "border-box" }}
+              />
+            </div>
+            <div style={{ flex: "1 1 200px" }}>
+              <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", color: "#4b5563" }}>Nitrogen (mg/kg)</label>
+              <input 
+                type="number" 
+                min="0" max="140"
+                placeholder="e.g. 40"
+                value={soilInputs.nitrogen}
+                onChange={(e) => setSoilInputs({...soilInputs, nitrogen: e.target.value})}
+                style={{ width: "100%", padding: "14px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "16px", boxSizing: "border-box" }}
+              />
+            </div>
+            <div style={{ flex: "1 1 200px" }}>
+              <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", color: "#4b5563" }}>Moisture (%)</label>
+              <input 
+                type="number" 
+                min="0" max="100"
+                placeholder="e.g. 50"
+                value={soilInputs.moisture}
+                onChange={(e) => setSoilInputs({...soilInputs, moisture: e.target.value})}
+                style={{ width: "100%", padding: "14px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "16px", boxSizing: "border-box" }}
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={analyzeSoil}
+            style={{
+              width: "100%",
+              padding: "16px",
+              backgroundColor: "#16a34a",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "18px",
+              fontWeight: "bold",
+              cursor: "pointer",
+              transition: "background-color 0.2s"
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#15803d"}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#16a34a"}
+          >
+            Analyse Soil
+          </button>
+
+          {soilAnalysisResult && (
+            <div style={{
+              marginTop: "25px",
+              backgroundColor: soilAnalysisResult.score >= 8 ? "#dcfce7" : soilAnalysisResult.score >= 5 ? "#ffedd5" : "#fee2e2",
+              padding: "25px",
+              borderRadius: "12px",
+              border: `2px solid ${soilAnalysisResult.score >= 8 ? "#16a34a" : soilAnalysisResult.score >= 5 ? "#f97316" : "#ef4444"}`
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px", flexWrap: "wrap", gap: "10px" }}>
+                <h3 style={{ 
+                  margin: 0, 
+                  color: soilAnalysisResult.score >= 8 ? "#166534" : soilAnalysisResult.score >= 5 ? "#9a3412" : "#991b1b",
+                  fontSize: "24px",
+                  fontWeight: "bold"
+                }}>
+                  {soilAnalysisResult.score >= 8 ? "Excellent Soil Health 🌱" : soilAnalysisResult.score >= 5 ? "Moderate Soil Health ⚠️" : "Poor Soil Health ❌"}
+                </h3>
+                <span style={{ 
+                  fontSize: "18px", 
+                  fontWeight: "bold", 
+                  backgroundColor: "rgba(255,255,255,0.5)", 
+                  padding: "6px 16px", 
+                  borderRadius: "20px" 
+                }}>
+                  Score: {soilAnalysisResult.score}/10
+                </span>
+              </div>
+              
+              <ul style={{ margin: 0, paddingLeft: "25px", color: "#374151", fontSize: "18px", lineHeight: "1.6" }}>
+                {soilAnalysisResult.tips.map((tip: string, idx: number) => (
+                  <li key={idx} style={{ marginBottom: "8px" }}>{tip}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </section>
 
     </div>
   );
