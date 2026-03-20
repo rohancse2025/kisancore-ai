@@ -1,71 +1,130 @@
-import { useEffect, useState } from "react";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import HomePage from "./pages/HomePage";
+import CropsPage from "./pages/CropsPage";
+import ScanPage from "./pages/ScanPage";
+import IoTPage from "./pages/IoTPage";
+import ChatPage from "./pages/ChatPage";
 
-function App() {
-  const [data, setData] = useState<any>(null);
-  const [crop, setCrop] = useState("");
-  const [irrigationSuggestion, setIrrigationSuggestion] = useState<{ status: string, message: string } | null>(null);
+export default function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const getCrop = async () => {
-    if (!data) return;
-    const res = await fetch(`http://127.0.0.1:8000/recommend-crop?temperature=${data.temperature}&humidity=${data.humidity}&ph=6.5&rainfall=100.0`);
-    const result = await res.json();
-    setCrop(result.crop);
-  };
-
-  useEffect(() => {
-    fetch("http://127.0.0.1:8000/sensor-data")
-      .then(res => res.json())
-      .then(data => {
-        setData(data);
-
-        fetch(`http://127.0.0.1:8000/recommend-crop?temperature=${data.temperature}&humidity=${data.humidity}&ph=6.5&rainfall=100.0`)
-          .then(res => res.json())
-          .then(result => setCrop(result.crop));
-
-        fetch(`http://127.0.0.1:8000/irrigation-suggestion?soil_moisture=${data.soil_moisture}`)
-          .then(res => res.json())
-          .then(result => setIrrigationSuggestion({ status: result.status, message: result.message }));
-      });
-  }, []);
+  const navItems = [
+    { path: "/", label: "Home" },
+    { path: "/crops", label: "Crops" },
+    { path: "/scan", label: "Scan" },
+    { path: "/iot", label: "IoT" },
+    { path: "/chat", label: "Chat" },
+  ];
 
   return (
-    <div style={{ textAlign: "center", marginTop: "50px" }}>
-      <h1>Kisancore-AI ✅</h1>
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      minHeight: "100vh",
+      width: "100%",
+      backgroundColor: "#f3f4f6",
+      fontFamily: "system-ui, -apple-system, sans-serif",
+      margin: 0,
+      padding: 0
+    }}>
+      {/* Global reset for body margin since we are not using external CSS here */}
+      <style>
+        {`
+          body {
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}
+      </style>
 
-      {!data ? (
-        <p>Loading sensor data...</p>
-      ) : (
-        <>
-          <h2>🌡 Temperature: {data.temperature}°C</h2>
-          <h2>💧 Humidity: {data.humidity}%</h2>
-          <h2>🌱 Soil Moisture: {data.soil_moisture}%</h2>
-          {irrigationSuggestion && (
-            <div style={{
-              margin: '20px auto',
-              padding: '15px',
-              borderRadius: '8px',
-              backgroundColor: irrigationSuggestion.status === 'ON' ? '#ffebee' :
-                irrigationSuggestion.status === 'MODERATE' ? '#fff3e0' : '#e8f5e9',
-              border: `2px solid ${irrigationSuggestion.status === 'ON' ? '#f44336' :
-                irrigationSuggestion.status === 'MODERATE' ? '#ff9800' : '#4caf50'}`,
-              display: 'inline-block',
-              minWidth: '300px'
-            }}>
-              <h2 style={{ margin: 0, color: '#333' }}>
-                🚰 Irrigation: <span style={{ color: irrigationSuggestion.status === 'ON' ? '#d32f2f' : irrigationSuggestion.status === 'MODERATE' ? '#e65100' : '#2e7d32' }}>{irrigationSuggestion.status}</span>
-              </h2>
-              <p style={{ fontSize: '18px', margin: '10px 0 0', color: '#555', fontWeight: 'bold' }}>
-                {irrigationSuggestion.message}
-              </p>
-            </div>
-          )}
-          <h2>🌾 Recommended Crop: {crop}</h2>
-          <button onClick={getCrop} style={{ padding: "10px 20px", fontSize: "16px", marginTop: "20px" }}>
-            Get Crop Recommendation
-          </button>        </>
-      )}
+      {/* Top Navigation Bar */}
+      <nav style={{
+        backgroundColor: "#15803d",
+        width: "100%",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "0 40px",
+        boxSizing: "border-box",
+        height: "70px",
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        position: "sticky",
+        top: 0,
+        zIndex: 100
+      }}>
+        {/* Logo */}
+        <div 
+          onClick={() => navigate("/")}
+          style={{
+            color: "white",
+            fontSize: "22px",
+            fontWeight: "bold",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center"
+          }}
+        >
+          🌿 KisanCore AI
+        </div>
+
+        {/* Links */}
+        <div style={{ display: "flex", gap: "10px" }}>
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <div
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                style={{
+                  color: "white",
+                  fontSize: "16px",
+                  cursor: "pointer",
+                  padding: "10px 16px",
+                  borderRadius: "6px",
+                  backgroundColor: isActive ? "rgba(255, 255, 255, 0.2)" : "transparent",
+                  textDecoration: isActive ? "underline" : "none",
+                  textUnderlineOffset: "6px",
+                  textDecorationThickness: "2px",
+                  transition: "background-color 0.2s ease, text-decoration 0.2s ease"
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) e.currentTarget.style.backgroundColor = "transparent";
+                }}
+              >
+                {item.label}
+              </div>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Main Content Area */}
+      <main style={{
+        flex: 1,
+        width: "100%",
+        maxWidth: "1200px",
+        margin: "0 auto",
+        padding: "30px",
+        boxSizing: "border-box",
+        animation: "fadeIn 0.3s ease-out"
+      }}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/crops" element={<CropsPage />} />
+          <Route path="/scan" element={<ScanPage />} />
+          <Route path="/iot" element={<IoTPage />} />
+          <Route path="/chat" element={<ChatPage />} />
+        </Routes>
+      </main>
     </div>
   );
 }
-
-export default App;
