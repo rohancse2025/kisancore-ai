@@ -213,7 +213,7 @@ export default function ScanPage() {
             boxShadow: "0 4px 15px rgba(0,0,0,0.05)",
             border: "1px solid #f3f4f6"
           }}>
-            <h3 style={{ margin: "0 0 16px 0", fontSize: "17px", color: "#1f2937", fontWeight: "700" }}>
+            <h3 style={{ margin: "0 0 16px 0", fontSize: "20px", color: "#111827", fontWeight: "700" }}>
               💡 Tips for Better Results
             </h3>
             <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -244,7 +244,7 @@ export default function ScanPage() {
               textAlign: "center"
             }}>
               <span style={{ fontSize: "52px", opacity: 0.3, marginBottom: "16px" }}>📷</span>
-              <h3 style={{ margin: "0 0 8px 0", color: "#9ca3af", fontSize: "20px", fontWeight: "700" }}>
+              <h3 style={{ margin: "0 0 8px 0", color: "#111827", fontSize: "20px", fontWeight: "700" }}>
                 Your analysis results will appear here
               </h3>
               <p style={{ margin: 0, color: "#9ca3af", fontSize: "15px" }}>
@@ -289,7 +289,7 @@ export default function ScanPage() {
             }}>
               {/* a) Disease Header */}
               <div style={{ padding: "28px 28px 20px" }}>
-                <h2 style={{ margin: "0 0 14px 0", fontSize: "24px", fontWeight: "800", color: "#111827" }}>
+                <h2 style={{ margin: "0 0 14px 0", fontSize: "20px", fontWeight: "700", color: "#111827" }}>
                   {result.disease}
                 </h2>
 
@@ -382,7 +382,7 @@ export default function ScanPage() {
 
       {/* COMMON DISEASES SECTION */}
       <section>
-        <h2 style={{ fontSize: "26px", fontWeight: "800", color: "#111827", margin: "0 0 20px 0" }}>
+        <h2 style={{ fontSize: "20px", fontWeight: "700", color: "#111827", margin: "0 0 20px 0" }}>
           📚 Common Plant Diseases
         </h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>

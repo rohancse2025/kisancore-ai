@@ -5,6 +5,7 @@ import CropsPage from "./pages/CropsPage";
 import ScanPage from "./pages/ScanPage";
 import IoTPage from "./pages/IoTPage";
 import ChatPage from "./pages/ChatPage";
+import MarketPage from "./pages/MarketPage";
 
 export default function App() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function App() {
     { path: "/crops", label: "Crops" },
     { path: "/scan", label: "Scan" },
     { path: "/iot", label: "IoT" },
+    { path: "/market", label: "Market" },
     { path: "/chat", label: "Chat" },
   ];
 
@@ -229,6 +231,7 @@ export default function App() {
           <Route path="/crops" element={<CropsPage />} />
           <Route path="/scan" element={<ScanPage />} />
           <Route path="/iot" element={<IoTPage />} />
+          <Route path="/market" element={<MarketPage />} />
           <Route path="/chat" element={<ChatPage />} />
         </Routes>
       </main>

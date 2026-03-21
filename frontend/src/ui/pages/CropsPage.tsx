@@ -227,9 +227,9 @@ export default function CropsPage() {
               ...cardStyle,
               borderTop: "4px solid #16a34a"
             }}>
-              <h2 style={{ margin: "0 0 20px 0", color: "#333", fontSize: "24px" }}>Farm Parameters</h2>
+              <h2 style={{ margin: "0 0 20px 0", color: "#111827", fontSize: "20px", fontWeight: "700" }}>Farm Parameters</h2>
               
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "25px", marginBottom: "25px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "30px", marginBottom: "25px" }}>
                 {sliders.map(slider => {
                   const currentValue = inputs[slider.name as keyof typeof inputs];
                   return (
@@ -310,7 +310,7 @@ export default function CropsPage() {
             {/* RESULTS SECTION */}
             {(isLoading || aiCrops.length > 0) && (
               <div>
-                <h2 style={{ fontSize: "24px", color: "#111827", marginBottom: "20px", textAlign: "center" }}>
+                <h2 style={{ fontSize: "20px", color: "#111827", marginBottom: "20px", textAlign: "center", fontWeight: "700" }}>
                   🤖 Top 3 AI Crop Recommendations
                 </h2>
                 
@@ -425,7 +425,7 @@ export default function CropsPage() {
 
 
           {/* 4. HOW IT WORKS SECTION */}
-          <h2 style={{ textAlign: "center", marginBottom: "30px", color: "#333", fontSize: "28px", fontWeight: "bold" }}>How It Works</h2>
+          <h2 style={{ textAlign: "center", marginBottom: "30px", color: "#111827", fontSize: "20px", fontWeight: "700" }}>How It Works</h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "25px" }}>
             
             <div style={{...cardStyle, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "30px 20px", border: "1px solid #e5e7eb" }}>
@@ -488,7 +488,7 @@ export default function CropsPage() {
 
       {activeTab === 'fertilizer' && (
         <div style={{ ...cardStyle, maxWidth: "700px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "25px", animation: "fadeIn 0.3s ease-out" }}>
-          <h2 style={{ margin: "0", color: "#333", fontSize: "28px", textAlign: "center" }}>
+          <h2 style={{ margin: "0", color: "#111827", fontSize: "20px", textAlign: "center", fontWeight: "700" }}>
             Find the right fertilizer for your crop
           </h2>
 

@@ -70,22 +70,18 @@ export default function HomePage() {
     // Fetch sensor + irrigation + crop data
     const fetchData = async () => {
       try {
-        const [sensorRes, cropRes] = await Promise.all([
-          fetch('http://127.0.0.1:8000/api/v1/sensor-data'),
-          fetch('http://127.0.0.1:8000/api/v1/recommend-crop?temperature=25&humidity=80&ph=6.5&rainfall=100')
-        ]);
-        
+        // 1. Fetch live sensor data
+        const sensorRes = await fetch('http://127.0.0.1:8000/api/v1/sensor-data');
         const data: SensorData = await sensorRes.json();
-        const cropJson: CropRecommendation = await cropRes.json();
         
-        setSensorData({
-          temperature: data.temperature,
-          humidity: data.humidity,
-          soil_moisture: data.soil_moisture
-        });
+        setSensorData(data);
 
+        // 2. Fetch crop recommendation using LIVE sensor values
+        const cropRes = await fetch(`http://127.0.0.1:8000/api/v1/recommend-crop?temperature=${data.temperature}&humidity=${data.humidity}&ph=6.5&rainfall=100`);
+        const cropJson: CropRecommendation = await cropRes.json();
         setRecommendedCrop(cropJson.crop);
         
+        // 3. Fetch irrigation suggestion
         const irrigationRes = await fetch(`http://127.0.0.1:8000/api/v1/irrigation-suggestion?soil_moisture=${data.soil_moisture}`);
         const irrigationJson: IrrigationSuggestion = await irrigationRes.json();
         setIrrigation(irrigationJson);
@@ -136,6 +132,10 @@ export default function HomePage() {
 
     fetchData();
     fetchWeather();
+
+    // Auto-refresh sensor data every 10 seconds
+    const interval = setInterval(fetchData, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -205,7 +205,7 @@ export default function HomePage() {
         boxShadow: "0 4px 6px rgba(0,0,0,0.05)",
         border: "1px solid #bfdbfe"
       }}>
-        <h2 style={{ fontSize: "24px", color: "#1e3a8a", margin: "0 0 25px 0" }}>🌤️ Today's Weather & Farming Advice</h2>
+        <h2 style={{ fontSize: "20px", color: "#111827", margin: "0 0 25px 0", fontWeight: 700 }}>🌤️ Today's Weather & Farming Advice</h2>
         
         {weatherData?.city && (
           <p style={{ margin: "0 0 18px 0", fontSize: "16px", color: "#3b82f6", fontWeight: "600" }}>
@@ -216,7 +216,7 @@ export default function HomePage() {
         <div style={{ display: "flex", gap: "30px", alignItems: "center", flexWrap: "wrap", marginBottom: "25px" }}>
           <div style={{ minWidth: "200px" }}>
             <span style={{ fontSize: "64px", fontWeight: "900", color: "#1e3a8a", lineHeight: 1 }}>
-              {weatherLoading ? "—" : weatherData?.temperature !== undefined ? `${weatherData.temperature}°C` : "N/A"}
+              {weatherLoading ? "—" : weatherData?.temperature !== undefined ? `${Math.round(weatherData.temperature * 10) / 10}°C` : "N/A"}
             </span>
             <p style={{ margin: "5px 0 0 0", color: "#3b82f6", fontWeight: "bold", fontSize: "20px" }}>
               {weatherLoading ? "Loading..." : weatherData?.condition || ""}
@@ -273,7 +273,7 @@ export default function HomePage() {
 
       {/* 2. STATS ROW */}
       <section style={{ marginBottom: "40px" }}>
-        <h2 style={{ fontSize: "24px", color: "#333", marginBottom: "20px", paddingLeft: "5px" }}>Live Farm Data</h2>
+        <h2 style={{ fontSize: "20px", color: "#111827", marginBottom: "20px", paddingLeft: "5px", fontWeight: 700 }}>Live Farm Data</h2>
         <div style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
@@ -332,7 +332,7 @@ export default function HomePage() {
         
         {/* 3. RECOMMENDED CROPS */}
         <section>
-          <h2 style={{ fontSize: "24px", color: "#333", marginBottom: "20px", paddingLeft: "5px" }}>AI Recommendation</h2>
+          <h2 style={{ fontSize: "20px", color: "#111827", marginBottom: "20px", paddingLeft: "5px", fontWeight: 700 }}>AI Recommendation</h2>
           <div style={{
             ...cardStyle,
             display: "flex",
@@ -364,7 +364,7 @@ export default function HomePage() {
 
         {/* 4. QUICK TIPS */}
         <section>
-          <h2 style={{ fontSize: "24px", color: "#333", marginBottom: "20px", paddingLeft: "5px" }}>Quick Tips</h2>
+          <h2 style={{ fontSize: "20px", color: "#111827", marginBottom: "20px", paddingLeft: "5px", fontWeight: 700 }}>Quick Tips</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
             
             <div style={{...cardStyle, padding: "20px", display: "flex", alignItems: "center", gap: "15px"}}>
@@ -400,10 +400,10 @@ export default function HomePage() {
 
       {/* 5. SOIL ANALYSIS */}
       <section style={{ marginBottom: "40px", marginTop: "40px" }}>
-        <h2 style={{ fontSize: "28px", color: "#333", margin: "0 0 5px 0", paddingLeft: "5px", fontWeight: "bold" }}>
+        <h2 style={{ fontSize: "20px", color: "#111827", margin: "0 0 5px 0", paddingLeft: "5px", fontWeight: "700" }}>
           🧪 Soil Analysis
         </h2>
-        <p style={{ paddingLeft: "5px", margin: "0 0 25px 0", color: "#6b7280", fontSize: "18px" }}>Quick soil health check</p>
+        <p style={{ paddingLeft: "5px", margin: "0 0 25px 0", color: "#6b7280", fontSize: "16px" }}>Quick soil health check</p>
         
         <div style={cardStyle}>
           <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "20px" }}>
