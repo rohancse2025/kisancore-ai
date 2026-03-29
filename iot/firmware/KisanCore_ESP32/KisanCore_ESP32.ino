@@ -5,13 +5,19 @@
 
 // --- CONFIGURATION ---
 const char *WIFI_SSID = "YOUR_WIFI_SSID"; // TODO: Fill with your WiFi SSID
-const char *WIFI_PASSWORD =
-    "YOUR_WIFI_PASSWORD"; // TODO: Fill with your WiFi Password
+const char *WIFI_PASSWORD = "YOUR_WIFI_PASSWORD"; // TODO: Fill with your WiFi Password
 
 const char *BACKEND_URL = "http://10.197.108.36:8000/api/v1/iot/data";
 
-#define DHTPIN 4      // GPIO Pin where DHT22 is connected
-#define DHTTYPE DHT22 // Using DHT22 sensor
+// --- SENSOR PINS ---
+#define DHTPIN 4      // GPIO Pin for DHT22
+#define DHTTYPE DHT22
+#define SOIL_PIN 34   // GPIO Pin for Capacitive Soil Moisture Sensor (Analog)
+
+// Calibration values for Soil Moisture (V1.2)
+// These may need adjustment based on your specific sensor
+const int AirValue = 3500;   // Value in dry air
+const int WaterValue = 1500; // Value in water
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -24,6 +30,7 @@ void setup() {
   delay(1000);
 
   Serial.println("\n--- KisanCore AI IoT Node ---");
+  Serial.println("Sensors: DHT22 (GPIO 4), Soil Moisture (GPIO 34)");
 
   // Initialize DHT sensor
   dht.begin();
@@ -45,24 +52,34 @@ void loop() {
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
 
-    // Read sensor data
+    // 1. Read DHT22 (Digital)
     float humidity = dht.readHumidity();
     float temperature = dht.readTemperature();
 
-    // Check if any reads failed
+    // 2. Read Soil Moisture (Analog)
+    int soilRaw = analogRead(SOIL_PIN);
+    // Convert raw analog reading to percentage
+    // Map: AirValue (0%) to WaterValue (100%)
+    float soilMoisture = map(soilRaw, AirValue, WaterValue, 0, 100);
+    
+    // Constrain to 0-100% range
+    if (soilMoisture > 100) soilMoisture = 100;
+    if (soilMoisture < 0) soilMoisture = 0;
+
+    // Check if DHT reads failed
     if (isnan(humidity) || isnan(temperature)) {
       Serial.println("Error: Failed to read from DHT sensor!");
-      return; // Skip this cycle and try again later
+      return; 
     }
 
-    Serial.print("Temp: ");
-    Serial.print(temperature);
-    Serial.print("°C, Humidity: ");
-    Serial.print(humidity);
-    Serial.println("%");
+    // Serial Debugging
+    Serial.println("-------------------------");
+    Serial.print("Temperature: "); Serial.print(temperature); Serial.println(" °C");
+    Serial.print("Humidity:    "); Serial.print(humidity); Serial.println(" %");
+    Serial.print("Soil Moister: "); Serial.print(soilMoisture); Serial.print(" % (Raw: "); Serial.print(soilRaw); Serial.println(")");
 
     // Send data to backend
-    sendDataToServer(temperature, humidity);
+    sendDataToServer(temperature, humidity, soilMoisture);
   }
 }
 
@@ -88,7 +105,7 @@ void connectToWiFi() {
   }
 }
 
-void sendDataToServer(float temp, float hum) {
+void sendDataToServer(float temp, float hum, float soil) {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
 
@@ -98,9 +115,10 @@ void sendDataToServer(float temp, float hum) {
     http.addHeader("Content-Type", "application/json");
 
     // Prepare JSON payload
-    StaticJsonDocument<128> doc;
+    StaticJsonDocument<256> doc;
     doc["temperature"] = temp;
     doc["humidity"] = hum;
+    doc["soil_moisture"] = soil;
 
     String jsonPayload;
     serializeJson(doc, jsonPayload);

@@ -3,6 +3,9 @@ import { useState, useEffect } from 'react';
 interface SensorData {
   temperature: number | null;
   humidity: number | null;
+  soil_moisture: number | null;
+  irrigation_needed: boolean;
+  suggestion: string;
   timestamp: string | null;
 }
 
@@ -62,6 +65,14 @@ export default function IoTPage() {
 
   const isConnected = lastUpdateDate && secondsSinceUpdate < 30 && !error;
 
+  // Helper for soil moisture coloring
+  const getMoistureColor = (val: number | null) => {
+    if (val === null) return "#9ca3af";
+    if (val < 30) return "#ef4444"; // Dry
+    if (val <= 60) return "#f59e0b"; // Okay
+    return "#16a34a"; // Wet
+  };
+
   if (isLoading) {
     return (
       <div style={{ 
@@ -92,12 +103,21 @@ export default function IoTPage() {
       <style>
         {`
           @keyframes pulse {
-            0% { transform: scale(0.95); opacity: 0.5; shadow: 0 0 0 0 rgba(22, 163, 74, 0.4); }
-            50% { transform: scale(1.05); opacity: 1; shadow: 0 0 0 10px rgba(22, 163, 74, 0); }
-            100% { transform: scale(0.95); opacity: 0.5; shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+            0% { transform: scale(0.95); opacity: 0.5; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.5; }
           }
           .pulse-dot {
             animation: pulse 2s infinite ease-in-out;
+          }
+          @keyframes drip {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            70% { transform: translateY(15px) scale(0.8); opacity: 0.5; }
+            100% { transform: translateY(20px) scale(0.5); opacity: 0; }
+          }
+          .water-drop {
+            display: inline-block;
+            animation: drip 1.5s infinite;
           }
         `}
       </style>
@@ -116,7 +136,7 @@ export default function IoTPage() {
           <div>
             <h1 style={{ margin: "0 0 10px 0", fontSize: isMobile ? "24px" : "32px", fontWeight: "800" }}>📡 IoT Smart Farm</h1>
             <p style={{ margin: 0, fontSize: isMobile ? "16px" : "18px", opacity: 0.9 }}>
-              Live ESP32 sensor values
+              Live ESP32 sensor values & Smart Irrigation
             </p>
           </div>
           <div style={{
@@ -142,58 +162,81 @@ export default function IoTPage() {
         </div>
       </section>
 
-      {/* Connection Status Bar */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        flexDirection: isMobile ? "column" : "row",
-        gap: isMobile ? "12px" : "0",
-        padding: "16px 20px",
-        backgroundColor: "white",
-        borderRadius: "12px",
-        marginBottom: "30px",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-        border: "1px solid #e5e7eb"
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+      {/* Connection Status Bar & Irrigation Alert */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "15px", marginBottom: "30px" }}>
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexDirection: isMobile ? "column" : "row",
+          gap: isMobile ? "12px" : "0",
+          padding: "16px 20px",
+          backgroundColor: "white",
+          borderRadius: "12px",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+          border: "1px solid #e5e7eb"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div style={{
+              padding: "6px 14px",
+              borderRadius: "20px",
+              fontSize: "13px",
+              fontWeight: "bold",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              backgroundColor: isConnected ? "#f0fdf4" : "#fef2f2",
+              color: isConnected ? "#16a34a" : "#ef4444",
+              border: `1px solid ${isConnected ? "#bbf7d0" : "#fecaca"}`
+            }}>
+              <div style={{ 
+                width: "8px", 
+                height: "8px", 
+                borderRadius: "50%", 
+                backgroundColor: isConnected ? "#16a34a" : "#ef4444" 
+              }} />
+              {isConnected ? "ESP32 Connected" : "ESP32 Disconnected"}
+            </div>
+            {error && <span style={{ color: "#ef4444", fontSize: "14px", fontWeight: "600" }}>⚠️ {error}</span>}
+            {isRefreshing && !error && <span style={{ fontSize: "13px", color: "#16a34a", opacity: 0.7 }}>Polling...</span>}
+          </div>
+          <div style={{ fontSize: "14px", color: "#6b7280" }}>
+            {lastUpdateDate ? (
+              <>Last updated: <strong>{sensorData?.timestamp}</strong> ({secondsSinceUpdate}s ago)</>
+            ) : (
+              "Waiting for initial data..."
+            )}
+          </div>
+        </div>
+
+        {/* IRRIGATION RECOMMENDATION BADGE */}
+        {isConnected && sensorData?.suggestion && (
           <div style={{
-            padding: "6px 14px",
-            borderRadius: "20px",
-            fontSize: "13px",
-            fontWeight: "bold",
             display: "flex",
             alignItems: "center",
-            gap: "8px",
-            backgroundColor: isConnected ? "#f0fdf4" : "#fef2f2",
-            color: isConnected ? "#16a34a" : "#ef4444",
-            border: `1px solid ${isConnected ? "#bbf7d0" : "#fecaca"}`
+            justifyContent: "space-between",
+            padding: "12px 20px",
+            backgroundColor: sensorData?.irrigation_needed ? "#eff6ff" : "#f0fdf4",
+            borderRadius: "12px",
+            border: `1px solid ${sensorData?.irrigation_needed ? "#bfdbfe" : "#bbf7d0"}`,
+            color: sensorData?.irrigation_needed ? "#1e40af" : "#16a34a",
           }}>
-            <div style={{ 
-              width: "8px", 
-              height: "8px", 
-              borderRadius: "50%", 
-              backgroundColor: isConnected ? "#16a34a" : "#ef4444" 
-            }} />
-            {isConnected ? "ESP32 Connected" : "ESP32 Disconnected"}
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "20px" }}>{sensorData?.irrigation_needed ? "🚨" : "✅"}</span>
+              <span style={{ fontWeight: "600" }}>Recommendation: {sensorData?.suggestion}</span>
+            </div>
+            {sensorData?.irrigation_needed && (
+              <span className="water-drop" style={{ fontSize: "24px" }}>💧</span>
+            )}
           </div>
-          {error && <span style={{ color: "#ef4444", fontSize: "14px", fontWeight: "600" }}>⚠️ {error}</span>}
-          {isRefreshing && !error && <span style={{ fontSize: "13px", color: "#16a34a", opacity: 0.7 }}>Polling...</span>}
-        </div>
-        <div style={{ fontSize: "14px", color: "#6b7280" }}>
-          {lastUpdateDate ? (
-            <>Last updated: <strong>{sensorData?.timestamp}</strong> ({secondsSinceUpdate}s ago)</>
-          ) : (
-            "Waiting for initial data..."
-          )}
-        </div>
+        )}
       </div>
 
       {/* Sensor Cards */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
-        gap: "25px",
+        gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
+        gap: "20px",
         marginBottom: "30px"
       }}>
         {/* TEMPERATURE CARD */}
@@ -202,7 +245,7 @@ export default function IoTPage() {
             <span style={{ fontSize: "32px" }}>🌡️</span>
             <span style={{ color: "#6b7280", fontWeight: "600", fontSize: "18px" }}>Temperature</span>
           </div>
-          <h3 style={{ margin: "0 0 10px 0", fontSize: "48px", fontWeight: "900", color: "#111827" }}>
+          <h3 style={{ margin: "0 0 10px 0", fontSize: "40px", fontWeight: "900", color: "#111827" }}>
             {sensorData?.temperature !== null ? `${sensorData?.temperature}°C` : "—"}
           </h3>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -212,23 +255,23 @@ export default function IoTPage() {
                 fontSize: "12px", 
                 padding: "4px 8px", 
                 borderRadius: "12px",
-                backgroundColor: sensorData.temperature > 15 && sensorData.temperature < 35 ? "#f0fdf4" : "#fef2f2",
-                color: sensorData.temperature > 15 && sensorData.temperature < 35 ? "#16a34a" : "#ef4444",
+                backgroundColor: (sensorData?.temperature ?? 0) > 15 && (sensorData?.temperature ?? 0) < 35 ? "#f0fdf4" : "#fef2f2",
+                color: (sensorData?.temperature ?? 0) > 15 && (sensorData?.temperature ?? 0) < 35 ? "#16a34a" : "#ef4444",
                 fontWeight: "bold"
               }}>
-                {sensorData.temperature > 15 && sensorData.temperature < 35 ? "Normal" : "Alert"}
+                {(sensorData?.temperature ?? 0) > 15 && (sensorData?.temperature ?? 0) < 35 ? "Normal" : "Alert"}
               </span>
             )}
           </div>
         </div>
 
         {/* HUMIDITY CARD */}
-        <div style={{ ...cardStyle, borderLeft: "6px solid #16a34a" }}>
+        <div style={{ ...cardStyle, borderLeft: "6px solid #3b82f6" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "15px", marginBottom: "15px" }}>
-            <span style={{ fontSize: "32px" }}>💧</span>
+            <span style={{ fontSize: "32px" }}>☁️</span>
             <span style={{ color: "#6b7280", fontWeight: "600", fontSize: "18px" }}>Humidity</span>
           </div>
-          <h3 style={{ margin: "0 0 10px 0", fontSize: "48px", fontWeight: "900", color: "#111827" }}>
+          <h3 style={{ margin: "0 0 10px 0", fontSize: "40px", fontWeight: "900", color: "#111827" }}>
             {sensorData?.humidity !== null ? `${sensorData?.humidity}%` : "—"}
           </h3>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -238,11 +281,37 @@ export default function IoTPage() {
                 fontSize: "12px", 
                 padding: "4px 8px", 
                 borderRadius: "12px",
-                backgroundColor: sensorData.humidity > 30 && sensorData.humidity < 70 ? "#f0fdf4" : "#fef2f2",
-                color: sensorData.humidity > 30 && sensorData.humidity < 70 ? "#16a34a" : "#ef4444",
+                backgroundColor: (sensorData?.humidity ?? 0) > 30 && (sensorData?.humidity ?? 0) < 70 ? "#eff6ff" : "#fef2f2",
+                color: (sensorData?.humidity ?? 0) > 30 && (sensorData?.humidity ?? 0) < 70 ? "#3b82f6" : "#ef4444",
                 fontWeight: "bold"
               }}>
-                {sensorData.humidity > 30 && sensorData.humidity < 70 ? "Normal" : "Alert"}
+                {(sensorData?.humidity ?? 0) > 30 && (sensorData?.humidity ?? 0) < 70 ? "Normal" : "Alert"}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* SOIL MOISTURE CARD */}
+        <div style={{ ...cardStyle, borderLeft: `6px solid ${getMoistureColor(sensorData?.soil_moisture || null)}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "15px", marginBottom: "15px" }}>
+            <span style={{ fontSize: "32px" }}>🌱</span>
+            <span style={{ color: "#6b7280", fontWeight: "600", fontSize: "18px" }}>Soil Moisture</span>
+          </div>
+          <h3 style={{ margin: "0 0 10px 0", fontSize: "40px", fontWeight: "900", color: "#111827" }}>
+            {sensorData?.soil_moisture !== null ? `${sensorData?.soil_moisture}%` : "—"}
+          </h3>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: "13px", color: "#9ca3af", fontStyle: "italic" }}>{(sensorData?.soil_moisture ?? 0) < 30 ? "Dry" : (sensorData?.soil_moisture ?? 0) <= 60 ? "Optimal" : "Wet"}</span>
+            {sensorData?.soil_moisture !== null && (
+              <span style={{ 
+                fontSize: "12px", 
+                padding: "4px 8px", 
+                borderRadius: "12px",
+                backgroundColor: (sensorData?.soil_moisture ?? 0) < 30 ? "#fef2f2" : (sensorData?.soil_moisture ?? 0) <= 60 ? "#fdfbe7" : "#f0fdf4",
+                color: (sensorData?.soil_moisture ?? 0) < 30 ? "#ef4444" : (sensorData?.soil_moisture ?? 0) <= 60 ? "#d97706" : "#16a34a",
+                fontWeight: "bold"
+              }}>
+                {(sensorData?.soil_moisture ?? 0) < 30 ? "Dry" : (sensorData?.soil_moisture ?? 0) <= 60 ? "Healthy" : "Wet"}
               </span>
             )}
           </div>
@@ -261,7 +330,7 @@ export default function IoTPage() {
 const cardStyle: React.CSSProperties = {
   backgroundColor: "white",
   borderRadius: "16px",
-  padding: "30px",
+  padding: "25px",
   boxShadow: "0 4px 6px rgba(0,0,0,0.05)",
   border: "1px solid #f3f4f6",
   display: "flex",
