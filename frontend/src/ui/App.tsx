@@ -95,7 +95,7 @@ export default function App() {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`text-[13px] font-black uppercase tracking-widest no-underline transition-all
+                className={`text-[13px] font-black uppercase tracking-widest no-underline transition-all relative group/link
                   ${location.pathname === link.path 
                     ? 'text-green-600' 
                     : 'text-gray-400 hover:text-green-600 dark:text-slate-400 dark:hover:text-green-400'}
@@ -103,7 +103,7 @@ export default function App() {
               >
                 {link.label}
                 {location.pathname === link.path && (
-                  <div className="h-0.5 bg-green-600 rounded-full mt-1 animate-fade-in" />
+                  <div className="absolute -bottom-1 left-0 h-0.5 bg-green-600 rounded-full animate-grow-width" />
                 )}
               </Link>
             ))}
@@ -197,7 +197,7 @@ export default function App() {
       <main className="transition-all duration-300">
         <div 
           key={location.pathname}
-          className={`max-w-[1100px] mx-auto p-5 md:p-12 transition-all animate-fade-in`}
+          className={`max-w-[1200px] mx-auto p-5 md:px-12 md:py-8 transition-all animate-fade-in`}
         >
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -232,7 +232,7 @@ export default function App() {
       
       {/* 5. FOOTER - HIDDEN ON CHAT PAGE */}
       {!isChatPage && (
-        <footer className="border-t border-gray-100 dark:border-slate-800 py-16 px-8 text-center bg-white dark:bg-slate-900 mt-20 pl-0">
+        <footer className="border-t border-gray-100 dark:border-slate-800 py-16 px-8 text-center bg-white dark:bg-slate-900 pl-0">
           <div className="flex flex-col items-center gap-4">
              <span className="text-xl">🌿</span>
              <p className="text-sm font-black text-green-600 uppercase tracking-widest m-0">KisanCore AI</p>

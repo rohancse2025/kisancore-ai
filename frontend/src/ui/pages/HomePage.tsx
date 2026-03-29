@@ -181,34 +181,40 @@ export default function HomePage() {
   return (
     <div className="font-sans">
       
-      {/* 1. HERO SECTION (White/Light Green Background, full-width content style) */}
-      <section className="relative overflow-hidden bg-[#f0fdf4] dark:bg-slate-900 -mx-8 md:-mx-12 px-8 md:px-12 py-16 md:py-24 text-center mb-12">
+      {/* 1. HERO SECTION (Solid Green Background) */}
+      <section className="relative overflow-hidden bg-[#15803d] -mx-8 md:-mx-12 px-8 md:px-12 py-10 md:py-14 text-center mb-12 shadow-2xl shadow-green-900/20">
         <div className="relative z-10 flex flex-col items-center">
-          <h1 className="m-0 mb-4 text-gray-900 dark:text-white text-[40px] md:text-[52px] font-black tracking-tighter leading-none italic">
+          <h2 className="m-0 mb-4 text-white text-[28px] md:text-[38px] font-bold tracking-tight">
             Empowering Farmers with
-          </h1>
-          <h1 className="m-0 mb-8 text-[#16a34a] text-[40px] md:text-[52px] font-black tracking-tighter leading-none italic">
+          </h2>
+          <h1 className="m-0 mb-4 text-white text-[28px] md:text-[38px] font-black tracking-tighter leading-none">
             Next-Gen AI & IoT
           </h1>
           
-          <p className="max-w-2xl text-gray-500 dark:text-slate-400 text-lg md:text-xl font-medium mb-12 leading-relaxed">
-            Maximize your yield with real-time soil analysis, satellite weather insights, and precision AI-driven crop recommendations.
+          <p className="max-w-2xl text-white/90 text-base font-light mb-6 leading-relaxed">
+            Smart Farming powered by AI and IoT
           </p>
 
           <div className="flex flex-col sm:flex-row gap-5">
             <button 
               onClick={() => navigate('/chat')}
-              className="bg-[#16a34a] text-white border-none rounded-xl py-4.5 px-10 text-base font-black cursor-pointer shadow-xl shadow-green-600/20 transition-all hover:bg-green-700 hover:-translate-y-1 active:scale-95 flex items-center gap-2 group"
+              className="bg-white text-[#15803d] border-none rounded-2xl py-3 px-8 text-lg font-black cursor-pointer shadow-2xl transition-all hover:bg-green-50 hover:-translate-y-1 active:scale-95"
             >
-              Get AI Advice →
+              Get Crop Recommendation
             </button>
             <button 
               onClick={() => navigate('/scan')}
-              className="bg-white dark:bg-slate-800 text-gray-900 dark:text-white border-2 border-gray-200 dark:border-slate-700 rounded-xl py-4 px-10 text-base font-black cursor-pointer transition-all hover:border-[#16a34a] hover:-translate-y-1 active:scale-95"
+              className="bg-[#14532d] text-white border-none rounded-2xl py-3 px-8 text-lg font-black cursor-pointer shadow-xl transition-all hover:bg-[#064e3b] hover:-translate-y-1 active:scale-95"
             >
-              Scan Plant Disease
+              Scan Disease
             </button>
           </div>
+        </div>
+        
+        {/* Premium Decorative Accents */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+          <div className="absolute -top-24 -left-24 w-96 h-96 bg-white/10 rounded-full blur-3xl opacity-50"></div>
+          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-green-400/20 rounded-full blur-3xl opacity-50"></div>
         </div>
       </section>
 
@@ -386,7 +392,7 @@ export default function HomePage() {
       </div>
 
       {/* 5. SOIL ANALYSIS */}
-      <section className="mb-10 pb-10">
+      <section className="mb-4 pb-4">
         <h2 className="text-xl text-gray-900 dark:text-white m-0 mb-1 font-bold uppercase tracking-widest text-xs opacity-50">
           🧪 Soil Health Analysis
         </h2>

@@ -178,69 +178,72 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-70px)] bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden w-full">
-      {/* 1. LEFT SIDEBAR (Compact - 220px) */}
+    <div className="flex h-[calc(100vh-140px)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden w-full border border-gray-100 dark:border-slate-800">
+      
+      {/* LEFT SIDEBAR (Fixed 350px) */}
       {!isMobile && (
-        <div className="w-[220px] border-r border-gray-100 dark:border-slate-700 flex flex-col bg-white dark:bg-slate-800 p-4 overflow-y-auto flex-shrink-0">
-          <h2 className="m-0 mb-4 text-[11px] text-gray-400 dark:text-slate-500 flex items-center gap-1.5 font-black uppercase tracking-widest opacity-80">
-            💡 Useful Tips
-          </h2>
-          
-          <div className="flex flex-col gap-2 mb-8">
-            {questions.map((q, idx) => (
-              <div 
-                key={idx}
-                onClick={() => setInput(q)}
-                className="py-[10px] px-[14px] bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-700 border-l-4 border-l-green-600 rounded-lg cursor-pointer text-[13px] text-gray-600 dark:text-slate-300 shadow-sm transition-all hover:bg-green-50/50 dark:hover:bg-green-900/10 font-bold"
-              >
-                {q}
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-auto">
-            <h3 className="text-[11px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-3">
-              Better AI Results
-            </h3>
-            <ul className="list-none p-0 m-0 flex flex-col gap-2">
-              {[
-                "Mention your crop",
-                "Describe leaf color",
-                "Mention soil type"
-              ].map((tip, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-[12px] text-gray-500 font-bold">
-                  <span className="text-green-600 text-[10px]">✓</span>
-                  {tip}
-                </li>
+        <div className="w-[350px] border-r border-gray-100 dark:border-slate-800 flex flex-col bg-white dark:bg-slate-900 overflow-y-auto flex-shrink-0">
+          <div className="p-8">
+            <h2 className="m-0 mb-8 text-xl text-gray-900 dark:text-white font-black flex items-center gap-3">
+              💡 Quick Questions
+            </h2>
+            
+            <div className="flex flex-col gap-3.5 mb-12">
+              {questions.map((q, idx) => (
+                <div 
+                  key={idx}
+                  onClick={() => setInput(q)}
+                  className="group py-4 px-5 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 border-l-4 border-l-[#16a34a] rounded-xl cursor-pointer text-[14px] text-gray-700 dark:text-slate-300 shadow-sm transition-all hover:bg-green-50/50 dark:hover:bg-green-900/10 hover:translate-x-1 font-bold"
+                >
+                  {q}
+                </div>
               ))}
-            </ul>
+            </div>
+
+            <div className="border-t border-gray-100 dark:border-slate-800 pt-8 mt-4.5">
+              <h3 className="text-[12px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-6">
+                TIPS FOR BETTER ANSWERS
+              </h3>
+              <ul className="list-none p-0 m-0 flex flex-col gap-4">
+                {[
+                  "Mention your crop name",
+                  "Include your location",
+                  "Describe the problem clearly"
+                ].map((tip, idx) => (
+                  <li key={idx} className="flex items-start gap-3 text-[14px] text-gray-600 dark:text-slate-400 font-bold">
+                    <span className="text-[#16a34a] text-lg">✓</span>
+                    {tip}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       )}
 
-      {/* 2. CHAT PANEL (Compact & Tighter) */}
-      <div className="flex-1 flex flex-col bg-gray-50 dark:bg-slate-900 relative h-full">
+      {/* RIGHT CHAT AREA */}
+      <div className="flex-1 flex flex-col bg-white dark:bg-slate-950 relative h-full">
         
-        {/* Compact Header */}
-        <div className={`py-3 ${isMobile ? 'px-4' : 'px-6'} bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center z-10 shadow-sm`}>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-base shadow-lg shadow-green-600/10">🤖</div>
+        {/* Header */}
+        <div className="py-5 px-8 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center z-10">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center text-3xl">🤖</div>
             <div>
-              <h2 className={`m-0 -mb-0.5 ${isMobile ? 'text-[12px]' : 'text-sm'} text-gray-900 dark:text-white font-black uppercase tracking-tight`}>
-                KisanCore AI Expert
+              <h2 className="m-0 text-[#16a34a] text-lg font-black tracking-tight">
+                KisanCore AI Assistant
               </h2>
-              <p className="m-0 text-[10px] text-green-600 font-bold uppercase tracking-widest opacity-80">
-                Online
+              <p className="m-0 text-xs text-gray-400 dark:text-slate-500 font-bold">
+                Powered by AI — Ask anything about farming
               </p>
             </div>
           </div>
           
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-4 items-center">
             {isMobile && (
               <button
                 onClick={() => setShowSidebar(!showSidebar)}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm cursor-pointer border transition-all
-                  ${showSidebar ? 'bg-green-600 text-white border-green-600' : 'bg-gray-100 dark:bg-slate-700 text-gray-500 border-gray-200 dark:border-slate-600'}`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-sm border
+                  ${showSidebar ? 'bg-[#16a34a] text-white border-[#16a34a]' : 'bg-gray-50 dark:bg-slate-800 text-gray-500 border-gray-100 dark:border-slate-700'}`}
               >
                 💡
               </button>
@@ -251,45 +254,27 @@ export default function ChatPage() {
                 setAutoSpeak(!autoSpeak);
                 if (autoSpeak && window.speechSynthesis) window.speechSynthesis.cancel();
               }}
-              className={`flex items-center gap-1.5 h-8 ${isMobile ? 'px-2' : 'px-3'} rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer transition-all border
-                ${autoSpeak ? 'bg-green-600 text-white border-green-600' : 'bg-white dark:bg-slate-800 text-gray-500 border-gray-200 dark:border-slate-700'}`}
+              className={`flex items-center gap-2 h-10 px-5 rounded-full text-xs font-black uppercase tracking-widest cursor-pointer transition-all border shadow-sm
+                ${autoSpeak ? 'bg-[#16a34a] text-white border-[#16a34a]' : 'bg-white dark:bg-slate-800 text-gray-500 border-gray-100 dark:border-slate-700'}`}
             >
-              {autoSpeak ? "📣 Speak ON" : "🔇 Speak OFF"}
+              {autoSpeak ? "Auto-speak ON" : "Auto-speak OFF"}
             </button>
           </div>
-
-          {/* MOBILE TIPS OVERLAY */}
-          {isMobile && showSidebar && (
-            <div className="absolute top-[60px] right-4 w-[260px] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700 z-[100] p-5 animate-fade-in">
-              <h3 className="m-0 mb-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Useful Questions</h3>
-              <div className="flex flex-col gap-1.5">
-                {questions.map((q, idx) => (
-                  <div 
-                    key={idx}
-                    onClick={() => { setInput(q); setShowSidebar(false); }}
-                    className="p-2.5 bg-gray-50 dark:bg-slate-900 rounded-xl text-[13px] text-gray-700 dark:text-slate-300 font-bold active:bg-green-50"
-                  >
-                    {q}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Messages Area (Reduced padding and bubble font) */}
-        <div className="flex-1 p-4 md:p-6 overflow-y-auto flex flex-col gap-4 custom-scrollbar">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-6 scroll-smooth">
           {messages.map(msg => {
             const isUser = msg.sender === 'user';
             return (
-              <div key={msg.id} className={`flex flex-col max-w-[85%] md:max-w-[75%] ${isUser ? 'self-end' : 'self-start'}`}>
-                <div className={`px-4 py-2 rounded-2xl text-[14px] leading-relaxed shadow-sm whitespace-pre-wrap font-medium
+              <div key={msg.id} className={`flex flex-col max-w-[80%] ${isUser ? 'self-end' : 'self-start'}`}>
+                <div className={`px-6 py-4 rounded-3xl text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap font-medium
                   ${isUser 
-                    ? 'bg-green-600 text-white rounded-br-none shadow-green-600/5' 
-                    : 'bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-bl-none border border-gray-100 dark:border-slate-700'}`}>
+                    ? 'bg-[#16a34a] text-white rounded-br-none' 
+                    : 'bg-green-50 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-bl-none border border-gray-100 dark:border-slate-700'}`}>
                   {msg.text}
                 </div>
-                <span className={`text-[10px] text-gray-400 dark:text-slate-500 mt-1.5 px-1 font-bold ${isUser ? 'self-end' : 'self-start'}`}>
+                <span className={`text-[11px] text-gray-400 dark:text-slate-600 mt-2 px-2 font-bold ${isUser ? 'self-end' : 'self-start'}`}>
                   {msg.timestamp}
                 </span>
               </div>
@@ -297,24 +282,24 @@ export default function ChatPage() {
           })}
           
           {isLoading && (
-            <div className="flex flex-col max-w-[85%] self-start animate-fade-in">
-              <div className="bg-white dark:bg-slate-800 text-green-600 px-4 py-3 rounded-2xl rounded-bl-none border border-gray-100 dark:border-slate-700 text-[12px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
-                <span className="inline-block animate-bounce">🧠</span>
+            <div className="flex flex-col max-w-[80%] self-start">
+              <div className="bg-gray-50 dark:bg-slate-800 text-[#16a34a] px-6 py-4 rounded-3xl rounded-bl-none border border-gray-100 dark:border-slate-700 text-xs font-black uppercase tracking-widest flex items-center gap-3 animate-pulse">
+                <span>🧠</span>
                 Thinking...
               </div>
             </div>
           )}
-          <div ref={messagesEndRef} className="h-2 flex-shrink-0" />
+          <div ref={messagesEndRef} className="h-4" />
         </div>
 
-        {/* Compact Input Field */}
-        <div className="p-4 md:p-6 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 flex gap-3 items-center">
+        {/* Input Area */}
+        <div className="p-6 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 flex gap-4 items-center">
           <button
             onClick={toggleListening}
-            className={`w-9 h-9 rounded-full border-none flex items-center justify-center cursor-pointer transition-all flex-shrink-0 shadow-sm
-              ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-100 dark:bg-slate-700 text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-600'}`}
+            className={`w-12 h-12 rounded-full border-none flex items-center justify-center cursor-pointer transition-all flex-shrink-0 shadow-sm
+              ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-700'}`}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill={isListening ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill={isListening ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5">
               <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
               <line x1="12" x2="12" y1="19" y2="22"></line>
@@ -326,17 +311,17 @@ export default function ChatPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={isListening ? "Listening..." : "How can I help you?"}
-            className="flex-1 h-9 px-5 bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-700 rounded-full text-[14px] outline-none text-gray-800 dark:text-white transition-all focus:border-green-600 focus:ring-4 focus:ring-green-50 dark:focus:ring-green-900/5 font-medium"
+            placeholder={isListening ? "Listening..." : "Ask KisanCore assistant anything about farming..."}
+            className="flex-1 h-12 px-6 bg-gray-50 dark:bg-slate-800 border-none rounded-2xl text-[15px] outline-none text-gray-800 dark:text-white transition-all focus:ring-2 focus:ring-[#16a34a] font-medium"
           />
           
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className={`w-9 h-9 rounded-full text-white border-none flex items-center justify-center cursor-pointer transition-all flex-shrink-0 shadow-md
-              ${(!input.trim() || isLoading) ? 'bg-gray-300 dark:bg-slate-800 cursor-not-allowed text-gray-500 shadow-none' : 'bg-green-600 hover:bg-green-700 active:scale-90 shadow-green-600/20'}`}
+            className={`w-12 h-12 rounded-full text-white border-none flex items-center justify-center cursor-pointer transition-all flex-shrink-0 shadow-lg
+              ${(!input.trim() || isLoading) ? 'bg-gray-200 dark:bg-slate-800 text-gray-400 cursor-not-allowed' : 'bg-[#16a34a] hover:bg-[#15803d] active:scale-95'}`}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="22" y1="2" x2="11" y2="13"></line>
               <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
             </svg>

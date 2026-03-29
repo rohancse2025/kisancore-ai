@@ -148,7 +148,7 @@ export default function CropsPage() {
   };
 
   return (
-    <div className="font-sans pb-10">
+    <div className="font-sans pb-4">
       
       {/* TABS HEADER */}
       <div className="flex border-b-2 border-gray-200 mb-8 gap-2 overflow-x-auto scrollbar-hide">
