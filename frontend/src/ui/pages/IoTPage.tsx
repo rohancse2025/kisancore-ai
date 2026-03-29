@@ -46,14 +46,12 @@ export default function IoTPage() {
     }
   };
 
-  // Poll for data every 5 seconds
   useEffect(() => {
     fetchData();
     const pollInterval = setInterval(fetchData, 5000);
     return () => clearInterval(pollInterval);
   }, []);
 
-  // Update "seconds ago" counter
   useEffect(() => {
     const timer = setInterval(() => {
       if (lastUpdateDate) {
@@ -65,41 +63,24 @@ export default function IoTPage() {
 
   const isConnected = lastUpdateDate && secondsSinceUpdate < 30 && !error;
 
-  // Helper for soil moisture coloring
   const getMoistureColor = (val: number | null) => {
-    if (val === null) return "#9ca3af";
-    if (val < 30) return "#ef4444"; // Dry
-    if (val <= 60) return "#f59e0b"; // Okay
-    return "#16a34a"; // Wet
+    if (val === null) return "border-l-gray-400";
+    if (val < 30) return "border-l-red-500";
+    if (val <= 60) return "border-l-amber-500";
+    return "border-l-green-600";
   };
 
   if (isLoading) {
     return (
-      <div style={{ 
-        display: "flex", 
-        flexDirection: "column",
-        justifyContent: "center", 
-        alignItems: "center", 
-        height: "60vh",
-        color: "#16a34a"
-      }}>
-        <div style={{ 
-          width: "40px", 
-          height: "40px", 
-          border: "4px solid #f3f3f3", 
-          borderTop: "4px solid #16a34a", 
-          borderRadius: "50%", 
-          animation: "spin 1s linear infinite",
-          marginBottom: "15px"
-        }} />
-        <p style={{ fontWeight: "600" }}>Connecting to ESP32...</p>
-        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      <div className="flex flex-col justify-center items-center h-[60vh] text-green-600">
+        <div className="w-10 h-10 border-4 border-gray-100 border-t-green-600 rounded-full animate-spin mb-4" />
+        <p className="font-semibold">Connecting to ESP32...</p>
       </div>
     );
   }
 
   return (
-    <div style={{ paddingBottom: "60px", fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div className="pb-[60px] font-sans">
       <style>
         {`
           @keyframes pulse {
@@ -123,84 +104,34 @@ export default function IoTPage() {
       </style>
 
       {/* Hero Header */}
-      <section style={{
-        background: "linear-gradient(135deg, #15803d 0%, #16a34a 100%)",
-        borderRadius: "16px",
-        padding: isMobile ? "30px 20px" : "40px",
-        color: "white",
-        marginBottom: "20px",
-        boxShadow: "0 10px 25px rgba(21, 128, 61, 0.2)",
-        textAlign: isMobile ? "center" : "left"
-      }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: isMobile ? "center" : "flex-start", flexDirection: isMobile ? "column" : "row", gap: isMobile ? "20px" : "0" }}>
+      <section className={`bg-gradient-to-br from-green-800 to-green-600 rounded-2xl p-8 md:p-10 text-white mb-5 shadow-lg shadow-green-700/20 ${isMobile ? 'text-center' : 'text-left'}`}>
+        <div className={`flex justify-between items-center ${isMobile ? 'flex-col gap-5' : 'flex-row'}`}>
           <div>
-            <h1 style={{ margin: "0 0 10px 0", fontSize: isMobile ? "24px" : "32px", fontWeight: "800" }}>📡 IoT Smart Farm</h1>
-            <p style={{ margin: 0, fontSize: isMobile ? "16px" : "18px", opacity: 0.9 }}>
+            <h1 className={`m-0 mb-2.5 ${isMobile ? 'text-2xl' : 'text-3xl'} font-extrabold tracking-tight`}>📡 IoT Smart Farm</h1>
+            <p className={`m-0 ${isMobile ? 'text-base' : 'text-lg'} opacity-90`}>
               Live ESP32 sensor values & Smart Irrigation
             </p>
           </div>
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            backgroundColor: "rgba(255,255,255,0.2)",
-            padding: "8px 14px",
-            borderRadius: "20px",
-            fontSize: "14px",
-            fontWeight: "bold",
-            backdropFilter: "blur(4px)"
-          }}>
-            {isConnected && <span className="pulse-dot" style={{ 
-              width: "10px", 
-              height: "10px", 
-              backgroundColor: "#4ade80", 
-              borderRadius: "50%",
-              boxShadow: "0 0 8px #4ade80"
-            }} />}
+          <div className="flex items-center gap-2 bg-white/20 py-2 px-3.5 rounded-full text-sm font-bold backdrop-blur-md">
+            {isConnected && <span className="pulse-dot w-2.5 h-2.5 bg-green-400 rounded-full shadow-[0_0_8px_#4ade80]" />}
             {isConnected ? "LIVE" : "OFFLINE"}
           </div>
         </div>
       </section>
 
       {/* Connection Status Bar & Irrigation Alert */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "15px", marginBottom: "30px" }}>
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexDirection: isMobile ? "column" : "row",
-          gap: isMobile ? "12px" : "0",
-          padding: "16px 20px",
-          backgroundColor: "white",
-          borderRadius: "12px",
-          boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-          border: "1px solid #e5e7eb"
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{
-              padding: "6px 14px",
-              borderRadius: "20px",
-              fontSize: "13px",
-              fontWeight: "bold",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              backgroundColor: isConnected ? "#f0fdf4" : "#fef2f2",
-              color: isConnected ? "#16a34a" : "#ef4444",
-              border: `1px solid ${isConnected ? "#bbf7d0" : "#fecaca"}`
-            }}>
-              <div style={{ 
-                width: "8px", 
-                height: "8px", 
-                borderRadius: "50%", 
-                backgroundColor: isConnected ? "#16a34a" : "#ef4444" 
-              }} />
+      <div className="flex flex-col gap-4 mb-8">
+        <div className={`flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-200 ${isMobile ? 'flex-col gap-3' : 'flex-row'}`}>
+          <div className="flex items-center gap-3">
+            <div className={`py-1.5 px-3.5 rounded-full text-xs font-bold flex items-center gap-2 border 
+              ${isConnected ? 'bg-green-50 text-green-600 border-green-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
+              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-600' : 'bg-red-600'}`} />
               {isConnected ? "ESP32 Connected" : "ESP32 Disconnected"}
             </div>
-            {error && <span style={{ color: "#ef4444", fontSize: "14px", fontWeight: "600" }}>⚠️ {error}</span>}
-            {isRefreshing && !error && <span style={{ fontSize: "13px", color: "#16a34a", opacity: 0.7 }}>Polling...</span>}
+            {error && <span className="text-red-500 text-sm font-semibold">⚠️ {error}</span>}
+            {isRefreshing && !error && <span className="text-xs text-green-600 opacity-70 italic">Polling...</span>}
           </div>
-          <div style={{ fontSize: "14px", color: "#6b7280" }}>
+          <div className="text-sm text-gray-500">
             {lastUpdateDate ? (
               <>Last updated: <strong>{sensorData?.timestamp}</strong> ({secondsSinceUpdate}s ago)</>
             ) : (
@@ -211,54 +142,35 @@ export default function IoTPage() {
 
         {/* IRRIGATION RECOMMENDATION BADGE */}
         {isConnected && sensorData?.suggestion && (
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "12px 20px",
-            backgroundColor: sensorData?.irrigation_needed ? "#eff6ff" : "#f0fdf4",
-            borderRadius: "12px",
-            border: `1px solid ${sensorData?.irrigation_needed ? "#bfdbfe" : "#bbf7d0"}`,
-            color: sensorData?.irrigation_needed ? "#1e40af" : "#16a34a",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span style={{ fontSize: "20px" }}>{sensorData?.irrigation_needed ? "🚨" : "✅"}</span>
-              <span style={{ fontWeight: "600" }}>Recommendation: {sensorData?.suggestion}</span>
+          <div className={`flex items-center justify-between p-3 px-5 rounded-xl border transition-colors
+            ${sensorData?.irrigation_needed ? 'bg-blue-50 border-blue-200 text-blue-900' : 'bg-green-50 border-green-200 text-green-700'}`}>
+            <div className="flex items-center gap-2.5">
+              <span className="text-xl">{sensorData?.irrigation_needed ? "🚨" : "✅"}</span>
+              <span className="font-bold">Recommendation: {sensorData?.suggestion}</span>
             </div>
             {sensorData?.irrigation_needed && (
-              <span className="water-drop" style={{ fontSize: "24px" }}>💧</span>
+              <span className="water-drop text-2xl">💧</span>
             )}
           </div>
         )}
       </div>
 
       {/* Sensor Cards */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
-        gap: "20px",
-        marginBottom: "30px"
-      }}>
+      <div className={`grid gap-5 mb-8 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
         {/* TEMPERATURE CARD */}
-        <div style={{ ...cardStyle, borderLeft: "6px solid #16a34a" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "15px", marginBottom: "15px" }}>
-            <span style={{ fontSize: "32px" }}>🌡️</span>
-            <span style={{ color: "#6b7280", fontWeight: "600", fontSize: "18px" }}>Temperature</span>
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col border-l-6 border-l-green-600">
+          <div className="flex items-center gap-4 mb-4">
+            <span className="text-3xl">🌡️</span>
+            <span className="text-gray-500 font-bold text-lg">Temperature</span>
           </div>
-          <h3 style={{ margin: "0 0 10px 0", fontSize: "40px", fontWeight: "900", color: "#111827" }}>
+          <h3 className="m-0 mb-2.5 text-4xl font-black text-gray-900 leading-tight">
             {sensorData?.temperature !== null ? `${sensorData?.temperature}°C` : "—"}
           </h3>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "13px", color: "#9ca3af", fontStyle: "italic" }}>Optimal: 15-35°C</span>
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-gray-400 italic">Optimal: 15-35°C</span>
             {sensorData?.temperature !== null && (
-              <span style={{ 
-                fontSize: "12px", 
-                padding: "4px 8px", 
-                borderRadius: "12px",
-                backgroundColor: (sensorData?.temperature ?? 0) > 15 && (sensorData?.temperature ?? 0) < 35 ? "#f0fdf4" : "#fef2f2",
-                color: (sensorData?.temperature ?? 0) > 15 && (sensorData?.temperature ?? 0) < 35 ? "#16a34a" : "#ef4444",
-                fontWeight: "bold"
-              }}>
+              <span className={`text-xs py-1 px-2.5 rounded-full font-bold
+                ${(sensorData?.temperature ?? 0) > 15 && (sensorData?.temperature ?? 0) < 35 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
                 {(sensorData?.temperature ?? 0) > 15 && (sensorData?.temperature ?? 0) < 35 ? "Normal" : "Alert"}
               </span>
             )}
@@ -266,25 +178,19 @@ export default function IoTPage() {
         </div>
 
         {/* HUMIDITY CARD */}
-        <div style={{ ...cardStyle, borderLeft: "6px solid #3b82f6" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "15px", marginBottom: "15px" }}>
-            <span style={{ fontSize: "32px" }}>☁️</span>
-            <span style={{ color: "#6b7280", fontWeight: "600", fontSize: "18px" }}>Humidity</span>
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col border-l-6 border-l-blue-500">
+          <div className="flex items-center gap-4 mb-4">
+            <span className="text-3xl">☁️</span>
+            <span className="text-gray-500 font-bold text-lg">Humidity</span>
           </div>
-          <h3 style={{ margin: "0 0 10px 0", fontSize: "40px", fontWeight: "900", color: "#111827" }}>
+          <h3 className="m-0 mb-2.5 text-4xl font-black text-gray-900 leading-tight">
             {sensorData?.humidity !== null ? `${sensorData?.humidity}%` : "—"}
           </h3>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "13px", color: "#9ca3af", fontStyle: "italic" }}>Optimal: 30-70%</span>
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-gray-400 italic">Optimal: 30-70%</span>
             {sensorData?.humidity !== null && (
-              <span style={{ 
-                fontSize: "12px", 
-                padding: "4px 8px", 
-                borderRadius: "12px",
-                backgroundColor: (sensorData?.humidity ?? 0) > 30 && (sensorData?.humidity ?? 0) < 70 ? "#eff6ff" : "#fef2f2",
-                color: (sensorData?.humidity ?? 0) > 30 && (sensorData?.humidity ?? 0) < 70 ? "#3b82f6" : "#ef4444",
-                fontWeight: "bold"
-              }}>
+              <span className={`text-xs py-1 px-2.5 rounded-full font-bold
+                ${(sensorData?.humidity ?? 0) > 30 && (sensorData?.humidity ?? 0) < 70 ? 'bg-blue-50 text-blue-500' : 'bg-red-50 text-red-500'}`}>
                 {(sensorData?.humidity ?? 0) > 30 && (sensorData?.humidity ?? 0) < 70 ? "Normal" : "Alert"}
               </span>
             )}
@@ -292,25 +198,19 @@ export default function IoTPage() {
         </div>
 
         {/* SOIL MOISTURE CARD */}
-        <div style={{ ...cardStyle, borderLeft: `6px solid ${getMoistureColor(sensorData?.soil_moisture || null)}` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "15px", marginBottom: "15px" }}>
-            <span style={{ fontSize: "32px" }}>🌱</span>
-            <span style={{ color: "#6b7280", fontWeight: "600", fontSize: "18px" }}>Soil Moisture</span>
+        <div className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col border-l-6 ${getMoistureColor(sensorData?.soil_moisture || null)}`}>
+          <div className="flex items-center gap-4 mb-4">
+            <span className="text-3xl">🌱</span>
+            <span className="text-gray-500 font-bold text-lg">Soil Moisture</span>
           </div>
-          <h3 style={{ margin: "0 0 10px 0", fontSize: "40px", fontWeight: "900", color: "#111827" }}>
+          <h3 className="m-0 mb-2.5 text-4xl font-black text-gray-900 leading-tight">
             {sensorData?.soil_moisture !== null ? `${sensorData?.soil_moisture}%` : "—"}
           </h3>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "13px", color: "#9ca3af", fontStyle: "italic" }}>{(sensorData?.soil_moisture ?? 0) < 30 ? "Dry" : (sensorData?.soil_moisture ?? 0) <= 60 ? "Optimal" : "Wet"}</span>
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-gray-400 italic">{(sensorData?.soil_moisture ?? 0) < 30 ? "Dry" : (sensorData?.soil_moisture ?? 0) <= 60 ? "Optimal" : "Wet"}</span>
             {sensorData?.soil_moisture !== null && (
-              <span style={{ 
-                fontSize: "12px", 
-                padding: "4px 8px", 
-                borderRadius: "12px",
-                backgroundColor: (sensorData?.soil_moisture ?? 0) < 30 ? "#fef2f2" : (sensorData?.soil_moisture ?? 0) <= 60 ? "#fdfbe7" : "#f0fdf4",
-                color: (sensorData?.soil_moisture ?? 0) < 30 ? "#ef4444" : (sensorData?.soil_moisture ?? 0) <= 60 ? "#d97706" : "#16a34a",
-                fontWeight: "bold"
-              }}>
+              <span className={`text-xs py-1 px-2.5 rounded-full font-bold
+                ${(sensorData?.soil_moisture ?? 0) < 30 ? 'bg-red-50 text-red-500' : (sensorData?.soil_moisture ?? 0) <= 60 ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'}`}>
                 {(sensorData?.soil_moisture ?? 0) < 30 ? "Dry" : (sensorData?.soil_moisture ?? 0) <= 60 ? "Healthy" : "Wet"}
               </span>
             )}
@@ -318,21 +218,11 @@ export default function IoTPage() {
         </div>
       </div>
 
-      <footer style={{ textAlign: "center", marginTop: "40px" }}>
-        <p style={{ color: "#9ca3af", fontStyle: "italic", fontSize: "14px" }}>
+      <footer className="text-center mt-10">
+        <p className="text-gray-400 italic text-sm">
           Auto-polling active every 5 seconds • KisanCore AI Smart Gateway
         </p>
       </footer>
     </div>
   );
 }
-
-const cardStyle: React.CSSProperties = {
-  backgroundColor: "white",
-  borderRadius: "16px",
-  padding: "25px",
-  boxShadow: "0 4px 6px rgba(0,0,0,0.05)",
-  border: "1px solid #f3f4f6",
-  display: "flex",
-  flexDirection: "column"
-};

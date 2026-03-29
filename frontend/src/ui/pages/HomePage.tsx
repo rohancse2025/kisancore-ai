@@ -26,6 +26,11 @@ interface CropRecommendation {
   crop: string;
 }
 
+// Skeleton Loader Component
+const Skeleton = ({ className }: { className: string }) => (
+  <div className={`animate-pulse bg-gray-200 dark:bg-slate-700 rounded ${className}`} />
+);
+
 // Helper for dynamic tips
 const getDynamicTips = (temp: number, humidity: number, moisture: number, condition: string) => {
   const conditionTips: { text: string; type: 'warning' | 'good' | 'info'; icon: string }[] = [];
@@ -93,16 +98,13 @@ export default function HomePage() {
 
     if (isNaN(ph) || isNaN(n) || isNaN(m)) return;
 
-    // Evaluate pH
     if (ph >= 6 && ph <= 7.5) score += 4;
     if (ph < 5.5) tips.push("Add lime to increase pH");
     if (ph > 7.5) tips.push("Add sulfur to reduce pH");
 
-    // Evaluate Nitrogen
     if (n > 40) score += 3;
     if (n < 40) tips.push("Apply urea fertilizer");
 
-    // Evaluate Moisture
     if (m >= 30 && m <= 70) score += 3;
     if (m < 30) tips.push("Increase irrigation");
     if (m > 70) tips.push("Improve field drainage");
@@ -113,21 +115,16 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    // Fetch sensor + irrigation + crop data
     const fetchData = async () => {
       try {
-        // 1. Fetch live sensor data
         const sensorRes = await fetch('http://127.0.0.1:8000/api/v1/sensor-data');
         const data: SensorData = await sensorRes.json();
-        
         setSensorData(data);
 
-        // 2. Fetch crop recommendation using LIVE sensor values
         const cropRes = await fetch(`http://127.0.0.1:8000/api/v1/recommend-crop?temperature=${data.temperature}&humidity=${data.humidity}&ph=6.5&rainfall=100`);
         const cropJson: CropRecommendation = await cropRes.json();
         setRecommendedCrop(cropJson.crop);
         
-        // 3. Fetch irrigation suggestion
         const irrigationRes = await fetch(`http://127.0.0.1:8000/api/v1/irrigation-suggestion?soil_moisture=${data.soil_moisture}`);
         const irrigationJson: IrrigationSuggestion = await irrigationRes.json();
         setIrrigation(irrigationJson);
@@ -139,7 +136,6 @@ export default function HomePage() {
       }
     };
 
-    // Fetch real weather via geolocation, fallback to sensor-data
     const fetchWeather = async () => {
       setWeatherLoading(true);
       try {
@@ -152,7 +148,6 @@ export default function HomePage() {
         const data: WeatherData = await res.json();
         setWeatherData(data);
       } catch {
-        // Fallback: use sensor-data for temperature & humidity
         try {
           const res = await fetch('http://127.0.0.1:8000/api/v1/sensor-data');
           const data: SensorData = await res.json();
@@ -179,359 +174,275 @@ export default function HomePage() {
     fetchData();
     fetchWeather();
 
-    // Auto-refresh sensor data every 10 seconds
     const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div style={{ paddingBottom: "40px", fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div className="font-sans">
       
-      {/* 1. HERO SECTION */}
-      <section style={{
-        backgroundColor: "#15803d",
-        backgroundImage: "linear-gradient(135deg, rgba(21, 128, 61, 0.9) 0%, rgba(22, 163, 74, 0.9) 100%), radial-gradient(#ffffff33 2px, transparent 2px)",
-        backgroundSize: "100% 100%, 30px 30px",
-        borderRadius: "16px",
-        padding: "80px 30px",
-        color: "white",
-        textAlign: "center",
-        marginBottom: "40px",
-        boxShadow: "0 10px 25px rgba(21, 128, 61, 0.2)"
-      }}>
-        <h1 style={{ margin: "0 0 15px 0", fontSize: "clamp(24px, 5vw, 36px)", fontWeight: "800", letterSpacing: "-0.5px" }}>
-          Welcome to KisanCore AI
-        </h1>
-        <p style={{ margin: "0 0 35px 0", fontSize: isMobile ? "16px" : "20px", opacity: 0.9, fontWeight: "400" }}>
-          Smart Farming powered by AI and IoT
-        </p>
-        <div style={{ display: "flex", justifyContent: "center", gap: "15px", flexWrap: "wrap" }}>
-          <button 
-            onClick={() => navigate('/crops')}
-            style={{
-              backgroundColor: "white",
-              color: "#15803d",
-              border: "none",
-              borderRadius: "8px",
-              padding: "14px 24px",
-              fontSize: "16px",
-              fontWeight: "bold",
-              cursor: "pointer",
-              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-              transition: "transform 0.2s"
-            }}
-          >
-            Get Crop Recommendation
-          </button>
-          <button 
-            onClick={() => navigate('/scan')}
-            style={{
-              backgroundColor: "transparent",
-              color: "white",
-              border: "2px solid white",
-              borderRadius: "8px",
-              padding: "12px 24px",
-              fontSize: "16px",
-              fontWeight: "bold",
-              cursor: "pointer",
-              transition: "transform 0.2s"
-            }}
-          >
-            Scan Disease
-          </button>
-        </div>
-      </section>
-
-      {/* 1A. WEATHER CARD */}
-      <section style={{
-        backgroundColor: "#eff6ff",
-        borderRadius: "12px",
-        padding: "30px",
-        marginBottom: "40px",
-        boxShadow: "0 4px 6px rgba(0,0,0,0.05)",
-        border: "1px solid #bfdbfe"
-      }}>
-        <h2 style={{ fontSize: "20px", color: "#111827", margin: "0 0 25px 0", fontWeight: 700 }}>🌤️ Today's Weather & Farming Advice</h2>
-        
-        {weatherData?.city && (
-          <p style={{ margin: "0 0 18px 0", fontSize: "16px", color: "#3b82f6", fontWeight: "600" }}>
-            📍 {weatherData.city}
-          </p>
-        )}
-
-        <div style={{ display: "flex", gap: "30px", alignItems: "center", flexWrap: "wrap", marginBottom: "25px" }}>
-          <div style={{ minWidth: "200px" }}>
-            <span style={{ fontSize: "64px", fontWeight: "900", color: "#1e3a8a", lineHeight: 1 }}>
-              {weatherLoading ? "—" : weatherData?.temperature !== undefined ? `${Math.round(weatherData.temperature * 10) / 10}°C` : "N/A"}
-            </span>
-            <p style={{ margin: "5px 0 0 0", color: "#3b82f6", fontWeight: "bold", fontSize: "20px" }}>
-              {weatherLoading ? "Loading..." : weatherData?.condition || ""}
-            </p>
-          </div>
+      {/* 1. HERO SECTION (White/Light Green Background, full-width content style) */}
+      <section className="relative overflow-hidden bg-[#f0fdf4] dark:bg-slate-900 -mx-8 md:-mx-12 px-8 md:px-12 py-16 md:py-24 text-center mb-12">
+        <div className="relative z-10 flex flex-col items-center">
+          <h1 className="m-0 mb-4 text-gray-900 dark:text-white text-[40px] md:text-[52px] font-black tracking-tighter leading-none italic">
+            Empowering Farmers with
+          </h1>
+          <h1 className="m-0 mb-8 text-[#16a34a] text-[40px] md:text-[52px] font-black tracking-tighter leading-none italic">
+            Next-Gen AI & IoT
+          </h1>
           
-          <div style={{ display: "flex", gap: "20px", flex: 1, flexWrap: "wrap" }}>
-            <div style={{ backgroundColor: "white", padding: "15px 20px", borderRadius: "10px", flex: "1 1 120px", textAlign: "center", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-              <p style={{ margin: "0 0 5px 0", color: "#6b7280", fontSize: "16px", fontWeight: "600" }}>Humidity</p>
-              <p style={{ margin: 0, fontWeight: "bold", color: "#333", fontSize: "22px" }}>
-                {weatherLoading ? "—" : weatherData?.humidity !== undefined ? `${weatherData.humidity}%` : "N/A"}
-              </p>
-            </div>
-            <div style={{ backgroundColor: "white", padding: "15px 20px", borderRadius: "10px", flex: "1 1 120px", textAlign: "center", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-              <p style={{ margin: "0 0 5px 0", color: "#6b7280", fontSize: "16px", fontWeight: "600" }}>Wind</p>
-              <p style={{ margin: 0, fontWeight: "bold", color: "#333", fontSize: "22px" }}>
-                {weatherLoading ? "—" : weatherData?.wind_speed !== undefined ? `${weatherData.wind_speed} m/s` : "N/A"}
-              </p>
-            </div>
-            <div style={{ backgroundColor: "white", padding: "15px 20px", borderRadius: "10px", flex: "1 1 120px", textAlign: "center", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-              <p style={{ margin: "0 0 5px 0", color: "#6b7280", fontSize: "16px", fontWeight: "600" }}>UV Index</p>
-              <p style={{ margin: 0, fontWeight: "bold", color: "#333", fontSize: "22px" }}>6</p>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ borderTop: "2px solid #bfdbfe", paddingTop: "20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "15px" }}>
-          <p style={{ margin: 0, color: "#15803d", fontStyle: "italic", fontWeight: "bold", fontSize: "18px" }}>
-            {weatherLoading ? "Fetching weather..." : weatherData?.farming_tip ? `💡 ${weatherData.farming_tip}` : "💡 Good farming conditions today"}
+          <p className="max-w-2xl text-gray-500 dark:text-slate-400 text-lg md:text-xl font-medium mb-12 leading-relaxed">
+            Maximize your yield with real-time soil analysis, satellite weather insights, and precision AI-driven crop recommendations.
           </p>
-          {!weatherLoading && weatherData && (
-            <button
-              onClick={() => navigate('/chat', { state: { prefill: `It is currently ${weatherData.temperature}°C with ${weatherData.condition} and ${weatherData.humidity}% humidity. What farming advice do you have for today?` } })}
-              style={{
-                border: "1px solid #16a34a",
-                color: "#16a34a",
-                backgroundColor: "white",
-                borderRadius: "8px",
-                padding: "10px 16px",
-                fontSize: "14px",
-                fontWeight: "600",
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-                transition: "background-color 0.2s"
-              }}
-              onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f0fdf4"}
-              onMouseLeave={e => e.currentTarget.style.backgroundColor = "white"}
+
+          <div className="flex flex-col sm:flex-row gap-5">
+            <button 
+              onClick={() => navigate('/chat')}
+              className="bg-[#16a34a] text-white border-none rounded-xl py-4.5 px-10 text-base font-black cursor-pointer shadow-xl shadow-green-600/20 transition-all hover:bg-green-700 hover:-translate-y-1 active:scale-95 flex items-center gap-2 group"
             >
-              🤖 Ask AI about today's weather
+              Get AI Advice →
             </button>
-          )}
-        </div>
-      </section>
-
-      {/* 2. STATS ROW */}
-      <section style={{ marginBottom: "40px" }}>
-        <h2 style={{ fontSize: "20px", color: "#111827", marginBottom: "20px", paddingLeft: "5px", fontWeight: 700 }}>Live Farm Data</h2>
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "repeat(auto-fit, minmax(140px, 1fr))" : "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: isMobile ? "12px" : "20px"
-        }}>
-          {/* Card: Temp */}
-          <div style={{ ...cardStyle, borderTop: "4px solid #ef4444" }}>
-            <div style={iconContainerStyle("#fff3e0")}>
-              <span style={{ fontSize: "24px" }}>🌡️</span>
-            </div>
-            <div style={{ marginTop: "15px" }}>
-              <h3 style={statValueStyle}>{isLoading ? "—" : sensorData?.temperature !== undefined ? `${sensorData.temperature}°C` : "N/A"}</h3>
-              <p style={statLabelStyle}>Soil Temp</p>
-            </div>
-          </div>
-          
-          {/* Card: Humidity */}
-          <div style={{ ...cardStyle, borderTop: "4px solid #3b82f6" }}>
-            <div style={iconContainerStyle("#e1f5fe")}>
-              <span style={{ fontSize: "24px" }}>💧</span>
-            </div>
-            <div style={{ marginTop: "15px" }}>
-              <h3 style={statValueStyle}>{isLoading ? "—" : sensorData?.humidity !== undefined ? `${sensorData.humidity}%` : "N/A"}</h3>
-              <p style={statLabelStyle}>Air Humidity</p>
-            </div>
-          </div>
-          
-          {/* Card: Soil Moisture */}
-          <div style={{ ...cardStyle, borderTop: "4px solid #22c55e" }}>
-            <div style={iconContainerStyle("#efebe9")}>
-              <span style={{ fontSize: "24px" }}>🌱</span>
-            </div>
-            <div style={{ marginTop: "15px" }}>
-              <h3 style={statValueStyle}>{isLoading ? "—" : sensorData?.soil_moisture !== undefined ? `${sensorData.soil_moisture}%` : "N/A"}</h3>
-              <p style={statLabelStyle}>Soil Moisture</p>
-            </div>
-          </div>
-
-          {/* Card: Irrigation */}
-          <div style={{ ...cardStyle, borderTop: "4px solid #f97316" }}>
-            <div style={iconContainerStyle("#e8f5e9")}>
-              <span style={{ fontSize: "24px" }}>🚰</span>
-            </div>
-            <div style={{ marginTop: "15px" }}>
-              <h3 style={{...statValueStyle, fontSize: "22px", color: irrigation?.status === "ON" ? "red" : irrigation?.status === "MODERATE" ? "orange" : "green" }}>
-                {isLoading ? "—" : irrigation?.status || "N/A"}
-              </h3>
-              <p style={statLabelStyle}>{isLoading ? "Loading..." : irrigation?.message}</p>
-            </div>
+            <button 
+              onClick={() => navigate('/scan')}
+              className="bg-white dark:bg-slate-800 text-gray-900 dark:text-white border-2 border-gray-200 dark:border-slate-700 rounded-xl py-4 px-10 text-base font-black cursor-pointer transition-all hover:border-[#16a34a] hover:-translate-y-1 active:scale-95"
+            >
+              Scan Plant Disease
+            </button>
           </div>
         </div>
       </section>
 
-      {/* 3. RECOMMENDED CROPS & 4. QUICK TIPS in a grid for larger screens */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "30px" }}>
+      {/* 2. WEATHER CARD (Blue Background) */}
+      <section className="bg-blue-50 dark:bg-blue-900/10 rounded-2xl p-8 mb-10 shadow-sm border border-blue-200 dark:border-blue-800">
+        <h2 className="text-xl text-gray-900 dark:text-white m-0 mb-6 font-bold flex items-center gap-2 uppercase tracking-widest text-xs opacity-50">🌤️ Today's Weather</h2>
         
-        {/* 3. RECOMMENDED CROPS */}
+        <div className="flex gap-8 items-center flex-wrap mb-6">
+          <div className="min-w-[200px]">
+            <div className="flex flex-col gap-2">
+              {weatherLoading ? (
+                <>
+                  <Skeleton className="h-16 w-32" />
+                  <Skeleton className="h-8 w-48" />
+                </>
+              ) : (
+                <>
+                  <span className="text-6xl font-black text-blue-900 dark:text-blue-300 leading-none">
+                    {weatherData?.temperature !== undefined ? `${Math.round(weatherData.temperature * 10) / 10}°C` : "N/A"}
+                  </span>
+                  <p className="m-0 mt-1 text-blue-500 dark:text-blue-400 font-bold text-xl">
+                    {weatherData?.condition || ""}
+                  </p>
+                  {weatherData?.city && (
+                    <p className="m-0 text-sm text-blue-400 font-semibold italic">
+                      📍 {weatherData.city}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex gap-5 flex-1 flex-wrap">
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl flex-[1_1_150px] text-center shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+              <p className="m-0 mb-1 text-gray-400 text-xs font-black uppercase tracking-widest">Humidity</p>
+              <p className="m-0 font-bold text-gray-800 dark:text-white text-2xl">
+                {weatherLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : weatherData?.humidity !== undefined ? `${weatherData.humidity}%` : "N/A"}
+              </p>
+            </div>
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl flex-[1_1_150px] text-center shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+              <p className="m-0 mb-1 text-gray-400 text-xs font-black uppercase tracking-widest">Wind Speed</p>
+              <p className="m-0 font-bold text-gray-800 dark:text-white text-2xl">
+                {weatherLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : weatherData?.wind_speed !== undefined ? `${weatherData.wind_speed} m/s` : "N/A"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t-2 border-blue-200 dark:border-blue-800 pt-5">
+          <p className="m-0 text-green-700 dark:text-green-400 italic font-bold text-lg min-h-[28px]">
+            {weatherLoading ? <Skeleton className="h-6 w-64" /> : weatherData?.farming_tip ? `💡 ${weatherData.farming_tip}` : "💡 Good farming conditions today"}
+          </p>
+        </div>
+      </section>
+
+      {/* 3. LIVE FARM DATA */}
+      <section className="mb-14">
+        <h2 className="text-xl text-gray-900 dark:text-white mb-6 font-black uppercase tracking-widest text-xs opacity-50">Live Farm Data</h2>
+        <div className={`grid gap-6 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#ef4444] flex flex-col justify-between">
+            <div className="w-14 h-14 bg-red-50 dark:bg-red-900/20 rounded-full flex justify-center items-center">
+              <span className="text-2xl">🌡️</span>
+            </div>
+            <div className="mt-6">
+              <div className="min-h-[44px]">
+                {isLoading ? <Skeleton className="h-9 w-24" /> : <h3 className="m-0 mb-1 text-[36px] font-black tracking-tight text-gray-900 dark:text-white leading-none">{sensorData?.temperature !== undefined ? `${sensorData.temperature}°C` : "N/A"}</h3>}
+              </div>
+              <p className="m-0 text-[14px] text-gray-400 font-bold uppercase tracking-wider pl-0.5 mt-1">Temperature</p>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#3b82f6] flex flex-col justify-between">
+            <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/20 rounded-full flex justify-center items-center">
+              <span className="text-2xl">💧</span>
+            </div>
+            <div className="mt-6">
+              <div className="min-h-[44px]">
+                {isLoading ? <Skeleton className="h-9 w-24" /> : <h3 className="m-0 mb-1 text-[36px] font-black tracking-tight text-gray-900 dark:text-white leading-none">{sensorData?.humidity !== undefined ? `${sensorData.humidity}%` : "N/A"}</h3>}
+              </div>
+              <p className="m-0 text-[14px] text-gray-400 font-bold uppercase tracking-wider pl-0.5 mt-1">Humidity</p>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#16a34a] flex flex-col justify-between">
+            <div className="w-14 h-14 bg-green-50 dark:bg-green-900/20 rounded-full flex justify-center items-center">
+              <span className="text-2xl">🌱</span>
+            </div>
+            <div className="mt-6">
+              <div className="min-h-[44px]">
+                {isLoading ? <Skeleton className="h-9 w-24" /> : <h3 className="m-0 mb-1 text-[36px] font-black tracking-tight text-gray-900 dark:text-white leading-none">{sensorData?.soil_moisture !== undefined ? `${sensorData.soil_moisture}%` : "N/A"}</h3>}
+              </div>
+              <p className="m-0 text-[14px] text-gray-400 font-bold uppercase tracking-wider pl-0.5 mt-1">Soil Moisture</p>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#f97316] flex flex-col justify-between">
+            <div className="w-14 h-14 bg-orange-50 dark:bg-orange-900/20 rounded-full flex justify-center items-center">
+              <span className="text-2xl">🚰</span>
+            </div>
+            <div className="mt-6">
+              <div className="min-h-[44px]">
+                {isLoading ? <Skeleton className="h-9 w-24" /> : (
+                  <h3 className={`m-0 mb-1 text-[36px] font-black tracking-tight leading-none ${irrigation?.status === "ON" ? "text-red-500" : irrigation?.status === "MODERATE" ? "text-orange-500" : "text-green-600"}`}>
+                    {irrigation?.status || "N/A"}
+                  </h3>
+                )}
+              </div>
+              <p className="m-0 text-[14px] text-gray-400 font-bold uppercase tracking-wider pl-0.5 mt-1">Irrigation</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. AI RECOMMENDATION + QUICK TIPS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
         <section>
-          <h2 style={{ fontSize: "20px", color: "#111827", marginBottom: "20px", paddingLeft: "5px", fontWeight: 700 }}>AI Recommendation</h2>
-          <div style={{
-            ...cardStyle,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "40px 20px",
-            minHeight: "220px",
-            background: "linear-gradient(to bottom right, #ffffff, #f0fdf4)"
-          }}>
-            <span style={{ fontSize: "48px", marginBottom: "15px" }}>🌾</span>
-            <p style={{ margin: "0 0 10px 0", color: "#6b7280", fontSize: "16px" }}>Top Suggested Crop</p>
-            <h3 style={{ margin: "0 0 15px 0", fontSize: "32px", color: "#15803d", textTransform: "capitalize" }}>
-              {isLoading ? "Analyzing..." : recommendedCrop || "Data Unavailable"}
-            </h3>
-            <span style={{
-              backgroundColor: "#dcfce7",
-              color: "#166534",
-              padding: "6px 16px",
-              borderRadius: "20px",
-              fontSize: "14px",
-              fontWeight: "bold",
-              boxShadow: "0 2px 4px rgba(22, 101, 52, 0.1)"
-            }}>
-              ✓ High Suitability
-            </span>
+          <h2 className="text-xl text-gray-900 dark:text-white mb-6 font-black uppercase tracking-widest text-xs opacity-50">AI Recommendation</h2>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-10 shadow-sm border border-gray-100 dark:border-slate-700 h-full flex flex-col items-center justify-center text-center bg-gradient-to-br from-white to-green-50 dark:to-green-900/10">
+            {isLoading ? (
+              <>
+                <div className="w-16 h-16 bg-gray-100 dark:bg-slate-700 rounded-full animate-pulse mb-6" />
+                <Skeleton className="h-10 w-48 mb-4" />
+                <Skeleton className="h-6 w-32 rounded-full" />
+              </>
+            ) : (
+              <>
+                <span className="text-6xl mb-6">🌾</span>
+                <p className="m-0 mb-2 text-gray-400 text-[10px] font-black uppercase tracking-widest">Recommended Crop</p>
+                <h3 className="m-0 mb-4 text-4xl text-green-700 dark:text-green-500 capitalize font-black tracking-tight">
+                  {recommendedCrop || "Analyzing..."}
+                </h3>
+                <span className="bg-green-600 text-white py-2 px-6 rounded-full text-xs font-black uppercase tracking-widest shadow-lg shadow-green-600/20">
+                  Ideal Match
+                </span>
+              </>
+            )}
           </div>
         </section>
 
-        {/* 4. QUICK TIPS */}
         <section>
-          <h2 style={{ fontSize: "20px", color: "#111827", marginBottom: "20px", paddingLeft: "5px", fontWeight: 700 }}>Quick Tips</h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-            {getDynamicTips(
-              sensorData?.temperature || 25,
-              sensorData?.humidity || 50,
-              sensorData?.soil_moisture || 50,
-              weatherData?.condition || "Sunny"
-            ).map((tip, idx) => {
-              const borderColors = { warning: "#f59e0b", good: "#16a34a", info: "#3b82f6" };
-              const bgIcons = { warning: "#fff3e0", good: "#e8f5e9", info: "#e3f2fd" };
-              
-              return (
-                <div key={idx} style={{
-                  ...cardStyle, 
-                  padding: "20px", 
-                  display: "flex", 
-                  alignItems: "center", 
-                  gap: "15px",
-                  borderLeft: `5px solid ${borderColors[tip.type]}`,
-                  borderTopLeftRadius: "4px",
-                  borderBottomLeftRadius: "4px"
-                }}>
-                  <div style={iconContainerStyle(bgIcons[tip.type])}>
-                    <span style={{ fontSize: "20px" }}>{tip.icon}</span>
-                  </div>
-                  <p style={{ margin: 0, color: "#4b5563", fontSize: "16px", lineHeight: 1.4 }}>
-                    {tip.text}
-                  </p>
+          <h2 className="text-xl text-gray-900 dark:text-white mb-6 font-black uppercase tracking-widest text-xs opacity-50">Quick Tips</h2>
+          <div className="flex flex-col gap-4">
+            {isLoading ? (
+              [1, 2, 3].map(i => (
+                <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-700 flex items-center gap-4">
+                   <div className="w-12 h-12 bg-gray-100 dark:bg-slate-700 rounded-xl animate-pulse flex-shrink-0" />
+                   <div className="flex-1 space-y-2">
+                     <Skeleton className="h-4 w-full" />
+                     <Skeleton className="h-3 w-3/4" />
+                   </div>
                 </div>
-              );
-            })}
+              ))
+            ) : (
+              getDynamicTips(
+                sensorData?.temperature || 25,
+                sensorData?.humidity || 50,
+                sensorData?.soil_moisture || 50,
+                weatherData?.condition || "Sunny"
+              ).map((tip, idx) => {
+                const borderColors = { warning: "border-l-amber-500", good: "border-l-green-600", info: "border-l-blue-500" };
+                const bgIcons = { warning: "bg-orange-50 dark:bg-orange-900/20", good: "bg-green-50 dark:bg-green-900/20", info: "bg-blue-50 dark:bg-blue-900/20" };
+                
+                return (
+                  <div key={idx} className={`bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-slate-700 flex items-center gap-5 border-l-4 rounded-l-sm ${borderColors[tip.type]}`}>
+                    <div className={`w-14 h-14 rounded-xl flex justify-center items-center flex-shrink-0 ${bgIcons[tip.type]}`}>
+                      <span className="text-2xl">{tip.icon}</span>
+                    </div>
+                    <p className="m-0 text-gray-600 dark:text-slate-300 text-sm leading-snug font-bold">
+                      {tip.text}
+                    </p>
+                  </div>
+                );
+              })
+            )}
           </div>
         </section>
       </div>
 
       {/* 5. SOIL ANALYSIS */}
-      <section style={{ marginBottom: "40px", marginTop: "40px" }}>
-        <h2 style={{ fontSize: "20px", color: "#111827", margin: "0 0 5px 0", paddingLeft: "5px", fontWeight: "700" }}>
-          🧪 Soil Analysis
+      <section className="mb-10 pb-10">
+        <h2 className="text-xl text-gray-900 dark:text-white m-0 mb-1 font-bold uppercase tracking-widest text-xs opacity-50">
+          🧪 Soil Health Analysis
         </h2>
-        <p style={{ paddingLeft: "5px", margin: "0 0 25px 0", color: "#6b7280", fontSize: "16px" }}>Quick soil health check</p>
+        <p className="m-0 mb-8 text-gray-400 text-sm font-medium">Quick check based on your manual readings</p>
         
-        <div style={cardStyle}>
-          <div style={{ display: "flex", gap: "20px", flexDirection: isMobile ? "column" : "row", flexWrap: "wrap", marginBottom: "20px" }}>
-            <div style={{ flex: "1 1 200px" }}>
-              <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", color: "#4b5563" }}>Soil pH</label>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-slate-700">
+          <div className={`flex gap-6 flex-wrap mb-6 ${isMobile ? 'flex-col' : 'flex-row'}`}>
+            <div className="flex-1 min-w-[200px]">
+              <label className="block mb-2 font-bold text-gray-500 dark:text-slate-400 text-sm">Soil pH</label>
               <input 
-                type="number" 
-                step="0.1"
-                min="0" max="14"
-                placeholder="e.g. 6.5"
+                type="number" step="0.1" min="0" max="14" placeholder="e.g. 6.5"
                 value={soilInputs.ph}
                 onChange={(e) => setSoilInputs({...soilInputs, ph: e.target.value})}
-                style={{ width: "100%", padding: "14px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "16px", boxSizing: "border-box" }}
+                className="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white text-base focus:border-[#16a34a] focus:ring-4 focus:ring-green-50 dark:focus:ring-green-900/20 outline-none transition-all"
               />
             </div>
-            <div style={{ flex: "1 1 200px" }}>
-              <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", color: "#4b5563" }}>Nitrogen (mg/kg)</label>
+            <div className="flex-1 min-w-[200px]">
+              <label className="block mb-2 font-bold text-gray-500 dark:text-slate-400 text-sm">Nitrogen (mg/kg)</label>
               <input 
-                type="number" 
-                min="0" max="140"
-                placeholder="e.g. 40"
+                type="number" min="0" max="140" placeholder="e.g. 40"
                 value={soilInputs.nitrogen}
                 onChange={(e) => setSoilInputs({...soilInputs, nitrogen: e.target.value})}
-                style={{ width: "100%", padding: "14px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "16px", boxSizing: "border-box" }}
+                className="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white text-base focus:border-[#16a34a] focus:ring-4 focus:ring-green-50 dark:focus:ring-green-900/20 outline-none transition-all"
               />
             </div>
-            <div style={{ flex: "1 1 200px" }}>
-              <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", color: "#4b5563" }}>Moisture (%)</label>
+            <div className="flex-1 min-w-[200px]">
+              <label className="block mb-2 font-bold text-gray-500 dark:text-slate-400 text-sm">Moisture (%)</label>
               <input 
-                type="number" 
-                min="0" max="100"
-                placeholder="e.g. 50"
+                type="number" min="0" max="100" placeholder="e.g. 50"
                 value={soilInputs.moisture}
                 onChange={(e) => setSoilInputs({...soilInputs, moisture: e.target.value})}
-                style={{ width: "100%", padding: "14px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "16px", boxSizing: "border-box" }}
+                className="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white text-base focus:border-[#16a34a] focus:ring-4 focus:ring-green-50 dark:focus:ring-green-900/20 outline-none transition-all"
               />
             </div>
           </div>
 
           <button
             onClick={analyzeSoil}
-            style={{
-              width: "100%",
-              padding: "16px",
-              backgroundColor: "#16a34a",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "18px",
-              fontWeight: "bold",
-              cursor: "pointer",
-              transition: "background-color 0.2s"
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#15803d"}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#16a34a"}
+            className="w-full py-4.5 bg-[#16a34a] text-white border-none rounded-xl text-lg font-black cursor-pointer shadow-lg shadow-green-600/30 transition-all hover:bg-green-700 active:scale-[0.98]"
           >
             Analyse Soil
           </button>
 
           {soilAnalysisResult && (
-            <div style={{
-              marginTop: "25px",
-              backgroundColor: soilAnalysisResult.score >= 8 ? "#dcfce7" : soilAnalysisResult.score >= 5 ? "#ffedd5" : "#fee2e2",
-              padding: "25px",
-              borderRadius: "12px",
-              border: `2px solid ${soilAnalysisResult.score >= 8 ? "#16a34a" : soilAnalysisResult.score >= 5 ? "#f97316" : "#ef4444"}`
-            }}>
-              <div style={{ marginBottom: "15px" }}>
-                <h3 style={{ 
-                  margin: 0, 
-                  color: soilAnalysisResult.score >= 8 ? "#166534" : soilAnalysisResult.score >= 5 ? "#9a3412" : "#991b1b",
-                  fontSize: "24px",
-                  fontWeight: "bold"
-                }}>
+            <div className={`mt-8 p-8 rounded-2xl border-2 animate-fade-in
+              ${soilAnalysisResult.score >= 8 ? 'bg-green-50 dark:bg-green-900/10 border-green-600' : soilAnalysisResult.score >= 5 ? 'bg-orange-50 dark:bg-orange-900/10 border-orange-500' : 'bg-red-50 dark:bg-red-900/10 border-red-500'}`}>
+              <div className="mb-4">
+                <h3 className={`m-0 text-2xl font-black tracking-tight
+                  ${soilAnalysisResult.score >= 8 ? 'text-green-800 dark:text-green-400' : soilAnalysisResult.score >= 5 ? 'text-orange-800 dark:text-orange-400' : 'text-red-800 dark:text-red-400'}`}>
                   {soilAnalysisResult.score >= 8 ? "Excellent Soil Health 🌱" : soilAnalysisResult.score >= 5 ? "Moderate Soil Health ⚠️" : "Poor Soil Health ❌"}
                 </h3>
               </div>
               
-              <ul style={{ margin: 0, paddingLeft: "25px", color: "#374151", fontSize: "18px", lineHeight: "1.6" }}>
+              <ul className="m-0 pl-6 text-gray-700 dark:text-slate-300 text-lg space-y-2 font-medium">
                 {soilAnalysisResult.tips.map((tip: string, idx: number) => (
-                  <li key={idx} style={{ marginBottom: "8px" }}>{tip}</li>
+                  <li key={idx}>{tip}</li>
                 ))}
               </ul>
             </div>
@@ -542,36 +453,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-// Reusable inline styles
-const cardStyle: React.CSSProperties = {
-  backgroundColor: "white",
-  borderRadius: "12px",
-  padding: "24px",
-  boxShadow: "0 4px 6px rgba(0,0,0,0.05)",
-  border: "1px solid #f3f4f6"
-};
-
-const iconContainerStyle = (bgColor: string): React.CSSProperties => ({
-  backgroundColor: bgColor,
-  width: "50px",
-  height: "50px",
-  borderRadius: "12px",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center"
-});
-
-const statValueStyle: React.CSSProperties = {
-  margin: "0 0 5px 0",
-  fontSize: "28px",
-  fontWeight: "bold",
-  color: "#1f2937"
-};
-
-const statLabelStyle: React.CSSProperties = {
-  margin: 0,
-  fontSize: "14px",
-  color: "#6b7280",
-  fontWeight: "500"
-};

@@ -59,7 +59,6 @@ export default function MarketPage() {
     fetchPrices(c, state);
   };
 
-  // Calculations for Summary
   const modalPrices = prices.map(p => parseFloat(p.modal_price)).filter(p => !isNaN(p));
   const minPrices = prices.map(p => parseFloat(p.min_price)).filter(p => !isNaN(p));
   const maxPrices = prices.map(p => parseFloat(p.max_price)).filter(p => !isNaN(p));
@@ -76,65 +75,43 @@ export default function MarketPage() {
 
   const getTrendIcon = (modal: string) => {
     const val = parseFloat(modal);
-    if (val > 2500) return { icon: "↑", color: "#16a34a" }; // Green
-    if (val < 1500) return { icon: "↓", color: "#ef4444" }; // Red
-    return { icon: "→", color: "#f59e0b" }; // Orange
+    if (val > 2500) return { icon: "↑", color: "text-green-600" };
+    if (val < 1500) return { icon: "↓", color: "text-red-500" };
+    return { icon: "→", color: "text-amber-500" };
   };
 
   return (
-    <div style={{ paddingBottom: "60px", fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div className="pb-[60px] font-sans">
       
-      <section style={{
-        background: "linear-gradient(135deg, #15803d 0%, #16a34a 100%)",
-        borderRadius: "16px",
-        padding: isMobile ? "30px 20px" : "40px",
-        color: "white",
-        marginBottom: "30px",
-        boxShadow: "0 10px 25px rgba(21, 128, 61, 0.2)",
-        textAlign: isMobile ? "center" : "left"
-      }}>
-        <h1 style={{ margin: "0 0 10px 0", fontSize: isMobile ? "24px" : "32px", fontWeight: "800" }}>📊 Market Price Checker</h1>
-        <p style={{ margin: "0 0 15px 0", fontSize: isMobile ? "16px" : "18px", opacity: 0.9 }}>
+      <section className={`bg-gradient-to-br from-green-800 to-green-600 rounded-2xl p-8 md:p-10 text-white mb-8 shadow-lg shadow-green-700/20 ${isMobile ? 'text-center' : 'text-left'}`}>
+        <h1 className={`m-0 mb-2.5 ${isMobile ? 'text-2xl' : 'text-3xl'} font-extrabold tracking-tight`}>📊 Market Price Checker</h1>
+        <p className={`m-0 mb-4 ${isMobile ? 'text-base' : 'text-lg'} opacity-90`}>
           Live mandi prices from Government of India
         </p>
-        <span style={{
-          backgroundColor: "rgba(255,255,255,0.2)",
-          padding: "6px 14px",
-          borderRadius: "20px",
-          fontSize: "13px",
-          fontWeight: "bold",
-          backdropFilter: "blur(4px)"
-        }}>
+        <span className="bg-white/20 py-1.5 px-3.5 rounded-full text-xs font-bold backdrop-blur-md">
           Powered by data.gov.in
         </span>
       </section>
 
       {/* 2. SEARCH SECTION */}
-      <section style={{
-        backgroundColor: "white",
-        borderRadius: "16px",
-        padding: "30px",
-        marginBottom: "40px",
-        boxShadow: "0 4px 6px rgba(0,0,0,0.05)",
-        border: "1px solid #e5e7eb"
-      }}>
-        <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", alignItems: "flex-end" }}>
-          <div style={{ flex: "1 1 200px" }}>
-            <label style={labelStyle}>Commodity</label>
+      <section className="bg-white rounded-2xl p-8 mb-10 shadow-sm border border-gray-200">
+        <div className="flex gap-5 flex-wrap items-end">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block mb-2 font-bold text-gray-500 text-sm">Commodity</label>
             <select 
               value={commodity} 
               onChange={(e) => setCommodity(e.target.value)}
-              style={selectStyle}
+              className="w-full p-3 px-4 rounded-lg border border-gray-300 text-base text-gray-700 bg-white outline-none focus:border-green-600 transition-colors"
             >
               {COMMODITIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-          <div style={{ flex: "1 1 200px" }}>
-            <label style={labelStyle}>State</label>
+          <div className="flex-1 min-w-[200px]">
+            <label className="block mb-2 font-bold text-gray-500 text-sm">State</label>
             <select 
               value={state} 
               onChange={(e) => setState(e.target.value)}
-              style={selectStyle}
+              className="w-full p-3 px-4 rounded-lg border border-gray-300 text-base text-gray-700 bg-white outline-none focus:border-green-600 transition-colors"
             >
               {STATES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -142,25 +119,22 @@ export default function MarketPage() {
           <button 
             onClick={() => fetchPrices()}
             disabled={isLoading}
-            style={{
-              ...buttonStyle,
-              backgroundColor: isLoading ? "#9ca3af" : "#16a34a",
-              cursor: isLoading ? "not-allowed" : "pointer"
-            }}
+            className={`py-3 px-7 rounded-lg text-white text-base font-bold transition-transform active:scale-95 whitespace-nowrap
+              ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 cursor-pointer hover:bg-green-700'}`}
           >
             {isLoading ? "Fetching..." : "Check Prices"}
           </button>
         </div>
 
-        {/* POPULAR SEARCHES (only show if not loading) */}
+        {/* POPULAR SEARCHES */}
         {!isLoading && (
-          <div style={{ marginTop: "24px", display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-            <span style={{ fontSize: "14px", color: "#6b7280", fontWeight: "600" }}>Popular:</span>
+          <div className="mt-6 flex gap-2.5 flex-wrap items-center">
+            <span className="text-sm text-gray-400 font-bold">Popular:</span>
             {POPULAR_CHIPS.map(chip => (
               <button
                 key={chip}
                 onClick={() => handleChipClick(chip)}
-                style={chipStyle}
+                className="bg-gray-100 text-gray-600 py-1.5 px-4 rounded-full border-none text-sm font-bold cursor-pointer transition-colors hover:bg-green-100 hover:text-green-700"
               >
                 {chip}
               </button>
@@ -171,216 +145,94 @@ export default function MarketPage() {
 
       {/* 3. RESULTS SECTION */}
       {isLoading ? (
-        /* LOADING STATE */
-        <div style={{ textAlign: "center", padding: "60px 0" }}>
-          <div style={spinnerStyle}></div>
-          <p style={{ marginTop: "20px", fontSize: "18px", color: "#16a34a", fontWeight: "bold" }}>
+        <div className="text-center py-16">
+          <div className="w-12 h-12 border-5 border-gray-100 border-t-green-600 rounded-full animate-spin mx-auto" />
+          <p className="mt-5 text-lg text-green-600 font-bold italic">
             Fetching live mandi prices...
           </p>
         </div>
       ) : !hasSearched ? (
-        /* EMPTY STATE */
-        <div style={{ 
-          textAlign: "center", 
-          padding: "60px 30px", 
-          backgroundColor: "#f9fafb", 
-          borderRadius: "16px",
-          border: "2px dashed #d1d5db"
-        }}>
-          <span style={{ fontSize: "64px" }}>📊</span>
-          <h2 style={{ marginTop: "20px", color: "#4b5563" }}>Select a commodity and state to see live mandi prices</h2>
-          <p style={{ color: "#9ca3af" }}>Real-time data for over 1000+ markets in India</p>
+        <div className="text-center py-16 px-8 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-300">
+          <span className="text-6xl mb-5 block">📊</span>
+          <h2 className="mt-1 text-gray-600 font-bold">Select a commodity and state to see live mandi prices</h2>
+          <p className="text-gray-400 mt-2">Real-time data for over 1000+ markets in India</p>
         </div>
       ) : (
-        /* RESULTS CONTENT */
-        <div style={{ animation: "fadeIn 0.5s ease-out" }}>
+        <div className="animate-fade-in">
           
-          {/* a) Summary Row */}
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(200px, 1fr))", gap: "20px", marginBottom: "30px" }}>
-            <div style={{ ...summaryCardStyle, borderTop: "4px solid #16a34a" }}>
-              <p style={summaryLabelStyle}>Lowest Price</p>
-              <h3 style={{ ...summaryValueStyle, color: "#16a34a" }}>₹{lowestPrice.toLocaleString()}</h3>
-              <p style={summaryUnitStyle}>per quintal</p>
+          {/* Summary Row */}
+          <div className={`grid gap-5 mb-8 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
+            <div className="bg-white p-5 rounded-xl text-center shadow-sm border-t-4 border-t-green-600">
+              <p className="m-0 mb-2 text-sm text-gray-400 font-bold">Lowest Price</p>
+              <h3 className="m-0 mb-1 text-2xl font-black text-green-600">₹{lowestPrice.toLocaleString()}</h3>
+              <p className="m-0 text-xs text-gray-400 italic">per quintal</p>
             </div>
-            <div style={{ ...summaryCardStyle, borderTop: "4px solid #3b82f6" }}>
-              <p style={summaryLabelStyle}>Average Price</p>
-              <h3 style={{ ...summaryValueStyle, color: "#3b82f6" }}>₹{Math.round(avgPrice).toLocaleString()}</h3>
-              <p style={summaryUnitStyle}>per quintal</p>
+            <div className="bg-white p-5 rounded-xl text-center shadow-sm border-t-4 border-t-blue-500">
+              <p className="m-0 mb-2 text-sm text-gray-400 font-bold">Average Price</p>
+              <h3 className="m-0 mb-1 text-2xl font-black text-blue-500">₹{Math.round(avgPrice).toLocaleString()}</h3>
+              <p className="m-0 text-xs text-gray-400 italic">per quintal</p>
             </div>
-            <div style={{ ...summaryCardStyle, borderTop: "4px solid #ef4444" }}>
-              <p style={summaryLabelStyle}>Highest Price</p>
-              <h3 style={{ ...summaryValueStyle, color: "#ef4444" }}>₹{highestPrice.toLocaleString()}</h3>
-              <p style={summaryUnitStyle}>per quintal</p>
+            <div className="bg-white p-5 rounded-xl text-center shadow-sm border-t-4 border-t-red-500">
+              <p className="m-0 mb-2 text-sm text-gray-400 font-bold">Highest Price</p>
+              <h3 className="m-0 mb-1 text-2xl font-black text-red-500">₹{highestPrice.toLocaleString()}</h3>
+              <p className="m-0 text-xs text-gray-400 italic">per quintal</p>
             </div>
           </div>
 
-          {/* b) Price Table */}
-          <div style={{ 
-            backgroundColor: "white", 
-            borderRadius: "16px", 
-            overflowX: "auto", 
-            boxShadow: "0 4px 6px rgba(0,0,0,0.05)",
-            border: "1px solid #e5e7eb",
-            marginBottom: "10px"
-          }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead style={{ backgroundColor: "#f9fafb" }}>
-                <tr>
-                  <th style={thStyle}>Market</th>
-                  <th style={thStyle}>Variety</th>
-                  <th style={thStyle}>Min Price</th>
-                  <th style={thStyle}>Max Price</th>
-                  <th style={thStyle}>Modal Price</th>
-                  <th style={thStyle}>Date</th>
+          {/* Price Table */}
+          <div className="bg-white rounded-2xl overflow-x-auto shadow-sm border border-gray-200 mb-2.5">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-50 border-b-2 border-gray-100">
+                  <th className="text-left py-4 px-5 text-gray-500 text-sm font-bold uppercase tracking-wider">Market</th>
+                  <th className="text-left py-4 px-5 text-gray-500 text-sm font-bold uppercase tracking-wider">Variety</th>
+                  <th className="text-left py-4 px-5 text-gray-500 text-sm font-bold uppercase tracking-wider">Min</th>
+                  <th className="text-left py-4 px-5 text-gray-500 text-sm font-bold uppercase tracking-wider">Max</th>
+                  <th className="text-left py-4 px-5 text-gray-500 text-sm font-bold uppercase tracking-wider font-black">Modal</th>
+                  <th className="text-left py-4 px-5 text-gray-500 text-sm font-bold uppercase tracking-wider">Date</th>
                 </tr>
               </thead>
               <tbody>
                 {prices.map((p, i) => (
-                  <tr key={i} style={{ 
-                    borderBottom: i === prices.length - 1 ? "none" : "1px solid #f3f4f6",
-                    backgroundColor: i % 2 === 0 ? "#fff" : "#fcfdfc"
-                  }}>
-                    <td style={tdStyle}>{p.market}</td>
-                    <td style={tdStyle}>{p.variety}</td>
-                    <td style={tdStyle}>₹{p.min_price}</td>
-                    <td style={tdStyle}>₹{p.max_price}</td>
-                    <td style={{ ...tdStyle, fontWeight: "bold", color: "#16a34a" }}>
-                      <span style={{ color: getTrendIcon(p.modal_price).color, marginRight: "8px" }}>
+                  <tr key={i} className={`border-b transition-colors hover:bg-gray-50 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
+                    <td className="py-4 px-5 text-[15px] text-gray-700">{p.market}</td>
+                    <td className="py-4 px-5 text-[15px] text-gray-700">{p.variety}</td>
+                    <td className="py-4 px-5 text-[15px] text-gray-700 font-medium">₹{p.min_price}</td>
+                    <td className="py-4 px-5 text-[15px] text-gray-700 font-medium">₹{p.max_price}</td>
+                    <td className="py-4 px-5 text-[15px] font-black text-green-600">
+                      <span className={`mr-2 ${getTrendIcon(p.modal_price).color}`}>
                         {getTrendIcon(p.modal_price).icon}
                       </span>
                       ₹{p.modal_price}
                     </td>
-                    <td style={tdStyle}>{p.date}</td>
+                    <td className="py-4 px-5 text-[15px] text-gray-500">{p.date}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <p style={{ margin: "0 0 30px 20px", fontSize: "13px", color: "#9ca3af", fontStyle: "italic" }}>
-            Showing top markets for {commodity} in {state}. Data refreshed daily from Government of India.
+          <p className="m-0 mb-8 ml-5 text-xs text-gray-400 italic font-medium">
+            Showing latest markets for {commodity} in {state}. Data refreshed from Government mandis.
           </p>
 
-          {/* c) Price Insight Card */}
-          <div style={{
-            backgroundColor: "#f0fdf4",
-            borderRadius: "16px",
-            padding: isMobile ? "20px" : "24px 30px",
-            border: "1px solid #dcfce7",
-            display: "flex",
-            alignItems: "center",
-            flexDirection: isMobile ? "column" : "row",
-            textAlign: isMobile ? "center" : "left",
-            gap: "20px"
-          }}>
-            <span style={{ fontSize: "32px" }}>💡</span>
+          {/* Price Insight Card */}
+          <div className={`bg-green-50 rounded-2xl p-6 md:px-8 border border-green-100 flex items-center gap-5 ${isMobile ? 'flex-col text-center' : 'flex-row text-left'}`}>
+            <span className="text-4xl">💡</span>
             <div>
-              <h4 style={{ margin: "0 0 5px 0", color: "#111827", fontSize: "20px", fontWeight: "700" }}>Price Insight</h4>
-              <p style={{ margin: 0, color: "#374151", fontSize: "16px", fontWeight: "500" }}>{getPriceInsight()}</p>
+              <h4 className="m-0 mb-1 text-gray-900 text-xl font-bold">Price Insight</h4>
+              <p className="m-0 text-gray-700 text-base font-semibold">{getPriceInsight()}</p>
             </div>
           </div>
 
         </div>
       )}
 
-      <footer style={{ marginTop: "40px", textAlign: "center" }}>
-        <p style={{ color: "#9ca3af", fontStyle: "italic", fontSize: "14px" }}>
-          Data provided by National Agriculture Market (e-NAM) via Data.gov.in
+      <footer className="mt-10 text-center">
+        <p className="text-gray-400 italic text-sm font-medium">
+          Source: National Agriculture Market (e-NAM) • Data.gov.in
         </p>
       </footer>
     </div>
   );
 }
-
-// Reusable Styles
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  marginBottom: "8px",
-  fontWeight: "bold",
-  color: "#4b5563",
-  fontSize: "14px"
-};
-
-const selectStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "12px 16px",
-  borderRadius: "8px",
-  border: "1px solid #d1d5db",
-  fontSize: "16px",
-  color: "#374151",
-  backgroundColor: "white",
-  outline: "none"
-};
-
-const buttonStyle: React.CSSProperties = {
-  padding: "12px 28px",
-  borderRadius: "8px",
-  color: "white",
-  border: "none",
-  fontSize: "16px",
-  fontWeight: "bold",
-  transition: "transform 0.1s"
-};
-
-const chipStyle: React.CSSProperties = {
-  backgroundColor: "#f3f4f6",
-  color: "#4b5563",
-  padding: "6px 16px",
-  borderRadius: "20px",
-  border: "none",
-  fontSize: "14px",
-  fontWeight: "bold",
-  cursor: "pointer"
-};
-
-const summaryCardStyle: React.CSSProperties = {
-  backgroundColor: "white",
-  padding: "20px",
-  borderRadius: "12px",
-  boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-  textAlign: "center"
-};
-
-const summaryLabelStyle: React.CSSProperties = {
-  margin: "0 0 8px 0",
-  fontSize: "14px",
-  color: "#6b7280",
-  fontWeight: "600"
-};
-
-const summaryValueStyle: React.CSSProperties = {
-  margin: "0 0 4px 0",
-  fontSize: "24px",
-  fontWeight: "900"
-};
-
-const summaryUnitStyle: React.CSSProperties = {
-  margin: 0,
-  fontSize: "12px",
-  color: "#9ca3af"
-};
-
-const thStyle: React.CSSProperties = {
-  textAlign: "left",
-  padding: "16px 20px",
-  color: "#4b5563",
-  fontSize: "14px",
-  fontWeight: "700",
-  borderBottom: "2px solid #f3f4f6"
-};
-
-const tdStyle: React.CSSProperties = {
-  padding: "16px 20px",
-  fontSize: "15px",
-  color: "#374151"
-};
-
-const spinnerStyle: React.CSSProperties = {
-  width: "48px",
-  height: "48px",
-  border: "5px solid #f3f3f3",
-  borderTop: "5px solid #16a34a",
-  borderRadius: "50%",
-  margin: "0 auto",
-  animation: "spin 1s linear infinite"
-};

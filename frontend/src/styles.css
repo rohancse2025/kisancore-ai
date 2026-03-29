@@ -1,57 +1,74 @@
+@import "tailwindcss";
+
 :root {
-  color-scheme: light;
-  --bg: #0b1020;
-  --card: rgba(255, 255, 255, 0.08);
-  --text: rgba(255, 255, 255, 0.92);
-  --muted: rgba(255, 255, 255, 0.65);
-  --border: rgba(255, 255, 255, 0.12);
+  /* LIGHT MODE VARIABLES */
+  --bg-page: #f9fafb;
+  --bg-card: #ffffff;
+  --text-main: #111827;
+  --text-muted: #6b7280;
+  --border-subtle: #e5e7eb;
+  /* Brand colors */
+  --brand-green: #16a34a;
+  --brand-green-hover: #15803d;
+  --brand-green-muted: rgba(22, 163, 74, 0.1);
 }
 
-html,
-body {
-  height: 100%;
+.dark {
+  /* DARK MODE VARIABLES */
+  --bg-page: #0b1120;
+  --bg-card: #1e293b;
+  --text-main: #f9fafb;
+  --text-muted: #94a3b8;
+  --border-subtle: #334155;
+  --brand-green-muted: rgba(22, 163, 74, 0.2);
 }
 
 body {
   margin: 0;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial,
-    "Apple Color Emoji", "Segoe UI Emoji";
-  background: radial-gradient(1200px 800px at 20% 10%, #1a2a6c 0%, transparent 60%),
-    radial-gradient(900px 700px at 90% 20%, #2e8b57 0%, transparent 55%),
-    var(--bg);
-  color: var(--text);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.page {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 40px 20px;
+/* AUTOMATIC THEME SWITCHING FIX */
+/* Overriding common Tailwind background and text classes globally */
+
+.bg-white { background-color: var(--bg-card) !important; }
+.bg-gray-50, .bg-gray-100 { background-color: var(--bg-page) !important; }
+.bg-blue-50, .bg-green-50, .bg-orange-50, .bg-red-50 { 
+  background-color: var(--brand-green-muted) !important; 
 }
 
-.header {
-  margin-bottom: 20px;
+.text-gray-900, .text-gray-800, .text-gray-700 { color: var(--text-main) !important; }
+.text-gray-600, .text-gray-500, .text-gray-400 { color: var(--text-muted) !important; }
+
+.border-gray-100, .border-gray-200, .border-gray-300 { border-color: var(--border-subtle) !important; }
+
+/* Keep green brand colors static as user requested */
+.text-green-600, .text-green-700, .text-green-800 { color: var(--brand-green) !important; }
+.bg-green-600, .bg-green-700 { background-color: var(--brand-green) !important; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.header h1 {
-  margin: 0 0 8px 0;
-  font-size: 32px;
-  letter-spacing: 0.2px;
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
 }
 
-.muted {
-  margin: 0;
-  color: var(--muted);
+/* Custom Scrollbar for modern look */
+::-webkit-scrollbar {
+  width: 8px;
 }
-
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 20px;
-  backdrop-filter: blur(10px);
+::-webkit-scrollbar-track {
+  background: var(--bg-page);
 }
-
-.card h2 {
-  margin-top: 0;
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 4px;
 }
-
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

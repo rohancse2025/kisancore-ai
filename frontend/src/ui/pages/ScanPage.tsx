@@ -72,45 +72,32 @@ export default function ScanPage() {
   const analyzeImage = async () => {
     if (!preview) return;
     setIsAnalyzing(true);
-    // Simulate API delay — replace with real endpoint later
     await new Promise((res) => setTimeout(res, 2000));
     setResult(MOCK_RESULT);
     setIsAnalyzing(false);
   };
 
   const severityColor = (s: string) =>
-    s === "Severe" ? "#ef4444" : s === "Mild" ? "#16a34a" : "#f59e0b";
+    s === "Severe" ? "text-red-500" : s === "Mild" ? "text-green-600" : "text-amber-500";
   const severityBg = (s: string) =>
-    s === "Severe" ? "#fee2e2" : s === "Mild" ? "#dcfce7" : "#fef3c7";
+    s === "Severe" ? "bg-red-50" : s === "Mild" ? "bg-green-50" : "bg-amber-50";
 
   return (
-    <div style={{ fontFamily: "system-ui, -apple-system, sans-serif", paddingBottom: "48px" }}>
-      <style>{`
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-      `}</style>
-
+    <div className="pb-12 font-sans">
+      
       {/* PAGE HEADER */}
-      <section style={{
-        background: "linear-gradient(135deg, #15803d 0%, #16a34a 100%)",
-        borderRadius: "16px",
-        padding: isMobile ? "30px 20px" : "40px",
-        color: "white",
-        marginBottom: "32px",
-        boxShadow: "0 4px 15px rgba(21, 128, 61, 0.2)",
-        textAlign: isMobile ? "center" : "left"
-      }}>
-        <h1 style={{ margin: "0 0 10px 0", fontSize: isMobile ? "28px" : "34px", fontWeight: "800" }}>🔍 {isMobile ? "Plant Scanner" : "Plant Disease Scanner"}</h1>
-        <p style={{ margin: 0, fontSize: isMobile ? "16px" : "18px", opacity: 0.9 }}>
+      <section className={`bg-gradient-to-br from-green-800 to-green-600 rounded-2xl p-8 md:p-10 text-white mb-8 shadow-lg shadow-green-700/20 ${isMobile ? 'text-center' : 'text-left'}`}>
+        <h1 className={`m-0 mb-2.5 ${isMobile ? 'text-2xl' : 'text-3xl'} font-extrabold tracking-tight`}>🔍 {isMobile ? "Plant Scanner" : "Plant Disease Scanner"}</h1>
+        <p className={`m-0 ${isMobile ? 'text-base' : 'text-lg'} opacity-90`}>
           Upload a photo of your plant leaf to detect diseases instantly
         </p>
       </section>
 
       {/* TWO-COLUMN LAYOUT */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(360px, 1fr))", gap: "28px", marginBottom: "40px" }}>
+      <div className={`grid gap-7 mb-10 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
 
         {/* ===== LEFT COLUMN ===== */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        <div className="flex flex-col gap-5">
 
           {/* UPLOAD AREA */}
           <div
@@ -118,27 +105,15 @@ export default function ScanPage() {
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={onDrop}
-            style={{
-              border: `2px dashed ${isDragging ? "#15803d" : "#16a34a"}`,
-              borderRadius: "12px",
-              backgroundColor: isDragging ? "#dcfce7" : "#f0fdf4",
-              minHeight: "260px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: preview ? "default" : "pointer",
-              position: "relative",
-              overflow: "hidden",
-              transition: "background-color 0.2s",
-              padding: "20px"
-            }}
+            className={`border-2 border-dashed rounded-2xl min-h-[260px] flex flex-col items-center justify-center relative overflow-hidden transition-all p-6
+              ${isDragging ? 'border-green-800 bg-green-100' : 'border-green-600 bg-green-50/50'}
+              ${preview ? 'cursor-default' : 'cursor-pointer hover:bg-green-50'}`}
           >
             <input
               ref={fileInputRef}
               type="file"
               accept="image/png, image/jpeg"
-              style={{ display: "none" }}
+              className="hidden"
               onChange={onFileChange}
             />
 
@@ -147,29 +122,20 @@ export default function ScanPage() {
                 <img
                   src={preview}
                   alt="Selected plant"
-                  style={{ maxWidth: "100%", maxHeight: "220px", borderRadius: "8px", objectFit: "contain" }}
+                  className="max-w-full max-h-[220px] rounded-lg object-contain shadow-sm"
                 />
-                {/* Remove button */}
                 <button
                   onClick={(e) => { e.stopPropagation(); clearImage(); }}
-                  style={{
-                    position: "absolute", top: "10px", right: "10px",
-                    background: "rgba(0,0,0,0.6)", color: "white",
-                    border: "none", borderRadius: "50%",
-                    width: "30px", height: "30px",
-                    fontSize: "16px", cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    lineHeight: 1
-                  }}
+                  className="absolute top-3 right-3 bg-black/60 text-white border-none rounded-full w-8 h-8 flex items-center justify-center cursor-pointer transition-colors hover:bg-black/80"
                 >✕</button>
               </>
             ) : (
               <>
-                <span style={{ fontSize: "48px", marginBottom: "12px" }}>📷</span>
-                <p style={{ margin: "0 0 6px 0", fontWeight: "700", fontSize: "17px", color: "#15803d" }}>
+                <span className="text-5xl mb-3">📷</span>
+                <p className="m-0 mb-1.5 font-bold text-lg text-green-800">
                   Click to upload or drag &amp; drop
                 </p>
-                <p style={{ margin: 0, fontSize: "13px", color: "#6b7280" }}>
+                <p className="m-0 text-sm text-gray-400 font-medium">
                   Supports JPG, PNG — max 5MB
                 </p>
               </>
@@ -180,55 +146,26 @@ export default function ScanPage() {
           <button
             onClick={analyzeImage}
             disabled={!preview || isAnalyzing}
-            style={{
-              width: "100%",
-              padding: "16px",
-              backgroundColor: !preview || isAnalyzing ? "#9ca3af" : "#111827",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "17px",
-              fontWeight: "bold",
-              cursor: !preview || isAnalyzing ? "not-allowed" : "pointer",
-              transition: "background-color 0.2s",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "10px",
-              fontFamily: "inherit"
-            }}
-            onMouseEnter={(e) => { if (preview && !isAnalyzing) e.currentTarget.style.backgroundColor = "#374151"; }}
-            onMouseLeave={(e) => { if (preview && !isAnalyzing) e.currentTarget.style.backgroundColor = "#111827"; }}
+            className={`w-full p-4 rounded-xl text-lg font-bold flex items-center justify-center gap-3 transition-all
+              ${!preview || isAnalyzing ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-900 text-white cursor-pointer hover:bg-gray-800 active:scale-95'}`}
           >
             {isAnalyzing ? (
               <>
-                <div style={{
-                  width: "20px", height: "20px",
-                  border: "3px solid rgba(255,255,255,0.3)",
-                  borderTop: "3px solid white",
-                  borderRadius: "50%",
-                  animation: "spin 0.8s linear infinite"
-                }} />
+                <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
                 Analyzing...
               </>
             ) : "Analyse Image"}
           </button>
 
           {/* TIPS CARD */}
-          <div style={{
-            backgroundColor: "white",
-            borderRadius: "12px",
-            padding: "24px",
-            boxShadow: "0 4px 15px rgba(0,0,0,0.05)",
-            border: "1px solid #f3f4f6"
-          }}>
-            <h3 style={{ margin: "0 0 16px 0", fontSize: "20px", color: "#111827", fontWeight: "700" }}>
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <h3 className="m-0 mb-4 text-xl text-gray-900 font-bold">
               💡 Tips for Better Results
             </h3>
-            <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "12px" }}>
+            <ul className="m-0 p-0 list-none flex flex-col gap-3">
               {TIPS.map((tip, i) => (
-                <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "10px", color: "#4b5563", fontSize: "14px", lineHeight: "1.4" }}>
-                  <span style={{ color: "#16a34a", fontWeight: "bold", fontSize: "16px", flexShrink: 0 }}>✓</span>
+                <li key={i} className="flex items-start gap-3 text-sm text-gray-600 leading-relaxed font-medium">
+                  <span className="text-green-600 font-bold flex-shrink-0">✓</span>
                   {tip}
                 </li>
               ))}
@@ -239,147 +176,73 @@ export default function ScanPage() {
         {/* ===== RIGHT COLUMN ===== */}
         <div>
           {!result && !isAnalyzing ? (
-            /* PLACEHOLDER */
-            <div style={{
-              backgroundColor: "#f9fafb",
-              border: "2px dashed #d1d5db",
-              borderRadius: "12px",
-              padding: "60px 30px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              minHeight: "320px",
-              textAlign: "center"
-            }}>
-              <span style={{ fontSize: "52px", opacity: 0.3, marginBottom: "16px" }}>📷</span>
-              <h3 style={{ margin: "0 0 8px 0", color: "#111827", fontSize: "20px", fontWeight: "700" }}>
+            <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-2xl p-15 flex flex-col items-center justify-center min-h-[320px] text-center">
+              <span className="text-6xl opacity-30 mb-4">📷</span>
+              <h3 className="m-0 mb-2 text-gray-700 text-xl font-bold">
                 Your analysis results will appear here
               </h3>
-              <p style={{ margin: 0, color: "#9ca3af", fontSize: "15px" }}>
+              <p className="m-0 text-gray-400 font-medium">
                 Upload an image and click Analyse
               </p>
             </div>
           ) : isAnalyzing ? (
-            /* LOADING STATE */
-            <div style={{
-              backgroundColor: "white",
-              borderRadius: "12px",
-              padding: "60px 30px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              minHeight: "320px",
-              boxShadow: "0 4px 15px rgba(0,0,0,0.05)",
-              border: "1px solid #f3f4f6",
-              textAlign: "center"
-            }}>
-              <div style={{
-                width: "52px", height: "52px",
-                border: "5px solid #dcfce7",
-                borderTop: "5px solid #16a34a",
-                borderRadius: "50%",
-                animation: "spin 0.9s linear infinite",
-                marginBottom: "20px"
-              }} />
-              <p style={{ margin: 0, color: "#16a34a", fontWeight: "700", fontSize: "18px" }}>Analyzing your image...</p>
-              <p style={{ margin: "8px 0 0 0", color: "#6b7280", fontSize: "14px" }}>Running disease detection model</p>
+            <div className="bg-white rounded-2xl p-15 flex flex-col items-center justify-center min-h-[320px] shadow-sm border border-gray-100 text-center">
+              <div className="w-14 h-14 border-5 border-green-50 border-t-green-600 rounded-full animate-spin mb-5" />
+              <p className="m-0 text-green-600 font-extrabold text-lg">Analyzing your image...</p>
+              <p className="m-0 mt-2 text-gray-400 text-sm italic font-medium">Running disease detection model</p>
             </div>
           ) : result ? (
-            /* RESULT CARD */
-            <div style={{
-              backgroundColor: "white",
-              borderRadius: "12px",
-              boxShadow: "0 4px 15px rgba(0,0,0,0.07)",
-              border: "1px solid #f3f4f6",
-              overflow: "hidden",
-              animation: "fadeUp 0.4s ease-out"
-            }}>
-              {/* a) Disease Header */}
-              <div style={{ padding: "28px 28px 20px" }}>
-                <h2 style={{ margin: "0 0 14px 0", fontSize: "20px", fontWeight: "700", color: "#111827" }}>
+            <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-200 overflow-hidden animate-fade-in">
+              {/* Disease Header */}
+              <div className="p-7 pb-5">
+                <h2 className="m-0 mb-4 text-2xl font-black text-gray-900 tracking-tight">
                   {result.disease}
                 </h2>
 
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "18px" }}>
-                  {/* Confidence badge */}
-                  <span style={{
-                    backgroundColor: "#dcfce7", color: "#166534",
-                    padding: "5px 14px", borderRadius: "20px",
-                    fontSize: "13px", fontWeight: "700"
-                  }}>
+                <div className="flex flex-wrap gap-2.5 mb-5">
+                  <span className="bg-green-100 text-green-800 py-1.5 px-4 rounded-full text-xs font-black uppercase tracking-wider">
                     {result.confidence}% Confidence
                   </span>
-
-                  {/* Severity badge */}
-                  <span style={{
-                    backgroundColor: severityBg(result.severity),
-                    color: severityColor(result.severity),
-                    padding: "5px 14px", borderRadius: "20px",
-                    fontSize: "13px", fontWeight: "700"
-                  }}>
+                  <span className={`py-1.5 px-4 rounded-full text-xs font-black uppercase tracking-wider ${severityBg(result.severity)} ${severityColor(result.severity)}`}>
                     {result.severity} Severity
                   </span>
                 </div>
 
-                {/* Confidence progress bar */}
-                <div style={{ marginBottom: "4px", display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#6b7280" }}>
+                <div className="mb-1 flex justify-between font-bold text-[11px] text-gray-400 uppercase tracking-widest">
                   <span>Confidence</span>
                   <span>{result.confidence}%</span>
                 </div>
-                <div style={{ height: "8px", backgroundColor: "#e5e7eb", borderRadius: "4px", overflow: "hidden" }}>
-                  <div style={{
-                    height: "100%",
-                    width: `${result.confidence}%`,
-                    backgroundColor: "#16a34a",
-                    borderRadius: "4px",
-                    transition: "width 0.8s ease-out"
-                  }} />
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                  <div 
+                    className="h-full bg-green-600 rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: `${result.confidence}%` }}
+                  />
                 </div>
               </div>
 
-              {/* b) Treatment */}
-              <div style={{ margin: "0 28px 16px", backgroundColor: "#f0fdf4", borderRadius: "10px", padding: "18px 20px" }}>
-                <h4 style={{ margin: "0 0 8px 0", color: "#15803d", fontSize: "15px", fontWeight: "700" }}>💊 Treatment</h4>
-                <p style={{ margin: 0, color: "#374151", fontSize: "14px", lineHeight: "1.55" }}>{result.treatment}</p>
+              {/* Treatment */}
+              <div className="mx-7 mb-4 bg-green-50/50 rounded-xl p-5 border border-green-100">
+                <h4 className="m-0 mb-2 text-green-700 text-sm font-black uppercase tracking-widest">💊 Treatment</h4>
+                <p className="m-0 text-gray-700 text-sm leading-relaxed font-medium">{result.treatment}</p>
               </div>
 
-              {/* c) Prevention */}
-              <div style={{ margin: "0 28px 24px", backgroundColor: "#eff6ff", borderRadius: "10px", padding: "18px 20px" }}>
-                <h4 style={{ margin: "0 0 8px 0", color: "#1e40af", fontSize: "15px", fontWeight: "700" }}>🛡️ Prevention</h4>
-                <p style={{ margin: 0, color: "#374151", fontSize: "14px", lineHeight: "1.55" }}>{result.prevention}</p>
+              {/* Prevention */}
+              <div className="mx-7 mb-7 bg-blue-50/50 rounded-xl p-5 border border-blue-100">
+                <h4 className="m-0 mb-2 text-blue-700 text-sm font-black uppercase tracking-widest">🛡️ Prevention</h4>
+                <p className="m-0 text-gray-700 text-sm leading-relaxed font-medium">{result.prevention}</p>
               </div>
 
-              {/* d) Buttons */}
-              <div style={{ padding: "0 28px 28px", display: "flex", gap: "12px", flexWrap: "wrap" }}>
+              {/* Buttons */}
+              <div className="p-7 pt-0 flex gap-3 flex-wrap">
                 <button
                   onClick={clearImage}
-                  style={{
-                    flex: 1, minWidth: "140px",
-                    padding: "12px 16px",
-                    backgroundColor: "white", color: "#111827",
-                    border: "2px solid #d1d5db", borderRadius: "8px",
-                    fontSize: "15px", fontWeight: "600", cursor: "pointer",
-                    transition: "border-color 0.2s", fontFamily: "inherit"
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = "#111827"}
-                  onMouseLeave={e => e.currentTarget.style.borderColor = "#d1d5db"}
+                  className="flex-1 min-w-[140px] py-3.5 px-6 bg-white text-gray-900 border-2 border-gray-200 rounded-xl text-sm font-bold transition-all hover:border-gray-900 active:scale-95"
                 >
-                  Analyse Another Image
+                  Analyse Another
                 </button>
                 <button
                   onClick={() => navigate('/chat', { state: { prefill: `I scanned a plant leaf and detected "${result.disease}" with ${result.confidence}% confidence and ${result.severity} severity. What should I do?` } })}
-                  style={{
-                    flex: 1, minWidth: "140px",
-                    padding: "12px 16px",
-                    backgroundColor: "#111827", color: "white",
-                    border: "none", borderRadius: "8px",
-                    fontSize: "15px", fontWeight: "600", cursor: "pointer",
-                    transition: "background-color 0.2s", fontFamily: "inherit"
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = "#374151"}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = "#111827"}
+                  className="flex-1 min-w-[140px] py-3.5 px-6 bg-gray-900 text-white border-none rounded-xl text-sm font-bold transition-all hover:bg-gray-800 active:scale-95"
                 >
                   🤖 Ask AI for Help
                 </button>
@@ -391,36 +254,15 @@ export default function ScanPage() {
 
       {/* COMMON DISEASES SECTION */}
       <section>
-        <h2 style={{ fontSize: "20px", fontWeight: "700", color: "#111827", margin: "0 0 20px 0", textAlign: isMobile ? "center" : "left" }}>
+        <h2 className={`text-xl font-bold text-gray-900 mb-6 ${isMobile ? 'text-center' : 'text-left'}`}>
           📚 Common Plant Diseases
         </h2>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
+        <div className={`grid gap-4 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
           {COMMON_DISEASES.map((d) => (
-            <div key={d.name} style={{
-              backgroundColor: "white",
-              borderRadius: "12px",
-              padding: "22px 20px",
-              boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-              border: "1px solid #f3f4f6",
-              borderTop: "4px solid #16a34a",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              textAlign: "center",
-              gap: "10px",
-              transition: "transform 0.2s",
-              cursor: "default"
-            }}
-            onMouseEnter={e => e.currentTarget.style.transform = "translateY(-4px)"}
-            onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
-            >
-              <span style={{ fontSize: "36px" }}>{d.emoji}</span>
-              <p style={{ margin: 0, fontWeight: "700", color: "#1f2937", fontSize: "15px", lineHeight: "1.3" }}>{d.name}</p>
-              <span style={{
-                backgroundColor: "#fff7ed", color: "#c2410c",
-                padding: "3px 12px", borderRadius: "12px",
-                fontSize: "12px", fontWeight: "700"
-              }}>
+            <div key={d.name} className="bg-white rounded-2xl p-6 text-center shadow-sm border border-gray-100 border-t-4 border-t-green-600 transition-all hover:-translate-y-1 hover:shadow-md">
+              <span className="text-4xl block mb-3">{d.emoji}</span>
+              <p className="m-0 font-bold text-gray-800 text-[15px] leading-snug mb-2">{d.name}</p>
+              <span className="bg-orange-50 text-orange-700 py-1 px-3 rounded-full text-xs font-black uppercase tracking-widest">
                 {d.type}
               </span>
             </div>

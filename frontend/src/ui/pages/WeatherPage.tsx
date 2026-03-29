@@ -73,19 +73,18 @@ export default function WeatherPage() {
   };
 
   if (loading) return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh", flexDirection: "column", gap: "16px" }}>
-      <div style={{ fontSize: "48px", animation: "spin 2s linear infinite" }}>🌿</div>
-      <p style={{ color: "#6b7280", fontSize: "16px" }}>Detecting your location and fetching weather...</p>
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+      <div className="text-5xl animate-spin text-green-600">🌿</div>
+      <p className="text-gray-500 text-base italic">Detecting your location and fetching weather...</p>
     </div>
   );
 
   if (error) return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh" }}>
-      <div style={{ background: "white", borderRadius: "16px", padding: "40px", textAlign: "center", maxWidth: "480px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
-        <div style={{ fontSize: "48px", marginBottom: "16px" }}>⚠️</div>
-        <h2 style={{ color: "#1f2937", marginBottom: "12px" }}>Weather Unavailable</h2>
-        <p style={{ color: "#6b7280", lineHeight: "1.6" }}>{error}</p>
+    <div className="flex items-center justify-center h-[60vh]">
+      <div className="bg-white rounded-2xl p-10 text-center max-w-[480px] shadow-xl shadow-gray-200/50 border border-gray-200">
+        <div className="text-5xl mb-4">⚠️</div>
+        <h2 className="text-gray-900 mb-3 text-2xl font-bold">Weather Unavailable</h2>
+        <p className="text-gray-500 leading-relaxed">{error}</p>
       </div>
     </div>
   );
@@ -96,104 +95,71 @@ export default function WeatherPage() {
   const tipEmoji = getTipEmoji(weather.farming_tip);
 
   return (
-    <div style={{ maxWidth: "900px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div className="max-w-[900px] mx-auto flex flex-col gap-6 font-sans">
 
       {/* Header */}
       <div>
-        <h1 style={{ margin: "0 0 4px 0", fontSize: "26px", color: "#111827", fontWeight: "700" }}>🌦️ Weather & Farm Advisor</h1>
-        <p style={{ margin: 0, color: "#6b7280", fontSize: "15px" }}>Live local weather with farming insights</p>
+        <h1 className="m-0 mb-1 text-2xl text-gray-900 font-bold">🌦️ Weather & Farm Advisor</h1>
+        <p className="m-0 text-gray-500 text-sm">Live local weather with farming insights</p>
       </div>
 
       {/* Main Weather Card */}
-      <div style={{
-        background: "linear-gradient(135deg, #16a34a 0%, #15803d 60%, #166534 100%)",
-        borderRadius: "20px",
-        padding: "36px 40px",
-        color: "white",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        boxShadow: "0 8px 32px rgba(22, 163, 74, 0.3)"
-      }}>
-        <div>
-          <p style={{ margin: "0 0 6px 0", fontSize: "16px", opacity: 0.85, fontWeight: "500" }}>📍 {weather.city}</p>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: "12px" }}>
-            <span style={{ fontSize: "72px", fontWeight: "700", lineHeight: 1 }}>{Math.round(weather.temperature)}°</span>
-            <span style={{ fontSize: "22px", marginBottom: "10px", opacity: 0.9 }}>C</span>
+      <div className="bg-gradient-to-br from-green-600 via-green-700 to-green-800 rounded-2xl p-9 md:p-10 text-white flex flex-col md:flex-row justify-between items-center shadow-lg shadow-green-600/30">
+        <div className="text-center md:text-left mb-8 md:mb-0">
+          <p className="m-0 mb-1.5 text-base opacity-85 font-semibold">📍 {weather.city}</p>
+          <div className="flex items-baseline justify-center md:justify-start gap-3">
+            <span className="text-[72px] font-bold leading-none">{Math.round(weather.temperature)}°</span>
+            <span className="text-2xl mb-2.5 opacity-90">C</span>
           </div>
-          <p style={{ margin: "8px 0 0 0", fontSize: "20px", opacity: 0.95, fontWeight: "500", textTransform: "capitalize" }}>
+          <p className="m-0 mt-2 text-xl opacity-95 font-semibold capitalize">
             {emoji} {weather.condition}
           </p>
         </div>
-        <div style={{ textAlign: "right", display: "flex", flexDirection: "column", gap: "16px" }}>
-          <div style={{ background: "rgba(255,255,255,0.15)", borderRadius: "12px", padding: "16px 24px", backdropFilter: "blur(4px)" }}>
-            <p style={{ margin: "0 0 4px 0", fontSize: "12px", opacity: 0.75, textTransform: "uppercase", letterSpacing: "0.05em" }}>Humidity</p>
-            <p style={{ margin: 0, fontSize: "28px", fontWeight: "700" }}>💧 {weather.humidity}%</p>
+        <div className="flex flex-col gap-4 w-full md:w-auto">
+          <div className="bg-white/15 rounded-xl p-4 md:px-6 backdrop-blur-md shadow-inner border border-white/10">
+            <p className="m-0 mb-1 text-xs opacity-75 uppercase tracking-widest font-bold">Humidity</p>
+            <p className="m-0 text-2xl font-black">💧 {weather.humidity}%</p>
           </div>
-          <div style={{ background: "rgba(255,255,255,0.15)", borderRadius: "12px", padding: "16px 24px", backdropFilter: "blur(4px)" }}>
-            <p style={{ margin: "0 0 4px 0", fontSize: "12px", opacity: 0.75, textTransform: "uppercase", letterSpacing: "0.05em" }}>Wind Speed</p>
-            <p style={{ margin: 0, fontSize: "28px", fontWeight: "700" }}>💨 {weather.wind_speed} m/s</p>
+          <div className="bg-white/15 rounded-xl p-4 md:px-6 backdrop-blur-md shadow-inner border border-white/10">
+            <p className="m-0 mb-1 text-xs opacity-75 uppercase tracking-widest font-bold">Wind Speed</p>
+            <p className="m-0 text-2xl font-black">💨 {weather.wind_speed} m/s</p>
           </div>
         </div>
       </div>
 
       {/* Farming Tip Card */}
-      <div style={{
-        background: "white",
-        borderRadius: "16px",
-        padding: "28px 32px",
-        border: "1px solid #e5e7eb",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-        borderLeft: "5px solid #16a34a"
-      }}>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
-          <span style={{ fontSize: "36px", lineHeight: 1 }}>{tipEmoji}</span>
+      <div className="bg-white rounded-2xl p-7 px-8 border border-gray-200 shadow-sm border-l-[6px] border-l-green-600 md:animate-fade-in">
+        <div className="flex items-start gap-4">
+          <span className="text-4xl leading-none flex-shrink-0">{tipEmoji}</span>
           <div>
-            <h3 style={{ margin: "0 0 8px 0", fontSize: "16px", color: "#16a34a", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <h3 className="m-0 mb-2 text-xs text-green-600 font-black uppercase tracking-widest">
               Today's Farming Tip
             </h3>
-            <p style={{ margin: 0, fontSize: "17px", color: "#1f2937", lineHeight: "1.6" }}>{weather.farming_tip}</p>
+            <p className="m-0 text-lg text-gray-800 leading-relaxed font-medium">{weather.farming_tip}</p>
           </div>
         </div>
       </div>
 
       {/* Stats Row */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
           { label: "Temperature", value: `${Math.round(weather.temperature)}°C`, icon: "🌡️", sub: weather.temperature > 30 ? "Hot" : weather.temperature < 15 ? "Cool" : "Comfortable" },
-          { label: "Humidity", value: `${weather.humidity}%`, icon: "💧", sub: weather.humidity > 80 ? "High — risk of fungal issues" : weather.humidity < 40 ? "Low — monitor soil moisture" : "Moderate" },
-          { label: "Wind Speed", value: `${weather.wind_speed} m/s`, icon: "💨", sub: weather.wind_speed > 10 ? "Strong — delay spraying" : weather.wind_speed > 5 ? "Breezy" : "Calm" }
+          { label: "Humidity", value: `${weather.humidity}%`, icon: "💧", sub: weather.humidity > 80 ? "High — fungal risk" : weather.humidity < 40 ? "Low — dry stress" : "Moderate" },
+          { label: "Wind Speed", value: `${weather.wind_speed} m/s`, icon: "💨", sub: weather.wind_speed > 10 ? "Strong winds" : weather.wind_speed > 5 ? "Breezy" : "Calm" }
         ].map(({ label, value, icon, sub }) => (
-          <div key={label} style={{
-            background: "white",
-            borderRadius: "14px",
-            padding: "20px 24px",
-            border: "1px solid #e5e7eb",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.04)"
-          }}>
-            <p style={{ margin: "0 0 8px 0", fontSize: "12px", color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: "600" }}>{icon} {label}</p>
-            <p style={{ margin: "0 0 4px 0", fontSize: "28px", fontWeight: "700", color: "#111827" }}>{value}</p>
-            <p style={{ margin: 0, fontSize: "13px", color: "#16a34a", fontWeight: "500" }}>{sub}</p>
+          <div key={label} className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm transition-all hover:bg-gray-50/50">
+            <p className="m-0 mb-2 text-[11px] text-gray-400 uppercase font-black">{icon} {label}</p>
+            <p className="m-0 mb-1 text-2xl font-black text-gray-900">{value}</p>
+            <p className="m-0 text-xs text-green-600 font-bold italic">{sub}</p>
           </div>
         ))}
       </div>
 
       {/* Ask AI Button */}
-      <div style={{ display: "flex", justifyContent: "center", paddingBottom: "8px" }}>
+      <div className="flex justify-center pt-2 pb-4">
         <button
           onClick={handleAskAI}
-          style={{
-            display: "flex", alignItems: "center", gap: "10px",
-            background: "#16a34a", color: "white",
-            border: "none", borderRadius: "12px",
-            padding: "16px 32px", fontSize: "16px",
-            fontWeight: "600", cursor: "pointer",
-            boxShadow: "0 4px 14px rgba(22, 163, 74, 0.35)",
-            transition: "all 0.2s",
-            fontFamily: "inherit"
-          }}
-          onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(22, 163, 74, 0.45)"; }}
-          onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(22, 163, 74, 0.35)"; }}
+          className="flex items-center gap-2.5 bg-green-600 text-white border-none rounded-xl py-4 px-10 text-base font-bold cursor-pointer shadow-lg shadow-green-600/30 transition-all hover:-translate-y-0.5 hover:shadow-green-600/40 active:scale-95"
         >
           🤖 Ask AI about this weather
         </button>

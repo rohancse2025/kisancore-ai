@@ -39,7 +39,6 @@ export default function CropsPage() {
   }, []);
 
   useEffect(() => {
-    // Fetch live sensor data for Temperature and Humidity
     const fetchSensorData = async () => {
       try {
         const res = await fetch("http://127.0.0.1:8000/api/v1/sensor-data");
@@ -60,13 +59,9 @@ export default function CropsPage() {
 
   // --- CROP RECOMMENDATION STATE ---
   const [inputs, setInputs] = useState({
-    N: 65,
-    P: 40,
-    K: 40,
-    temperature: 25,
-    humidity: 80,
-    ph: 6.5,
-    rainfall: 100
+    N: 65, P: 40, K: 40,
+    temperature: 25, humidity: 80,
+    ph: 6.5, rainfall: 100
   });
 
   type AICrop = {
@@ -111,30 +106,24 @@ export default function CropsPage() {
   };
 
   const sliders = [
-    { name: "N", label: "Nitrogen (N)", min: 0, max: 140, step: 1, hint: "From your Soil Health Card or Krishi Kendra test" },
-    { name: "P", label: "Phosphorus (P)", min: 0, max: 140, step: 1, hint: "From your Soil Health Card or Krishi Kendra test" },
-    { name: "K", label: "Potassium (K)", min: 0, max: 200, step: 1, hint: "From your Soil Health Card or Krishi Kendra test" },
-    { name: "temperature", label: "Temperature (°C)", min: 0, max: 50, step: 0.1, hint: "Auto-filled from your weather data" },
-    { name: "humidity", label: "Humidity (%)", min: 0, max: 100, step: 1, hint: "Auto-filled from your weather data" },
-    { name: "ph", label: "Soil pH", min: 0, max: 14, step: 0.1, hint: "From Soil Health Card. Normal range: 6.0-7.5" },
-    { name: "rainfall", label: "Rainfall (mm)", min: 0, max: 300, step: 1, hint: "Check your district's average annual rainfall online" },
+    { name: "N", label: "Nitrogen (N)", min: 0, max: 140, step: 1, hint: "Soil Health Card N value" },
+    { name: "P", label: "Phosphorus (P)", min: 0, max: 140, step: 1, hint: "Soil Health Card P value" },
+    { name: "K", label: "Potassium (K)", min: 0, max: 200, step: 1, hint: "Soil Health Card K value" },
+    { name: "temperature", label: "Temperature (°C)", min: 0, max: 50, step: 0.1, hint: "Auto-filled from ESP32" },
+    { name: "humidity", label: "Humidity (%)", min: 0, max: 100, step: 1, hint: "Auto-filled from ESP32" },
+    { name: "ph", label: "Soil pH", min: 0, max: 14, step: 0.1, hint: "Optimal range: 6.0-7.5" },
+    { name: "rainfall", label: "Rainfall (mm)", min: 0, max: 300, step: 1, hint: "Avg annual rainfall" },
   ];
 
   // --- FERTILIZER RECOMMENDATION STATE ---
   const [fertInputs, setFertInputs] = useState({
-    crop: 'Rice',
-    soil: 'Loamy',
-    N: 60,
-    P: 40,
-    K: 40
+    crop: 'Rice', soil: 'Loamy',
+    N: 60, P: 40, K: 40
   });
   
   const [fertResult, setFertResult] = useState<{
-    title: string;
-    dosage: string;
-    time: string;
-    colorBg: string;
-    colorText: string;
+    title: string; dosage: string; time: string;
+    colorBg: string; colorText: string;
   } | null>(null);
 
   const handleFertChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
@@ -146,186 +135,91 @@ export default function CropsPage() {
     const n = Number(fertInputs.N);
     const p = Number(fertInputs.P);
     const k = Number(fertInputs.K);
-    
-    // Evaluate lowest nutrient
     const minVal = Math.min(n, p, k);
     if (minVal > 60) {
-      setFertResult({
-        title: "Balanced NPK (10-26-26)",
-        dosage: "Apply 2-3 bags per acre",
-        time: "Apply before sowing or at planting time",
-        colorBg: "#dcfce7", colorText: "#166534" // green
-      });
+      setFertResult({ title: "Balanced NPK (10-26-26)", dosage: "2-3 bags per acre", time: "At sowing time", colorBg: "bg-green-50", colorText: "text-green-800" });
     } else if (minVal === n) {
-      setFertResult({
-        title: "Apply Urea (46-0-0)",
-        dosage: "Apply 2-3 bags per acre",
-        time: "Apply before sowing or at planting time",
-        colorBg: "#dbeafe", colorText: "#1e40af" // blue
-      });
+      setFertResult({ title: "Apply Urea (46-0-0)", dosage: "2-3 bags per acre", time: "At planting time", colorBg: "bg-blue-50", colorText: "text-blue-800" });
     } else if (minVal === p) {
-      setFertResult({
-        title: "Apply DAP (18-46-0)",
-        dosage: "Apply 2-3 bags per acre",
-        time: "Apply before sowing or at planting time",
-        colorBg: "#ffedd5", colorText: "#9a3412" // orange
-      });
+      setFertResult({ title: "Apply DAP (18-46-0)", dosage: "2-3 bags per acre", time: "At planting time", colorBg: "bg-orange-50", colorText: "text-orange-800" });
     } else {
-      setFertResult({
-        title: "Apply MOP (0-0-60)",
-        dosage: "Apply 2-3 bags per acre",
-        time: "Apply before sowing or at planting time",
-        colorBg: "#f3e8ff", colorText: "#6b21a8" // purple
-      });
+      setFertResult({ title: "Apply MOP (0-0-60)", dosage: "2-3 bags per acre", time: "At planting time", colorBg: "bg-purple-50", colorText: "text-purple-800" });
     }
   };
 
   return (
-    <div style={{ fontFamily: "system-ui, -apple-system, sans-serif", paddingBottom: "40px" }}>
+    <div className="font-sans pb-10">
       
       {/* TABS HEADER */}
-      <div style={{ display: "flex", borderBottom: "2px solid #e5e7eb", marginBottom: "30px", gap: "8px" }}>
+      <div className="flex border-b-2 border-gray-200 mb-8 gap-2 overflow-x-auto scrollbar-hide">
         <button 
           onClick={() => setActiveTab('crop')}
-          style={{
-            backgroundColor: activeTab === 'crop' ? "#f0fdf4" : "white",
-            border: "1px solid",
-            borderColor: activeTab === 'crop' ? "#16a34a #16a34a transparent #16a34a" : "transparent transparent transparent transparent",
-            borderTopLeftRadius: "12px",
-            borderTopRightRadius: "12px",
-            color: activeTab === 'crop' ? "#16a34a" : "#6b7280",
-            padding: isMobile ? "12px 15px" : "16px 25px",
-            fontSize: isMobile ? "14px" : "18px",
-            fontWeight: "bold",
-            flex: isMobile ? 1 : "initial",
-            textAlign: "center",
-            cursor: "pointer",
-            transition: "all 0.2s ease-in-out",
-            position: "relative",
-            bottom: activeTab === 'crop' ? "-2px" : "0"
-          }}
-          onMouseEnter={(e) => { if (activeTab !== 'crop') e.currentTarget.style.color = "#16a34a"; }}
-          onMouseLeave={(e) => { if (activeTab !== 'crop') e.currentTarget.style.color = "#6b7280"; }}
+          className={`px-6 py-4 text-base md:text-lg font-black transition-all border-t border-x rounded-t-xl relative -bottom-[2px] cursor-pointer whitespace-nowrap
+            ${activeTab === 'crop' ? 'bg-green-50 border-green-600 text-green-600' : 'bg-transparent border-transparent text-gray-400 hover:text-green-600'}`}
         >
-          🌾 ML Crop Recommendation
+          🌾 ML Recommendation
         </button>
         <button 
           onClick={() => setActiveTab('fertilizer')}
-          style={{
-            backgroundColor: activeTab === 'fertilizer' ? "#f0fdf4" : "white",
-            border: "1px solid",
-            borderColor: activeTab === 'fertilizer' ? "#16a34a #16a34a transparent #16a34a" : "transparent transparent transparent transparent",
-            borderTopLeftRadius: "12px",
-            borderTopRightRadius: "12px",
-            color: activeTab === 'fertilizer' ? "#16a34a" : "#6b7280",
-            padding: isMobile ? "12px 15px" : "16px 25px",
-            fontSize: isMobile ? "14px" : "18px",
-            fontWeight: "bold",
-            flex: isMobile ? 1 : "initial",
-            textAlign: "center",
-            cursor: "pointer",
-            transition: "all 0.2s ease-in-out",
-            position: "relative",
-            bottom: activeTab === 'fertilizer' ? "-2px" : "0"
-          }}
-          onMouseEnter={(e) => { if (activeTab !== 'fertilizer') e.currentTarget.style.color = "#16a34a"; }}
-          onMouseLeave={(e) => { if (activeTab !== 'fertilizer') e.currentTarget.style.color = "#6b7280"; }}
+          className={`px-6 py-4 text-base md:text-lg font-black transition-all border-t border-x rounded-t-xl relative -bottom-[2px] cursor-pointer whitespace-nowrap
+            ${activeTab === 'fertilizer' ? 'bg-green-50 border-green-600 text-green-600' : 'bg-transparent border-transparent text-gray-400 hover:text-green-600'}`}
         >
-          🧪 Fertilizer Recommendation
+          🧪 Fertilizer Advisor
         </button>
       </div>
 
       {activeTab === 'crop' && (
-        <div style={{ animation: "fadeIn 0.3s ease-out" }}>
-          {/* 1. HERO HEADER */}
-          <section style={{
-            background: "linear-gradient(135deg, #15803d 0%, #16a34a 100%)",
-            borderRadius: "12px",
-            padding: isMobile ? "30px 20px" : "40px",
-            color: "white",
-            marginBottom: "30px",
-            boxShadow: "0 4px 15px rgba(21, 128, 61, 0.2)",
-            textAlign: isMobile ? "center" : "left"
-          }}>
-            <h1 style={{ margin: "0 0 10px 0", fontSize: isMobile ? "28px" : "36px", fontWeight: "bold" }}>🌾 {isMobile ? "Plant AI" : "Crop Recommendation"}</h1>
-            <p style={{ margin: 0, fontSize: isMobile ? "16px" : "18px", opacity: 0.9 }}>{isMobile ? "Move sliders to analyze soil" : "Move the sliders to match your farm conditions"}</p>
+        <div className="animate-fade-in">
+          {/* HERO HEADER */}
+          <section className={`bg-gradient-to-br from-green-800 to-green-600 rounded-2xl p-8 md:p-10 text-white mb-8 shadow-lg shadow-green-700/20 ${isMobile ? 'text-center' : 'text-left'}`}>
+            <h1 className="m-0 mb-2.5 text-2xl md:text-3xl font-extrabold tracking-tight">🌾 AI Crop Recommendation</h1>
+            <p className="m-0 text-base md:text-lg opacity-90 font-medium">Smart analysis based on soil nutrients and live climate data</p>
           </section>
 
-          {/* 2. PARAMETERS AND RESULTS */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "30px", marginBottom: "40px" }}>
-            
+          <div className="flex flex-col gap-8 mb-10">
             {/* Input Form Card */}
-            <div style={{
-              ...cardStyle,
-              borderTop: "4px solid #16a34a"
-            }}>
-              <h2 style={{ margin: "0 0 20px 0", color: "#111827", fontSize: "20px", fontWeight: "700" }}>Farm Parameters</h2>
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 border-t-4 border-t-green-600">
+              <h2 className="m-0 mb-6 text-xl text-gray-900 font-black flex items-center gap-2">
+                📂 Farm Parameters
+              </h2>
               
-              {/* INFO CARD */}
-              <div style={{
-                backgroundColor: "#eff6ff",
-                borderLeft: "4px solid #3b82f6",
-                borderRadius: "8px",
-                padding: "12px",
-                fontSize: "13px",
-                color: "#1e40af",
-                marginBottom: "20px",
-                lineHeight: "1.5"
-              }}>
-                ℹ️ <strong>Don't know your soil values?</strong> Get a FREE Soil Health Card from your nearest Krishi Kendra (Agriculture Office). It has all N, P, K and pH values.
+              <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 text-sm text-blue-800 mb-8 leading-relaxed font-medium">
+                ℹ️ <strong>Soil Nutrients:</strong> Use values from your Soil Health Card (Krishi Kendra) for the most accurate AI recommendation.
               </div>
               
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: isMobile ? "20px" : "30px", marginBottom: "25px" }}>
+              <div className={`grid gap-6 md:gap-x-10 mb-8 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 {sliders.map(slider => {
                   const currentValue = inputs[slider.name as keyof typeof inputs];
                   return (
                     <div key={slider.name}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", alignItems: "flex-start" }}>
+                      <div className="flex justify-between mb-2 items-start">
                         <div>
-                          <label style={{ fontWeight: "600", color: "#4b5563", display: "flex", alignItems: "center" }}>
+                          <label className="font-bold text-gray-700 text-sm flex items-center">
                             {slider.label}
                             {(slider.name === "temperature" || slider.name === "humidity") && (
-                              <span style={{ marginLeft: "8px", color: "#16a34a", fontSize: "12px", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
-                                <span style={{ color: "#ef4444", fontSize: "10px" }}>🔴</span> Live
+                              <span className="ml-2 text-green-600 text-[10px] font-black uppercase flex items-center gap-1 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                                <span className="text-[8px] animate-pulse">🔴</span> Live
                               </span>
                             )}
                           </label>
-                          <div style={{ fontSize: "11px", color: "#9ca3af", fontStyle: "italic", marginTop: "2px" }}>
-                            {slider.hint}
-                          </div>
+                          <p className="text-[11px] text-gray-400 italic mt-0.5 font-medium">{slider.hint}</p>
                         </div>
-                        <span style={{ fontWeight: "bold", color: "#15803d", fontSize: "18px" }}>
-                          {currentValue}
-                        </span>
+                        <span className="font-black text-green-700 text-xl">{currentValue}</span>
                       </div>
                       
                       <input
-                        type="range"
-                        name={slider.name}
-                        min={slider.min}
-                        max={slider.max}
-                        step={slider.step}
-                        value={currentValue}
-                        onChange={handleSliderChange}
-                        style={{
-                          width: "100%",
-                          accentColor: "#16a34a",
-                          cursor: "pointer",
-                          height: "6px",
-                          borderRadius: "3px",
-                          marginBottom: "4px"
-                        }}
+                        type="range" name={slider.name} min={slider.min} max={slider.max} step={slider.step}
+                        value={currentValue} onChange={handleSliderChange}
+                        className="w-full accent-green-600 cursor-pointer h-1.5 rounded-full mb-1"
                       />
                       
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#9ca3af" }}>
-                        <span>{slider.min}</span>
-                        <span>{slider.max}</span>
+                      <div className="flex justify-between text-[10px] text-gray-300 font-black uppercase tracking-tighter">
+                        <span>Min {slider.min}</span>
+                        <span>Max {slider.max}</span>
                       </div>
                       
                       {getSliderHint(slider.name, currentValue) && (
-                        <div style={{ fontSize: "12px", color: "#b45309", marginTop: "4px" }}>
-                          {getSliderHint(slider.name, currentValue)}
-                        </div>
+                        <p className="text-[11px] text-amber-600 mt-2 font-bold italic">{getSliderHint(slider.name, currentValue)}</p>
                       )}
                     </div>
                   );
@@ -333,125 +227,73 @@ export default function CropsPage() {
               </div>
 
               <button
-                onClick={getMLRecommendation}
-                disabled={isLoading}
-                style={{
-                  width: "100%",
-                  padding: "16px",
-                  backgroundColor: isLoading ? "#9ca3af" : "#16a34a",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  cursor: isLoading ? "not-allowed" : "pointer",
-                  transition: "background-color 0.2s"
-                }}
-                onMouseEnter={(e) => {
-                  if (!isLoading) e.currentTarget.style.backgroundColor = "#15803d";
-                }}
-                onMouseLeave={(e) => {
-                  if (!isLoading) e.currentTarget.style.backgroundColor = "#16a34a";
-                }}
+                onClick={getMLRecommendation} disabled={isLoading}
+                className={`w-full py-4.5 rounded-xl text-lg font-black transition-all tracking-tight active:scale-[0.98] mt-2
+                  ${isLoading ? 'bg-gray-400 cursor-not-allowed shadow-none' : 'bg-green-600 text-white cursor-pointer hover:bg-green-700 shadow-lg shadow-green-600/30'}`}
               >
-                {isLoading ? "Analyzing..." : "Get ML Recommendation"}
+                {isLoading ? "🔍 Analyzing Data..." : "✨ Get AI Recommendation"}
               </button>
             </div>
 
             {/* ERROR MESSAGE */}
             {error && (
-              <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: "12px", padding: "20px", color: "#991b1b", textAlign: "center" }}>
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-red-800 text-center font-bold animate-shake">
                 ⚠️ {error}
               </div>
             )}
 
             {/* RESULTS SECTION */}
             {(isLoading || aiCrops.length > 0) && (
-              <div>
-                <h2 style={{ fontSize: "20px", color: "#111827", marginBottom: "20px", textAlign: "center", fontWeight: "700" }}>
+              <div className="animate-fade-in">
+                <h2 className="text-xl text-gray-900 mb-6 text-center font-black tracking-tight">
                   🤖 Top 3 AI Crop Recommendations
                 </h2>
                 
                 {isLoading ? (
-                  <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
-                    <div style={{ 
-                      border: "4px solid #f3f4f6", 
-                      borderTop: "4px solid #16a34a", 
-                      borderRadius: "50%", 
-                      width: "50px", 
-                      height: "50px", 
-                      animation: "spin 1s linear infinite" 
-                    }} />
-                    <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+                  <div className="flex justify-center p-12">
+                    <div className="w-12 h-12 border-5 border-gray-100 border-t-green-600 rounded-full animate-spin" />
                   </div>
                 ) : (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {aiCrops.slice(0, 3).map((crop, idx) => {
-                      const topBorderColors = ["#16a34a", "#2563eb", "#ea580c"];
-                      const profitConfig = {
-                        Low: { bg: "#fee2e2", text: "#991b1b" },
-                        Medium: { bg: "#ffedd5", text: "#9a3412" },
-                        High: { bg: "#dcfce7", text: "#166534" }
-                      };
-                      const profitStyle = profitConfig[crop.profit_potential as keyof typeof profitConfig] || profitConfig.Medium;
+                      const colors = [
+                        { b: "border-t-green-600", s: "shadow-green-600/10", t: "text-green-700" },
+                        { b: "border-t-blue-500", s: "shadow-blue-600/10", t: "text-blue-700" },
+                        { b: "border-t-amber-500", s: "shadow-amber-600/10", t: "text-amber-700" }
+                      ];
+                      const c = colors[idx] || colors[0];
+                      const profit = {
+                        Low: "bg-red-50 text-red-700",
+                        Medium: "bg-orange-50 text-orange-700",
+                        High: "bg-green-50 text-green-700"
+                      }[crop.profit_potential as 'Low'|'Medium'|'High'] || "bg-gray-50 text-gray-700";
 
                       return (
-                        <div key={idx} style={{
-                          ...cardStyle,
-                          borderTop: `6px solid ${topBorderColors[idx] || "#16a34a"}`,
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "15px",
-                          textAlign: "center",
-                          transition: "transform 0.2s",
-                          cursor: "default"
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.transform = "translateY(-5px)"}
-                        onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
-                        >
-                          <div style={{ fontSize: "48px", marginTop: "10px" }}>{crop.emoji}</div>
-                          <h3 style={{ fontSize: "24px", fontWeight: "bold", color: "#2563eb", margin: 0 }}>{crop.name}</h3>
-                          <p style={{ fontSize: "14px", color: "#6b7280", fontStyle: "italic", margin: 0, lineHeight: "1.4" }}>{crop.reason}</p>
+                        <div key={idx} className={`bg-white rounded-2xl p-8 border border-gray-100 border-t-6 ${c.b} flex flex-col gap-4 text-center transition-all hover:-translate-y-1 hover:shadow-xl ${c.s}`}>
+                          <div className="text-5xl mt-2">{crop.emoji}</div>
+                          <h3 className={`text-2xl font-black ${c.t} tracking-tight m-0`}>{crop.name}</h3>
+                          <p className="text-sm text-gray-500 italic m-0 leading-relaxed font-medium">{crop.reason}</p>
                           
-                          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "10px", textAlign: "left" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "15px" }}>
-                              <span>💧</span>
-                              <span style={{ fontWeight: "600", color: "#4b5563" }}>Water needed:</span>
-                              <span style={{ color: "#1f2937" }}>{crop.water_needed}</span>
+                          <div className="flex flex-col gap-3 mt-4 text-left border-t border-gray-50 pt-5">
+                            <div className="flex items-center gap-2.5 text-[15px] font-medium text-gray-700">
+                              <span>💧</span> <span className="text-gray-400 font-bold">Water:</span> {crop.water_needed}
                             </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "15px" }}>
-                              <span>📅</span>
-                              <span style={{ fontWeight: "600", color: "#4b5563" }}>Best season:</span>
-                              <span style={{ color: "#1f2937" }}>{crop.best_season}</span>
+                            <div className="flex items-center gap-2.5 text-[15px] font-medium text-gray-700">
+                              <span>📅</span> <span className="text-gray-400 font-bold">Season:</span> {crop.best_season}
                             </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "15px" }}>
-                              <span>💰</span>
-                              <span style={{ fontWeight: "600", color: "#4b5563" }}>Profit:</span>
-                              <span style={{ 
-                                background: profitStyle.bg, 
-                                color: profitStyle.text, 
-                                padding: "2px 10px", 
-                                borderRadius: "12px", 
-                                fontSize: "13px", 
-                                fontWeight: "bold" 
-                              }}>
+                            <div className="flex items-center gap-2.5 text-[15px] font-medium text-gray-700">
+                              <span>💰</span> <span className="text-gray-400 font-bold">Profit:</span> 
+                              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider ${profit}`}>
                                 {crop.profit_potential}
                               </span>
                             </div>
                           </div>
 
                           <button
-                            onClick={() => navigate('/chat', { state: { prefill: `Tell me more about growing ${crop.name} — best practices, diseases to watch for, and fertilizer tips.` } })}
-                            style={{
-                              marginTop: "10px",
-                              background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0",
-                              borderRadius: "8px", padding: "10px", fontSize: "14px",
-                              fontWeight: "600", cursor: "pointer", transition: "background 0.2s"
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = "#dcfce7"}
-                            onMouseLeave={e => e.currentTarget.style.background = "#f0fdf4"}
+                            onClick={() => navigate('/chat', { state: { prefill: `Tell me more about growing ${crop.name} — best practices and fertilizer tips.` } })}
+                            className="mt-4 bg-green-50 text-green-600 border border-green-200 rounded-xl py-3 text-sm font-bold transition-colors hover:bg-green-100 cursor-pointer"
                           >
-                            Ask AI about {crop.name} →
+                            Ask AI Expert →
                           </button>
                         </div>
                       );
@@ -461,225 +303,112 @@ export default function CropsPage() {
               </div>
             )}
             
-            {(!isLoading && aiCrops.length === 0 && !error) && (
-              <div style={{
-                ...cardStyle, 
-                display: "flex", 
-                flexDirection: "column", 
-                alignItems: "center", 
-                justifyContent: "center",
-                backgroundColor: "#f9fafb",
-                border: "2px dashed #d1d5db",
-                boxShadow: "none",
-                padding: "60px 20px"
-              }}>
-                <span style={{ fontSize: "40px", opacity: 0.5, marginBottom: "15px" }}>🌾</span>
-                <p style={{ color: "#6b7280", fontSize: "18px", textAlign: "center", maxWidth: "500px" }}>
-                  Adjust your farm parameters above and click <strong>Get ML Recommendation</strong> to see AI suggestions here.
+            {!isLoading && aiCrops.length === 0 && !error && (
+              <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl py-16 flex flex-col items-center justify-center text-center px-10">
+                <span className="text-5xl opacity-20 mb-4 block">🌾</span>
+                <p className="text-gray-500 font-bold text-lg max-w-md">
+                  Complete your soil parameters above and get instant suggestions from our trained AI model.
                 </p>
               </div>
             )}
           </div>
 
-
-          {/* 4. HOW IT WORKS SECTION */}
-          <h2 style={{ textAlign: "center", marginBottom: "30px", color: "#111827", fontSize: "20px", fontWeight: "700" }}>How It Works</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "25px" }}>
-            
-            <div style={{...cardStyle, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "30px 20px", border: "1px solid #e5e7eb" }}>
-              <div style={{
-                backgroundColor: "#dcfce7",
-                color: "#16a34a",
-                width: "60px",
-                height: "60px",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "28px",
-                fontWeight: "bold",
-                marginBottom: "20px"
-              }}>1</div>
-              <h3 style={{ margin: "0 0 10px 0", color: "#1f2937", fontSize: "20px" }}>Enter Soil Data</h3>
-              <p style={{ margin: 0, color: "#6b7280", fontSize: "16px" }}>N, P, K values</p>
-            </div>
-
-            <div style={{...cardStyle, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "30px 20px", border: "1px solid #e5e7eb" }}>
-              <div style={{
-                backgroundColor: "#dcfce7",
-                color: "#16a34a",
-                width: "60px",
-                height: "60px",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "28px",
-                fontWeight: "bold",
-                marginBottom: "20px"
-              }}>2</div>
-              <h3 style={{ margin: "0 0 10px 0", color: "#1f2937", fontSize: "20px" }}>Add Climate Info</h3>
-              <p style={{ margin: 0, color: "#6b7280", fontSize: "16px" }}>Temperature, humidity etc.</p>
-            </div>
-
-            <div style={{...cardStyle, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "30px 20px", border: "1px solid #e5e7eb" }}>
-              <div style={{
-                backgroundColor: "#dcfce7",
-                color: "#16a34a",
-                width: "60px",
-                height: "60px",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "28px",
-                fontWeight: "bold",
-                marginBottom: "20px"
-              }}>3</div>
-              <h3 style={{ margin: "0 0 10px 0", color: "#1f2937", fontSize: "20px" }}>Get AI Result</h3>
-              <p style={{ margin: 0, color: "#6b7280", fontSize: "16px" }}>Instant recommendation</p>
-            </div>
-
+          <h2 className="text-center mb-8 text-xl font-black text-gray-900 uppercase tracking-widest">📋 Simple Steps</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { n: 1, t: "Enter Soil Data", d: "N, P, K from your test card" },
+              { n: 2, t: "Fetch Climate", d: "Temp & Humidity auto-filled" },
+              { n: 3, t: "AI Predicts", d: "Top crops for your field" }
+            ].map(step => (
+              <div key={step.n} className="bg-white p-8 rounded-2xl flex flex-col items-center text-center border border-gray-100 shadow-sm hover:border-green-300 transition-colors">
+                <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl font-black mb-4">{step.n}</div>
+                <h3 className="text-lg font-black text-gray-800 m-0 mb-1">{step.t}</h3>
+                <p className="text-gray-400 text-sm font-medium m-0">{step.d}</p>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
       {activeTab === 'fertilizer' && (
-        <div style={{ ...cardStyle, maxWidth: "700px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "25px", animation: "fadeIn 0.3s ease-out" }}>
-          <h2 style={{ margin: "0", color: "#111827", fontSize: "20px", textAlign: "center", fontWeight: "700" }}>
-            Find the right fertilizer for your crop
-          </h2>
+        <div className="max-w-[700px] mx-auto flex flex-col gap-6 animate-fade-in">
+          <div className="bg-white rounded-2xl p-8 md:p-10 shadow-sm border border-gray-100 flex flex-col gap-6">
+            <h2 className="m-0 text-xl text-gray-900 text-center font-black">
+              🧪 Smart Fertilizer Advisor
+            </h2>
 
-          <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginTop: "10px" }}>
-            <div style={{ flex: 1, minWidth: "250px" }}>
-              <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", color: "#4b5563" }}>Select Crop</label>
-              <select 
-                name="crop" 
-                value={fertInputs.crop} 
-                onChange={handleFertChange}
-                style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "16px", backgroundColor: "#f9fafb" }}
-              >
-                {['Rice', 'Wheat', 'Maize', 'Cotton', 'Sugarcane', 'Mango', 'Banana', 'Grapes', 'Apple', 'Chickpea'].map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div style={{ flex: 1, minWidth: "250px" }}>
-              <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", color: "#4b5563" }}>Soil Type</label>
-              <select 
-                name="soil" 
-                value={fertInputs.soil} 
-                onChange={handleFertChange}
-                style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "16px", backgroundColor: "#f9fafb" }}
-              >
-                {['Sandy', 'Loamy', 'Clay', 'Black', 'Red'].map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginTop: "10px" }}>
-            <div style={{ flex: 1, minWidth: "150px" }}>
-              <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", color: "#4b5563" }}>Nitrogen (N) Level</label>
-              <input 
-                type="number" 
-                name="N" 
-                min="0" max="140" 
-                value={fertInputs.N} 
-                onChange={handleFertChange}
-                style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "16px", boxSizing: "border-box" }}
-              />
-            </div>
-            
-            <div style={{ flex: 1, minWidth: "150px" }}>
-              <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", color: "#4b5563" }}>Phosphorus (P) Level</label>
-              <input 
-                type="number" 
-                name="P" 
-                min="0" max="140" 
-                value={fertInputs.P} 
-                onChange={handleFertChange}
-                style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "16px", boxSizing: "border-box" }}
-              />
-            </div>
-            
-            <div style={{ flex: 1, minWidth: "150px" }}>
-              <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", color: "#4b5563" }}>Potassium (K) Level</label>
-              <input 
-                type="number" 
-                name="K" 
-                min="0" max="200" 
-                value={fertInputs.K} 
-                onChange={handleFertChange}
-                style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "16px", boxSizing: "border-box" }}
-              />
-            </div>
-          </div>
-
-          <button
-            onClick={getFertilizerRecommendation}
-            style={{
-              padding: "16px",
-              backgroundColor: "#16a34a",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "18px",
-              fontWeight: "bold",
-              cursor: "pointer",
-              transition: "background-color 0.2s",
-              marginTop: "20px"
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#15803d"}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#16a34a"}
-          >
-            Get Fertilizer Recommendation
-          </button>
-
-          {fertResult && (
-            <div style={{
-              marginTop: "20px",
-              padding: "25px",
-              backgroundColor: fertResult.colorBg,
-              borderRadius: "12px",
-              border: `2px solid ${fertResult.colorText}`,
-              animation: "fadeIn 0.3s ease-out"
-            }}>
-              <h3 style={{ margin: "0 0 15px 0", color: fertResult.colorText, fontSize: "24px" }}>
-                🧪 {fertResult.title}
-              </h3>
-              <ul style={{ margin: "0 0 20px 0", paddingLeft: "20px", color: "#374151", fontSize: "18px", lineHeight: "1.6" }}>
-                <li><strong>Dosage:</strong> {fertResult.dosage}</li>
-                <li><strong>Best time:</strong> {fertResult.time}</li>
-              </ul>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="flex flex-col gap-2">
+                <label className="font-bold text-gray-500 text-sm">Target Crop</label>
+                <select 
+                  name="crop" value={fertInputs.crop} onChange={handleFertChange}
+                  className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 font-bold outline-none focus:border-green-600 focus:bg-white transition-all"
+                >
+                  {['Rice', 'Wheat', 'Maize', 'Cotton', 'Sugarcane', 'Mango', 'Banana', 'Grapes', 'Apple', 'Chickpea'].map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
               
-              <div style={{
-                backgroundColor: "#fef3c7",
-                borderLeft: "4px solid #f59e0b",
-                padding: "15px",
-                borderRadius: "4px",
-                display: "flex",
-                gap: "10px",
-                alignItems: "flex-start"
-              }}>
-                <span style={{ fontSize: "20px" }}>⚠️</span>
-                <p style={{ margin: "0", color: "#92400e", fontSize: "14px", fontWeight: "600", lineHeight: "1.4" }}>
-                  Warning: Always consult local agriculture department for exact dosage.
-                </p>
+              <div className="flex flex-col gap-2">
+                <label className="font-bold text-gray-500 text-sm">Soil Texture</label>
+                <select 
+                  name="soil" value={fertInputs.soil} onChange={handleFertChange}
+                  className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 font-bold outline-none focus:border-green-600 focus:bg-white transition-all"
+                >
+                  {['Sandy', 'Loamy', 'Clay', 'Black', 'Red'].map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
               </div>
             </div>
-          )}
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { n: "N", l: "Nitrogen", m: 140 },
+                { n: "P", l: "Phosphorus", m: 140 },
+                { n: "K", l: "Potassium", m: 200 }
+              ].map(item => (
+                <div key={item.n} className="flex flex-col gap-2">
+                  <label className="font-bold text-gray-500 text-sm">{item.l} (PPM)</label>
+                  <input 
+                    type="number" name={item.n} min="0" max={item.m} 
+                    value={fertInputs[item.n as keyof typeof fertInputs]} 
+                    onChange={handleFertChange}
+                    className="p-3.5 rounded-xl border border-gray-200 font-bold outline-none focus:border-green-600 focus:bg-white transition-all text-center"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={getFertilizerRecommendation}
+              className="mt-4 bg-green-600 text-white py-4.5 rounded-xl text-lg font-black shadow-lg shadow-green-600/30 transition-all hover:bg-green-700 active:scale-95 cursor-pointer"
+            >
+              Get Recommendation
+            </button>
+
+            {fertResult && (
+              <div className={`mt-4 p-8 rounded-2xl border-l-[10px] animate-fade-in ${fertResult.colorBg} shadow-sm`} style={{ borderColor: 'currentColor' }}>
+                <h3 className={`m-0 mb-4 text-2xl font-black ${fertResult.colorText}`}>
+                  ✅ {fertResult.title}
+                </h3>
+                <ul className="m-0 mb-6 pl-5 space-y-3 text-gray-700 text-lg font-bold">
+                  <li>Dosage: <span className="font-normal opacity-80">{fertResult.dosage}</span></li>
+                  <li>Timing: <span className="font-normal opacity-80">{fertResult.time}</span></li>
+                </ul>
+                
+                <div className="bg-amber-100/50 border-l-4 border-amber-500 p-4 rounded-lg flex gap-3 items-center">
+                  <span className="text-xl">⚠️</span>
+                  <p className="m-0 text-amber-800 text-[13px] font-bold leading-relaxed">
+                    Consult your district agri-officer for regional soil variations before application.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
   );
 }
-
-const cardStyle: React.CSSProperties = {
-  backgroundColor: "white",
-  borderRadius: "12px",
-  padding: "30px",
-  boxShadow: "0 4px 15px rgba(0,0,0,0.05)"
-};
