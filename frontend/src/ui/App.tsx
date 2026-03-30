@@ -52,6 +52,16 @@ export default function App() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const navLinks = [
     { path: "/", label: "Home" },
     { path: "/crops", label: "Crops" },
@@ -73,7 +83,7 @@ export default function App() {
     <div className="min-h-screen w-full bg-gray-50 dark:bg-slate-900 transition-colors duration-300 font-sans">
       
       {/* 1. TOP NAVBAR */}
-      <nav className="sticky top-0 z-[100] bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-700 h-20 px-6 md:px-12 flex items-center justify-between shadow-sm">
+      <nav className={`sticky top-0 z-[100] h-20 px-6 md:px-12 flex items-center justify-between transition-all duration-300 animate-slide-down ${scrolled ? 'bg-white/80 dark:bg-slate-800/80 backdrop-blur-md shadow-md border-b border-gray-100 dark:border-slate-700' : 'bg-transparent border-transparent'}`}>
         {/* LEFT: LOGO */}
         <Link 
           to="/" 
@@ -115,7 +125,7 @@ export default function App() {
             <button 
               onClick={toggleDarkMode}
               title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              className="w-10 h-10 rounded-full bg-gray-50 dark:bg-slate-700/50 flex items-center justify-center text-xl mb-1 hover:bg-gray-100 dark:hover:bg-slate-700 cursor-pointer transition-colors"
+              className="w-10 h-10 rounded-full bg-gray-50 dark:bg-slate-700/50 flex items-center justify-center text-xl mb-1 hover:bg-gray-100 dark:hover:bg-slate-700 cursor-pointer transition-colors ripple"
             >
               {isDark ? "🌞" : "🌙"}
             </button>
@@ -124,7 +134,7 @@ export default function App() {
             <div ref={dropdownRef} className="relative hidden md:block pl-0">
               <button 
                 onClick={() => setShowDropdown(!showDropdown)}
-                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-600 cursor-pointer hover:border-green-600 dark:hover:border-green-500 flex items-center gap-2"
+                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-600 cursor-pointer hover:border-green-600 dark:hover:border-green-500 flex items-center gap-2 transition-all ripple"
               >
                 <span className="text-xs">🌐</span>
                 <span className="font-bold text-xs text-gray-600 dark:text-slate-300">{lang}</span>

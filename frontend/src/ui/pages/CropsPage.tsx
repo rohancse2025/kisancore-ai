@@ -82,6 +82,10 @@ export default function CropsPage() {
     setIsLoading(true);
     setAiCrops([]);
     setError(null);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     try {
       const res = await fetch("http://127.0.0.1:8000/api/v1/crops", {
         method: "POST",
@@ -90,7 +94,8 @@ export default function CropsPage() {
           nitrogen: inputs.N, phosphorus: inputs.P, potassium: inputs.K,
           temperature: inputs.temperature, humidity: inputs.humidity,
           ph: inputs.ph, rainfall: inputs.rainfall
-        })
+        }),
+        signal: controller.signal
       });
       if (!res.ok) {
         const err = await res.json();
@@ -99,8 +104,13 @@ export default function CropsPage() {
       const data = await res.json();
       setAiCrops(data.crops || []);
     } catch (err: any) {
-      setError(err.message || "Failed to get AI recommendations. Please try again.");
+      if (err.name === 'AbortError') {
+        setError("Recommendation timed out. Please check your backend connection.");
+      } else {
+        setError(err.message || "Failed to get AI recommendations. Please try again.");
+      }
     } finally {
+      clearTimeout(timeoutId);
       setIsLoading(false);
     }
   };
@@ -121,29 +131,44 @@ export default function CropsPage() {
     N: 60, P: 40, K: 40
   });
   
-  const [fertResult, setFertResult] = useState<{
-    title: string; dosage: string; time: string;
-    colorBg: string; colorText: string;
-  } | null>(null);
+  const [fertResult, setFertResult] = useState<string | null>(null);
+  const [fertLoading, setFertLoading] = useState(false);
 
   const handleFertChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
     const { name, value } = e.target;
     setFertInputs(prev => ({ ...prev, [name]: value }));
   };
 
-  const getFertilizerRecommendation = () => {
-    const n = Number(fertInputs.N);
-    const p = Number(fertInputs.P);
-    const k = Number(fertInputs.K);
-    const minVal = Math.min(n, p, k);
-    if (minVal > 60) {
-      setFertResult({ title: "Balanced NPK (10-26-26)", dosage: "2-3 bags per acre", time: "At sowing time", colorBg: "bg-green-50", colorText: "text-green-800" });
-    } else if (minVal === n) {
-      setFertResult({ title: "Apply Urea (46-0-0)", dosage: "2-3 bags per acre", time: "At planting time", colorBg: "bg-blue-50", colorText: "text-blue-800" });
-    } else if (minVal === p) {
-      setFertResult({ title: "Apply DAP (18-46-0)", dosage: "2-3 bags per acre", time: "At planting time", colorBg: "bg-orange-50", colorText: "text-orange-800" });
-    } else {
-      setFertResult({ title: "Apply MOP (0-0-60)", dosage: "2-3 bags per acre", time: "At planting time", colorBg: "bg-purple-50", colorText: "text-purple-800" });
+  const getFertilizerRecommendation = async () => {
+    if (fertLoading) return;
+    setFertLoading(true);
+    setFertResult(null);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    const prompt = `I am growing ${fertInputs.crop} on ${fertInputs.soil} soil. My soil has Nitrogen: ${fertInputs.N} PPM, Phosphorus: ${fertInputs.P} PPM, Potassium: ${fertInputs.K} PPM. Give me exact fertilizer recommendations — which fertilizers to apply, how much per acre, and when to apply. Provide 3 short, professional sentences.`;
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/v1/chat/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: prompt, history: [] }),
+        signal: controller.signal
+      });
+      if (!res.ok) throw new Error("Advisor API failed");
+      const data = await res.json();
+      setFertResult(data.reply);
+    } catch (err: any) {
+      console.error("Fertilizer Advisor Error:", err);
+      if (err.name === 'AbortError') {
+        setFertResult("Request timed out. Please ensure the backend is running and try again.");
+      } else {
+        setFertResult("Sorry, I couldn't get a recommendation right now. Please check your connection.");
+      }
+    } finally {
+      clearTimeout(timeoutId);
+      setFertLoading(false);
     }
   };
 
@@ -342,7 +367,7 @@ export default function CropsPage() {
                 <label className="font-bold text-gray-500 text-sm">Target Crop</label>
                 <select 
                   name="crop" value={fertInputs.crop} onChange={handleFertChange}
-                  className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 font-bold outline-none focus:border-green-600 focus:bg-white transition-all"
+                  className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 font-bold outline-none focus-ring-green focus:bg-white transition-all"
                 >
                   {['Rice', 'Wheat', 'Maize', 'Cotton', 'Sugarcane', 'Mango', 'Banana', 'Grapes', 'Apple', 'Chickpea'].map(c => (
                     <option key={c} value={c}>{c}</option>
@@ -354,7 +379,7 @@ export default function CropsPage() {
                 <label className="font-bold text-gray-500 text-sm">Soil Texture</label>
                 <select 
                   name="soil" value={fertInputs.soil} onChange={handleFertChange}
-                  className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 font-bold outline-none focus:border-green-600 focus:bg-white transition-all"
+                  className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 font-bold outline-none focus-ring-green focus:bg-white transition-all"
                 >
                   {['Sandy', 'Loamy', 'Clay', 'Black', 'Red'].map(s => (
                     <option key={s} value={s}>{s}</option>
@@ -375,7 +400,7 @@ export default function CropsPage() {
                     type="number" name={item.n} min="0" max={item.m} 
                     value={fertInputs[item.n as keyof typeof fertInputs]} 
                     onChange={handleFertChange}
-                    className="p-3.5 rounded-xl border border-gray-200 font-bold outline-none focus:border-green-600 focus:bg-white transition-all text-center"
+                    className="p-3.5 rounded-xl border border-gray-200 font-bold outline-none focus-ring-green focus:bg-white transition-all text-center"
                   />
                 </div>
               ))}
@@ -383,26 +408,54 @@ export default function CropsPage() {
 
             <button
               onClick={getFertilizerRecommendation}
-              className="mt-4 bg-green-600 text-white py-4.5 rounded-xl text-lg font-black shadow-lg shadow-green-600/30 transition-all hover:bg-green-700 active:scale-95 cursor-pointer"
+              disabled={fertLoading}
+              className={`mt-4 py-4.5 rounded-xl text-lg font-black shadow-lg shadow-green-600/30 transition-all active:scale-95 cursor-pointer ripple flex items-center justify-center gap-3
+                ${fertLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-700'}`}
             >
-              Get Recommendation
+              {fertLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Analyzing with AI...
+                </>
+              ) : "Get Recommendation"}
             </button>
 
             {fertResult && (
-              <div className={`mt-4 p-8 rounded-2xl border-l-[10px] animate-fade-in ${fertResult.colorBg} shadow-sm`} style={{ borderColor: 'currentColor' }}>
-                <h3 className={`m-0 mb-4 text-2xl font-black ${fertResult.colorText}`}>
-                  ✅ {fertResult.title}
+              <div className="mt-4 p-8 rounded-2xl border-2 border-green-600 bg-green-50 dark:bg-green-900/10 shadow-sm animate-fade-in hover-lift">
+                <h3 className="m-0 mb-4 text-2xl font-black text-green-800 dark:text-green-400 flex items-center gap-2">
+                  ✅ Fertilizer Recommendation
                 </h3>
-                <ul className="m-0 mb-6 pl-5 space-y-3 text-gray-700 text-lg font-bold">
-                  <li>Dosage: <span className="font-normal opacity-80">{fertResult.dosage}</span></li>
-                  <li>Timing: <span className="font-normal opacity-80">{fertResult.time}</span></li>
-                </ul>
                 
-                <div className="bg-amber-100/50 border-l-4 border-amber-500 p-4 rounded-lg flex gap-3 items-center">
-                  <span className="text-xl">⚠️</span>
-                  <p className="m-0 text-amber-800 text-[13px] font-bold leading-relaxed">
-                    Consult your district agri-officer for regional soil variations before application.
-                  </p>
+                <div className="m-0 mb-8 flex flex-col gap-5">
+                  {fertResult.split(". ").filter(s => s.trim().length > 0).slice(0, 3).map((sentence, idx) => {
+                    const words = sentence.trim().split(" ");
+                    const head = words.slice(0, 2).join(" ");
+                    const tail = words.slice(2).join(" ");
+                    return (
+                      <div key={idx} className="flex gap-3 items-start bg-green-100/30 p-4 rounded-xl border-l-4 border-green-600 animate-fade-in">
+                        <span className="text-green-600 font-bold mt-1">●</span>
+                        <p className="m-0 text-gray-700 dark:text-slate-300 text-lg font-medium leading-relaxed">
+                          <span className="font-black text-gray-900 dark:text-white uppercase text-[15px]">{head}</span> {tail}{!sentence.endsWith(".") && "."}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                <div className="flex flex-col gap-4">
+                  <div className="bg-amber-100/50 border-l-4 border-amber-500 p-4 rounded-lg flex gap-3 items-center">
+                    <span className="text-xl">⚠️</span>
+                    <p className="m-0 text-amber-800 text-[13px] font-bold leading-relaxed">
+                      Consult your district agri-officer for regional soil variations before application.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => navigate('/chat', { state: { prefill: `I just got this fertilizer advice for my ${fertInputs.crop} crop: "${fertResult.substring(0, 50)}...". I have more questions about application techniques.` } })}
+                    className="w-full bg-white text-green-600 border-2 border-green-600 rounded-xl py-3.5 text-base font-black hover:bg-green-50 transition-all ripple"
+                  >
+                    💬 Ask More Questions
+                  </button>
                 </div>
               </div>
             )}

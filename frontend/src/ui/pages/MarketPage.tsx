@@ -101,7 +101,7 @@ export default function MarketPage() {
             <select 
               value={commodity} 
               onChange={(e) => setCommodity(e.target.value)}
-              className="w-full p-3 px-4 rounded-lg border border-gray-300 text-base text-gray-700 bg-white outline-none focus:border-green-600 transition-colors"
+              className="w-full p-3 px-4 rounded-lg border border-gray-300 text-base text-gray-700 bg-white focus-ring-green outline-none"
             >
               {COMMODITIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -111,7 +111,7 @@ export default function MarketPage() {
             <select 
               value={state} 
               onChange={(e) => setState(e.target.value)}
-              className="w-full p-3 px-4 rounded-lg border border-gray-300 text-base text-gray-700 bg-white outline-none focus:border-green-600 transition-colors"
+              className="w-full p-3 px-4 rounded-lg border border-gray-300 text-base text-gray-700 bg-white focus-ring-green outline-none"
             >
               {STATES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -119,7 +119,7 @@ export default function MarketPage() {
           <button 
             onClick={() => fetchPrices()}
             disabled={isLoading}
-            className={`py-3 px-7 rounded-lg text-white text-base font-bold transition-transform active:scale-95 whitespace-nowrap
+            className={`py-3 px-7 rounded-lg text-white text-base font-bold transition-transform active:scale-95 whitespace-nowrap shadow-lg ripple
               ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 cursor-pointer hover:bg-green-700'}`}
           >
             {isLoading ? "Fetching..." : "Check Prices"}
@@ -162,19 +162,28 @@ export default function MarketPage() {
           
           {/* Summary Row */}
           <div className={`grid gap-5 mb-8 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
-            <div className="bg-white p-5 rounded-xl text-center shadow-sm border-t-4 border-t-green-600">
+            <div className="bg-white p-5 rounded-xl text-center shadow-sm border-t-4 border-t-green-600 hover-lift">
               <p className="m-0 mb-2 text-sm text-gray-400 font-bold">Lowest Price</p>
-              <h3 className="m-0 mb-1 text-2xl font-black text-green-600">₹{lowestPrice.toLocaleString()}</h3>
+              <h3 className="m-0 mb-1 text-2xl font-black text-green-600">
+                <span className="mr-1">↓</span>
+                ₹{lowestPrice.toLocaleString()}
+              </h3>
               <p className="m-0 text-xs text-gray-400 italic">per quintal</p>
             </div>
-            <div className="bg-white p-5 rounded-xl text-center shadow-sm border-t-4 border-t-blue-500">
+            <div className="bg-white p-5 rounded-xl text-center shadow-sm border-t-4 border-t-blue-500 hover-lift">
               <p className="m-0 mb-2 text-sm text-gray-400 font-bold">Average Price</p>
-              <h3 className="m-0 mb-1 text-2xl font-black text-blue-500">₹{Math.round(avgPrice).toLocaleString()}</h3>
+              <h3 className="m-0 mb-1 text-2xl font-black text-blue-500">
+                <span className="mr-1">📊</span>
+                ₹{Math.round(avgPrice).toLocaleString()}
+              </h3>
               <p className="m-0 text-xs text-gray-400 italic">per quintal</p>
             </div>
-            <div className="bg-white p-5 rounded-xl text-center shadow-sm border-t-4 border-t-red-500">
+            <div className="bg-white p-5 rounded-xl text-center shadow-sm border-t-4 border-t-red-500 hover-lift">
               <p className="m-0 mb-2 text-sm text-gray-400 font-bold">Highest Price</p>
-              <h3 className="m-0 mb-1 text-2xl font-black text-red-500">₹{highestPrice.toLocaleString()}</h3>
+              <h3 className="m-0 mb-1 text-2xl font-black text-red-500">
+                <span className="mr-1">↑</span>
+                ₹{highestPrice.toLocaleString()}
+              </h3>
               <p className="m-0 text-xs text-gray-400 italic">per quintal</p>
             </div>
           </div>

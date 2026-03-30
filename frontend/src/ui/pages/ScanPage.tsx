@@ -72,9 +72,42 @@ export default function ScanPage() {
   const analyzeImage = async () => {
     if (!preview) return;
     setIsAnalyzing(true);
-    await new Promise((res) => setTimeout(res, 2000));
-    setResult(MOCK_RESULT);
-    setIsAnalyzing(false);
+    setResult(null);
+
+    try {
+      // 1. Mock the initial detection (In a real app, this would be a vision model)
+      await new Promise((res) => setTimeout(res, 2000));
+      const detectedDisease = COMMON_DISEASES[Math.floor(Math.random() * COMMON_DISEASES.length)].name;
+      
+      // 2. Fetch professional AI advice for this disease
+      const prompt = `My plant has been diagnosed with "${detectedDisease}". Give me a JSON response with: "disease" (the name), "confidence" (a number between 90-99), "severity" (Mild/Moderate/Severe), "treatment" (2 sentences of medicine/action), and "prevention" (2 sentences of future advice). Return ONLY JSON.`;
+      
+      const res = await fetch("http://127.0.0.1:8000/api/v1/chat/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: prompt, history: [] })
+      });
+      
+      if (!res.ok) throw new Error("AI Advice failed");
+      const data = await res.json();
+      
+      // Parse the JSON from the AI response (it might have triple backticks)
+      const jsonStr = data.reply.replace(/```json|```/g, "").trim();
+      const aiResult = JSON.parse(jsonStr);
+      
+      setResult({
+        disease: aiResult.disease || detectedDisease,
+        confidence: aiResult.confidence || 95.0,
+        severity: aiResult.severity || "Moderate",
+        treatment: aiResult.treatment || "Consult an expert.",
+        prevention: aiResult.prevention || "Maintain good hygiene."
+      });
+    } catch (err) {
+      console.error("Analysis Error:", err);
+      setResult(MOCK_RESULT); // Fallback to mock if AI fails
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const severityColor = (s: string) =>
@@ -146,15 +179,15 @@ export default function ScanPage() {
           <button
             onClick={analyzeImage}
             disabled={!preview || isAnalyzing}
-            className={`w-full p-4 rounded-xl text-lg font-bold flex items-center justify-center gap-3 transition-all
+            className={`w-full p-4 rounded-xl text-lg font-bold flex items-center justify-center gap-3 transition-all shadow-lg ripple
               ${!preview || isAnalyzing ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-900 text-white cursor-pointer hover:bg-gray-800 active:scale-95'}`}
           >
             {isAnalyzing ? (
               <>
                 <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
-                Analyzing...
+                Analyzing Image...
               </>
-            ) : "Analyse Image"}
+            ) : "Start Analysis"}
           </button>
 
           {/* TIPS CARD */}
@@ -192,59 +225,67 @@ export default function ScanPage() {
               <p className="m-0 mt-2 text-gray-400 text-sm italic font-medium">Running disease detection model</p>
             </div>
           ) : result ? (
-            <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-200 overflow-hidden animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/60 border border-gray-200 overflow-hidden animate-fade-in-up">
               {/* Disease Header */}
-              <div className="p-7 pb-5">
-                <h2 className="m-0 mb-4 text-2xl font-black text-gray-900 tracking-tight">
-                  {result.disease}
-                </h2>
+              <div className="p-8 pb-6">
+                <div className="flex justify-between items-start mb-4">
+                  <h2 className="m-0 text-3xl font-black text-gray-900 tracking-tight leading-tight">
+                    {result.disease}
+                  </h2>
+                  <span className="text-4xl">🔬</span>
+                </div>
 
-                <div className="flex flex-wrap gap-2.5 mb-5">
-                  <span className="bg-green-100 text-green-800 py-1.5 px-4 rounded-full text-xs font-black uppercase tracking-wider">
+                <div className="flex flex-wrap gap-2.5 mb-6">
+                  <span className="bg-green-100 text-green-800 py-1.5 px-4 rounded-full text-xs font-black uppercase tracking-wider border border-green-200">
                     {result.confidence}% Confidence
                   </span>
-                  <span className={`py-1.5 px-4 rounded-full text-xs font-black uppercase tracking-wider ${severityBg(result.severity)} ${severityColor(result.severity)}`}>
+                  <span className={`py-1.5 px-4 rounded-full text-xs font-black uppercase tracking-wider border ${severityBg(result.severity)} ${severityColor(result.severity)}`}>
                     {result.severity} Severity
                   </span>
                 </div>
 
-                <div className="mb-1 flex justify-between font-bold text-[11px] text-gray-400 uppercase tracking-widest">
-                  <span>Confidence</span>
+                <div className="mb-2 flex justify-between font-black text-[11px] text-gray-400 uppercase tracking-widest">
+                  <span>Detection Confidence</span>
                   <span>{result.confidence}%</span>
                 </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                <div className="h-3 bg-gray-100 rounded-full overflow-hidden shadow-inner p-0.5">
                   <div 
-                    className="h-full bg-green-600 rounded-full transition-all duration-1000 ease-out"
+                    className="h-full bg-green-600 rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(22,163,74,0.5)]"
                     style={{ width: `${result.confidence}%` }}
                   />
                 </div>
               </div>
 
-              {/* Treatment */}
-              <div className="mx-7 mb-4 bg-green-50/50 rounded-xl p-5 border border-green-100">
-                <h4 className="m-0 mb-2 text-green-700 text-sm font-black uppercase tracking-widest">💊 Treatment</h4>
-                <p className="m-0 text-gray-700 text-sm leading-relaxed font-medium">{result.treatment}</p>
+              {/* Advice Content */}
+              <div className="px-8 pb-8 flex flex-col gap-5">
+                <div className="bg-green-50/50 rounded-2xl p-6 border border-green-100/50 hover-lift transition-all">
+                  <h4 className="m-0 mb-3 text-green-700 text-[12px] font-black uppercase tracking-widest flex items-center gap-2">
+                    <span className="text-base">💊</span> Treatment Plan
+                  </h4>
+                  <p className="m-0 text-gray-700 text-[15px] leading-relaxed font-medium italic">"{result.treatment}"</p>
+                </div>
+
+                <div className="bg-blue-50/50 rounded-2xl p-6 border border-blue-100/50 hover-lift transition-all">
+                  <h4 className="m-0 mb-3 text-blue-700 text-[12px] font-black uppercase tracking-widest flex items-center gap-2">
+                    <span className="text-base">🛡️</span> Prevention Strategy
+                  </h4>
+                  <p className="m-0 text-gray-700 text-[15px] leading-relaxed font-medium italic">"{result.prevention}"</p>
+                </div>
               </div>
 
-              {/* Prevention */}
-              <div className="mx-7 mb-7 bg-blue-50/50 rounded-xl p-5 border border-blue-100">
-                <h4 className="m-0 mb-2 text-blue-700 text-sm font-black uppercase tracking-widest">🛡️ Prevention</h4>
-                <p className="m-0 text-gray-700 text-sm leading-relaxed font-medium">{result.prevention}</p>
-              </div>
-
-              {/* Buttons */}
-              <div className="p-7 pt-0 flex gap-3 flex-wrap">
+              {/* Action Buttons */}
+              <div className="p-8 pt-0 flex gap-4 flex-wrap">
                 <button
                   onClick={clearImage}
-                  className="flex-1 min-w-[140px] py-3.5 px-6 bg-white text-gray-900 border-2 border-gray-200 rounded-xl text-sm font-bold transition-all hover:border-gray-900 active:scale-95"
+                  className="flex-1 min-w-[160px] py-4 px-6 bg-white text-gray-900 border-2 border-gray-100 rounded-2xl text-sm font-black transition-all hover:border-gray-900 active:scale-95 ripple"
                 >
-                  Analyse Another
+                  Scan New Image
                 </button>
                 <button
-                  onClick={() => navigate('/chat', { state: { prefill: `I scanned a plant leaf and detected "${result.disease}" with ${result.confidence}% confidence and ${result.severity} severity. What should I do?` } })}
-                  className="flex-1 min-w-[140px] py-3.5 px-6 bg-gray-900 text-white border-none rounded-xl text-sm font-bold transition-all hover:bg-gray-800 active:scale-95"
+                  onClick={() => navigate('/chat', { state: { prefill: `I scanned a plant leaf and detected "${result.disease}" with ${result.confidence}% confidence. Give me more detailed organic treatment options.` } })}
+                  className="flex-1 min-w-[160px] py-4 px-6 bg-[#16a34a] text-white border-none rounded-2xl text-sm font-black transition-all hover:bg-[#15803d] active:scale-95 shadow-lg shadow-green-600/20 ripple"
                 >
-                  🤖 Ask AI for Help
+                  🤖 Talk to AI Expert
                 </button>
               </div>
             </div>

@@ -193,7 +193,7 @@ export default function ChatPage() {
                 <div 
                   key={idx}
                   onClick={() => setInput(q)}
-                  className="group py-4 px-5 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 border-l-4 border-l-[#16a34a] rounded-xl cursor-pointer text-[14px] text-gray-700 dark:text-slate-300 shadow-sm transition-all hover:bg-green-50/50 dark:hover:bg-green-900/10 hover:translate-x-1 font-bold"
+                  className="group py-4 px-5 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 border-l-4 border-l-[#16a34a] rounded-xl cursor-pointer text-[14px] text-gray-700 dark:text-slate-300 shadow-sm transition-all hover:bg-green-50/50 dark:hover:bg-green-900/10 hover-lift ripple font-bold"
                 >
                   {q}
                 </div>
@@ -267,8 +267,8 @@ export default function ChatPage() {
           {messages.map(msg => {
             const isUser = msg.sender === 'user';
             return (
-              <div key={msg.id} className={`flex flex-col max-w-[80%] ${isUser ? 'self-end' : 'self-start'}`}>
-                <div className={`px-6 py-4 rounded-3xl text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap font-medium
+              <div key={msg.id} className={`flex flex-col max-w-[80%] animate-fade-in-up ${isUser ? 'self-end' : 'self-start'}`}>
+                <div className={`px-6 py-4 rounded-3xl text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap font-medium hover-lift transition-transform
                   ${isUser 
                     ? 'bg-[#16a34a] text-white rounded-br-none' 
                     : 'bg-green-50 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-bl-none border border-gray-100 dark:border-slate-700'}`}>
@@ -282,10 +282,11 @@ export default function ChatPage() {
           })}
           
           {isLoading && (
-            <div className="flex flex-col max-w-[80%] self-start">
-              <div className="bg-gray-50 dark:bg-slate-800 text-[#16a34a] px-6 py-4 rounded-3xl rounded-bl-none border border-gray-100 dark:border-slate-700 text-xs font-black uppercase tracking-widest flex items-center gap-3 animate-pulse">
-                <span>🧠</span>
-                Thinking...
+            <div className="flex flex-col max-w-[80%] self-start animate-fade-in-up">
+              <div className="bg-gray-50 dark:bg-slate-800 px-6 py-4 rounded-3xl rounded-bl-none border border-gray-100 dark:border-slate-700 flex items-center gap-2">
+                <span className="w-2 h-2 bg-green-500 rounded-full dot-bounce" style={{ animationDelay: '0s' }} />
+                <span className="w-2 h-2 bg-green-500 rounded-full dot-bounce" style={{ animationDelay: '0.2s' }} />
+                <span className="w-2 h-2 bg-green-500 rounded-full dot-bounce" style={{ animationDelay: '0.4s' }} />
               </div>
             </div>
           )}
@@ -296,7 +297,7 @@ export default function ChatPage() {
         <div className="p-6 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 flex gap-4 items-center">
           <button
             onClick={toggleListening}
-            className={`w-12 h-12 rounded-full border-none flex items-center justify-center cursor-pointer transition-all flex-shrink-0 shadow-sm
+            className={`w-12 h-12 rounded-full border-none flex items-center justify-center cursor-pointer transition-all flex-shrink-0 shadow-sm ripple
               ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-700'}`}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill={isListening ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5">
@@ -312,13 +313,13 @@ export default function ChatPage() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={isListening ? "Listening..." : "Ask KisanCore assistant anything about farming..."}
-            className="flex-1 h-12 px-6 bg-gray-50 dark:bg-slate-800 border-none rounded-2xl text-[15px] outline-none text-gray-800 dark:text-white transition-all focus:ring-2 focus:ring-[#16a34a] font-medium"
+            className="flex-1 h-12 px-6 bg-gray-50 dark:bg-slate-800 border-none rounded-2xl text-[15px] outline-none text-gray-800 dark:text-white transition-all focus-ring-green font-medium"
           />
           
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className={`w-12 h-12 rounded-full text-white border-none flex items-center justify-center cursor-pointer transition-all flex-shrink-0 shadow-lg
+            className={`w-12 h-12 rounded-full text-white border-none flex items-center justify-center cursor-pointer transition-all flex-shrink-0 shadow-lg ripple
               ${(!input.trim() || isLoading) ? 'bg-gray-200 dark:bg-slate-800 text-gray-400 cursor-not-allowed' : 'bg-[#16a34a] hover:bg-[#15803d] active:scale-95'}`}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

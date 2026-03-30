@@ -1,4 +1,25 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+// --- HELPER: COUNT UP ANIMATION ---
+const CountUp = ({ end, duration = 1500, decimals = 0 }: { end: number, duration?: number, decimals?: number }) => {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let start = 0;
+    const increment = end / (duration / 16);
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(start);
+      }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [end, duration]);
+  return <span>{count.toFixed(decimals)}</span>;
+};
 
 interface SensorData {
   temperature: number | null;
@@ -57,6 +78,11 @@ export default function IoTPage() {
   const [lastUpdateDate, setLastUpdateDate] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const [aiIrrigation, setAiIrrigation] = useState<string | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const lastAiFetch = useRef<number>(0);
+  const navigate = useNavigate();
 
   const fetchData = useCallback(async () => {
     try {
@@ -112,40 +138,86 @@ export default function IoTPage() {
     return <span className="bg-green-50 text-green-600 text-xs font-bold px-2.5 py-1 rounded-full border border-green-100">Optimal</span>;
   };
 
-  // --- LOGIC: IRRIGATION STATUS ---
+  // --- LOGIC: AI IRRIGATION ANALYSIS ---
+  useEffect(() => {
+    const fetchAiIrrigation = async () => {
+      if (!sensorData?.soil_moisture || Date.now() - lastAiFetch.current < 300000) return; // 5 min cache
+      
+      setIsAiLoading(true);
+      try {
+        const prompt = `Current soil moisture is ${sensorData.soil_moisture}%. Status: ${sensorData.soil_moisture < 30 ? 'Low' : sensorData.soil_moisture > 60 ? 'Waterlogged' : 'Optimal'}. Give a 2-sentence summary of irrigation status and advice.`;
+        const res = await fetch("http://127.0.0.1:8000/api/v1/chat/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: prompt, history: [] })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAiIrrigation(data.reply);
+          lastAiFetch.current = Date.now();
+        }
+      } catch (err) {
+        console.error("AI Irrigation error:", err);
+      } finally {
+        setIsAiLoading(false);
+      }
+    };
+
+    if (sensorData) fetchAiIrrigation();
+  }, [sensorData]);
+
   const renderIrrigationCard = () => {
     const moist = sensorData?.soil_moisture;
     if (moist === null || moist === undefined) return null;
 
-    let bg = "bg-gray-50 border-gray-200";
-    let status = "No Data";
-    let icon = "❓";
-    let text = "Waiting for sensor readings...";
+    let bg = "bg-white border-gray-100";
+    let status = "Irrigation Status";
+    let icon = "🚿";
 
     if (moist < 30) {
       bg = "bg-orange-50 border-orange-200 text-orange-900";
       status = "⚠️ Irrigation Required";
-      icon = "🚿";
-      text = "The soil is too dry. Irrigation system should be activated immediately.";
     } else if (moist >= 30 && moist <= 60) {
       bg = "bg-green-50 border-green-200 text-green-800";
       status = "✅ No Irrigation Needed";
       icon = "🌿";
-      text = "Soil moisture levels are within the optimal range for plant growth.";
     } else {
       bg = "bg-blue-50 border-blue-200 text-blue-900";
       status = "💧 Soil is Waterlogged";
       icon = "🌊";
-      text = "Moisture levels are excessive. Ensure proper drainage to avoid root rot.";
     }
 
     return (
-      <div className={`mt-4 p-8 rounded-2xl border-2 transition-all duration-500 shadow-sm ${bg}`}>
-        <div className="flex items-center gap-4 mb-3">
-          <span className="text-3xl">{icon}</span>
-          <h2 className="text-2xl font-black mb-0">{status}</h2>
+      <div className={`mt-4 p-8 rounded-3xl border-2 transition-all duration-500 shadow-sm animate-fade-in-up hover-lift ${bg}`}>
+        <div className="flex justify-between items-start flex-wrap gap-4">
+          <div className="flex items-center gap-4">
+            <span className="text-4xl">{icon}</span>
+            <div>
+              <h2 className="text-2xl font-black mb-1 m-0">{status}</h2>
+              <p className="m-0 text-sm opacity-70 font-bold uppercase tracking-widest">AI Analysis Engine</p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => navigate('/chat', { state: { prefill: `Soil moisture is ${moist}%. Should I change my irrigation schedule?` } })}
+            className="bg-white/50 backdrop-blur-sm border-2 border-current px-5 py-2.5 rounded-xl text-sm font-black transition-all hover:bg-white hover:shadow-md ripple"
+          >
+            🤖 Professional Advice →
+          </button>
         </div>
-        <p className="m-0 text-lg opacity-80">{text}</p>
+
+        <div className="mt-6 p-5 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 text-lg font-medium leading-relaxed italic">
+          {isAiLoading ? (
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
+              <div className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+              <div className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+              <span className="ml-2 font-bold uppercase tracking-tighter">AI is thinking...</span>
+            </div>
+          ) : (
+            aiIrrigation || `The current moisture level is ${moist}%. ${moist < 30 ? 'Soil is dry, consider turning on the water.' : 'Moisture is adequate.'}`
+          )}
+        </div>
       </div>
     );
   };
@@ -201,7 +273,7 @@ export default function IoTPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         
         {/* TEMPERATURE CARD */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col border-t-4 border-t-red-500 relative hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col border-t-4 border-t-red-500 relative hover-lift animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
           <div className="flex justify-between items-start mb-4">
             <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-2xl shadow-inner">
               🌡️
@@ -209,7 +281,7 @@ export default function IoTPage() {
             {getTempBadge(sensorData?.temperature || null)}
           </div>
           <h3 className="m-0 text-4xl font-black text-gray-900">
-            {sensorData?.temperature !== null ? `${sensorData?.temperature}°C` : "--"}
+            {sensorData?.temperature !== undefined && sensorData?.temperature !== null ? <CountUp end={sensorData.temperature} decimals={1} /> : "--"}°C
           </h3>
           <p className="text-gray-500 font-bold text-sm mb-4 uppercase tracking-wider">Soil Temp</p>
           
@@ -219,7 +291,7 @@ export default function IoTPage() {
         </div>
 
         {/* HUMIDITY CARD */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col border-t-4 border-t-blue-500 relative hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col border-t-4 border-t-blue-500 relative hover-lift animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
           <div className="flex justify-between items-start mb-4">
             <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-2xl shadow-inner">
               💧
@@ -227,7 +299,7 @@ export default function IoTPage() {
             {getHumidityBadge(sensorData?.humidity || null)}
           </div>
           <h3 className="m-0 text-4xl font-black text-gray-900">
-            {sensorData?.humidity !== null ? `${sensorData?.humidity}%` : "--"}
+            {sensorData?.humidity !== undefined && sensorData?.humidity !== null ? <CountUp end={sensorData.humidity} /> : "--"}%
           </h3>
           <p className="text-gray-500 font-bold text-sm mb-4 uppercase tracking-wider">Air Humidity</p>
           
@@ -237,7 +309,7 @@ export default function IoTPage() {
         </div>
 
         {/* SOIL MOISTURE CARD */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col border-t-4 border-t-green-500 relative hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col border-t-4 border-t-green-500 relative hover-lift animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
           <div className="flex justify-between items-start mb-4">
             <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-2xl shadow-inner">
               🌱
@@ -245,7 +317,7 @@ export default function IoTPage() {
             {getMoistureBadge(sensorData?.soil_moisture || null)}
           </div>
           <h3 className="m-0 text-4xl font-black text-gray-900">
-            {sensorData?.soil_moisture !== null ? `${sensorData?.soil_moisture}%` : "--"}
+            {sensorData?.soil_moisture !== undefined && sensorData?.soil_moisture !== null ? <CountUp end={sensorData.soil_moisture} /> : "--"}%
           </h3>
           <p className="text-gray-500 font-bold text-sm mb-4 uppercase tracking-wider">Soil Moisture</p>
           
