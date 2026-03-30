@@ -145,6 +145,11 @@ export default function HomePage() {
         body: JSON.stringify({ message: prompt, history: [] }),
         signal: controller.signal
       });
+
+      if (res.status === 429) {
+        setSoilAnalysisError("AI Limit Reached. Our models are busy—please try again in 5 minutes.");
+        return;
+      }
       
       const data = await res.json();
       console.log("Soil AI Response:", data);
@@ -158,8 +163,10 @@ export default function HomePage() {
       console.error("Soil Analysis Error:", err);
       if (err.name === 'AbortError') {
         setSoilAnalysisError("Request timed out. Backend is slow or offline.");
+      } else if (err.message.includes("429")) {
+        setSoilAnalysisError("AI Limit Reached. Please try again in a few minutes.");
       } else {
-        setSoilAnalysisError("Backend offline. Please start the backend server and try again.");
+        setSoilAnalysisError("Backend offline or error occurred. Please check your connection.");
       }
     } finally {
       clearTimeout(timeoutId);

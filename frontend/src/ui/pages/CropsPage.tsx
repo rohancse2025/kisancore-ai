@@ -156,13 +156,19 @@ export default function CropsPage() {
         body: JSON.stringify({ message: prompt, history: [] }),
         signal: controller.signal
       });
-      if (!res.ok) throw new Error("Advisor API failed");
+      if (res.status === 429) {
+        setFertResult("AI Limit Reached. Our models are busy—please try again in 5 minutes.");
+        return;
+      }
+      
       const data = await res.json();
       setFertResult(data.reply);
     } catch (err: any) {
       console.error("Fertilizer Advisor Error:", err);
       if (err.name === 'AbortError') {
         setFertResult("Request timed out. Please ensure the backend is running and try again.");
+      } else if (err.message.includes("429")) {
+        setFertResult("AI Limit Reached. Please try again in 5 minutes.");
       } else {
         setFertResult("Sorry, I couldn't get a recommendation right now. Please check your connection.");
       }

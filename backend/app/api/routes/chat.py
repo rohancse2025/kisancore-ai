@@ -57,14 +57,17 @@ async def chat_endpoint(request: ChatRequest):
         messages.append({"role": "user", "content": request.message})
 
         response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="llama-3.1-8b-instant",
             messages=messages,
             max_tokens=300,
         )
         return ChatResponse(reply=response.choices[0].message.content)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        error_str = str(e)
+        if "rate_limit_exceeded" in error_str.lower() or "429" in error_str:
+            raise HTTPException(status_code=429, detail="AI Rate Limit Reached. Please try again in a few minutes.")
+        raise HTTPException(status_code=500, detail=error_str)
 
 @router.post("/stream")
 async def chat_stream_endpoint(request: ChatRequest):
@@ -84,7 +87,7 @@ async def chat_stream_endpoint(request: ChatRequest):
         def generate():
             try:
                 stream = client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
+                    model="llama-3.1-8b-instant",
                     messages=messages,
                     max_tokens=300,
                     stream=True
