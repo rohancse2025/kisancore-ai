@@ -69,41 +69,7 @@ const getDynamicTips = (temp: number, humidity: number, moisture: number, condit
   return selected.slice(0, 3);
 };
 
-// CountUp Component for animated numbers
-const CountUp = ({ end, duration = 2000, suffix = "" }: { end: number, duration?: number, suffix?: string }) => {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    let start = 0;
-    const increment = end / (duration / 16);
-    const timer = setInterval(() => {
-      start += increment;
-      if (start >= end) {
-        setCount(end);
-        clearInterval(timer);
-      } else {
-        setCount(Math.floor(start));
-      }
-    }, 16);
-    return () => clearInterval(timer);
-  }, [end, duration]);
-  return <span>{count}{suffix}</span>;
-};
-
-// Cache Helper
-const getCachedData = (key: string, expiryMs: number) => {
-  const cached = localStorage.getItem(key);
-  if (!cached) return null;
-  const { data, timestamp } = JSON.parse(cached);
-  if (Date.now() - timestamp > expiryMs) {
-    localStorage.removeItem(key);
-    return null;
-  }
-  return data;
-};
-
-const setCachedData = (key: string, data: any) => {
-  localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
-};
+// No-op for removed helpers
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -114,6 +80,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [soilAiLoading, setSoilAiLoading] = useState(false);
+  const [soilAnalysisError, setSoilAnalysisError] = useState<string | null>(null);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -163,19 +130,56 @@ export default function HomePage() {
   const analyzeSoil = async () => {
     if (!soilInputs.ph || !soilInputs.nitrogen || !soilInputs.moisture) return;
     setSoilAiLoading(true);
-    
-    const prompt = `Act as a soil scientist. Analyze these readings for an Indian farm: pH: ${soilInputs.ph}, Nitrogen: ${soilInputs.nitrogen}mg/kg, Moisture: ${soilInputs.moisture}%. Provide 3 concise, professional bullet points for the farmer. Start each with "• ". Keep total advice under 50 words.`;
-    
-    const advice = await fetchAIAdvice(prompt);
-    if (advice) {
-      const tips = advice.split(/•|\n/).map((t: string) => t.trim()).filter((t: string) => t.length > 0);
+    setSoilAnalysisError(null);
+    setSoilAnalysisResult(null);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    const prompt = `My soil has pH: ${soilInputs.ph}, Nitrogen: ${soilInputs.nitrogen} mg/kg, Moisture: ${soilInputs.moisture}%. Give me 3 short specific tips to improve this soil for farming. Keep each tip under 15 words.`;
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/v1/chat/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: prompt, history: [] }),
+        signal: controller.signal
+      });
+      
+      const data = await res.json();
+      console.log("Soil AI Response:", data);
+      
+      if (!data.reply) throw new Error("Empty response");
+      
+      const tips = data.reply.split(/\n|\. /).map((t: string) => t.trim()).filter((t: string) => t.length > 5).slice(0, 3);
       setSoilAnalysisResult({ tips });
+
+    } catch (err: any) {
+      console.error("Soil Analysis Error:", err);
+      if (err.name === 'AbortError') {
+        setSoilAnalysisError("Request timed out. Backend is slow or offline.");
+      } else {
+        setSoilAnalysisError("Backend offline. Please start the backend server and try again.");
+      }
+    } finally {
+      clearTimeout(timeoutId);
+      setSoilAiLoading(false);
     }
-    setSoilAiLoading(false);
   };
 
   useEffect(() => {
     const fetchData = async () => {
+      // Session cache to prevent skeleton flashing on back-navigation
+      const sessionCache = sessionStorage.getItem('home_data_cache');
+      if (sessionCache) {
+        const { sensor, crop, irrigation: irr } = JSON.parse(sessionCache);
+        setSensorData(sensor);
+        setRecommendedCrop(crop);
+        setIrrigation(irr);
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const sensorRes = await fetch('http://127.0.0.1:8000/api/v1/sensor-data');
         const data: SensorData = await sensorRes.json();
@@ -185,14 +189,18 @@ export default function HomePage() {
         const cropJson: CropRecommendation = await cropRes.json();
         setRecommendedCrop(cropJson.crop);
         
-        // AI Irrigation Suggestion
         const irrigationPrompt = `Current farm data: Temp ${data.temperature}°C, Humidity ${data.humidity}%, Soil Moisture ${data.soil_moisture}%. Provide a very brief (max 15 words) irrigation recommendation for an Indian farmer. Start with "Status: ON/OFF/MODERATE - ".`;
         const aiIrrigation = await fetchAIAdvice(irrigationPrompt);
+        let irrObj = null;
         if (aiIrrigation) {
           const status = aiIrrigation.includes("ON") ? "ON" : aiIrrigation.includes("MODERATE") ? "MODERATE" : "OFF";
-          setIrrigation({ status, message: aiIrrigation.split("-")[1]?.trim() || aiIrrigation });
+          irrObj = { status, message: aiIrrigation.split("-")[1]?.trim() || aiIrrigation };
+          setIrrigation(irrObj);
         }
         
+        // Save to session cache
+        sessionStorage.setItem('home_data_cache', JSON.stringify({ sensor: data, crop: cropJson.crop, irrigation: irrObj }));
+
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -201,12 +209,16 @@ export default function HomePage() {
     };
 
     const fetchWeather = async () => {
-      // Check cache first
-      const cachedWeather = getCachedData('weather_data', 5 * 60 * 1000);
-      if (cachedWeather) {
-        setWeatherData(cachedWeather);
-        setWeatherLoading(false);
-        return;
+      // 10-minute weather cache logic
+      const CACHE_KEY = 'weather_cache_v2';
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < 10 * 60 * 1000) {
+          setWeatherData(data);
+          setWeatherLoading(false);
+          return;
+        }
       }
 
       setWeatherLoading(true);
@@ -219,9 +231,9 @@ export default function HomePage() {
         if (!res.ok) throw new Error('Weather API failed');
         const data: WeatherData = await res.json();
         setWeatherData(data);
-        setCachedData('weather_data', data);
-      } catch {
-        // Fallback... (omitted for brevity in this replacement chunk, but I'll keeping the logic)
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
+      } catch (err) {
+        console.error("Weather Fetch Error:", err);
       } finally {
         setWeatherLoading(false);
       }
@@ -229,10 +241,7 @@ export default function HomePage() {
 
     fetchData();
     fetchWeather();
-
-    const interval = setInterval(fetchData, 10000);
-    return () => clearInterval(interval);
-  }, [sensorData?.temperature]); // Initial load
+  }, []); // Fetch exactly once on mount to prevent flickering
 
   const getWeatherEmoji = (condition: string, temp: number) => {
     const c = condition.toLowerCase();
@@ -375,7 +384,7 @@ export default function HomePage() {
                 {isLoading ? <Skeleton className="h-9 w-24" /> : (
                   <>
                     <h3 className="m-0 mb-1 text-[36px] font-black tracking-tight text-gray-900 dark:text-white leading-none">
-                      <CountUp end={sensorData?.temperature || 0} suffix="°C" />
+                      {sensorData?.temperature || 0}°C
                     </h3>
                     <span className={`text-xl font-bold ${getTrend(sensorData?.temperature || 25, 'temp') === '↑' ? 'text-red-500' : 'text-blue-500'}`}>
                       {getTrend(sensorData?.temperature || 25, 'temp')}
@@ -395,7 +404,7 @@ export default function HomePage() {
                 {isLoading ? <Skeleton className="h-9 w-24" /> : (
                   <>
                     <h3 className="m-0 mb-1 text-[36px] font-black tracking-tight text-gray-900 dark:text-white leading-none">
-                      <CountUp end={sensorData?.humidity || 0} suffix="%" />
+                      {sensorData?.humidity || 0}%
                     </h3>
                     <span className="text-xl font-bold text-blue-500">{getTrend(sensorData?.humidity || 50, 'hum')}</span>
                   </>
@@ -413,7 +422,7 @@ export default function HomePage() {
                 {isLoading ? <Skeleton className="h-9 w-24" /> : (
                   <>
                     <h3 className="m-0 mb-1 text-[36px] font-black tracking-tight text-gray-900 dark:text-white leading-none">
-                      <CountUp end={sensorData?.soil_moisture || 0} suffix="%" />
+                      {sensorData?.soil_moisture || 0}%
                     </h3>
                     <span className="text-xl font-bold text-green-500">{getTrend(sensorData?.soil_moisture || 50, 'moist')}</span>
                   </>
@@ -550,93 +559,40 @@ export default function HomePage() {
           >
             {soilAiLoading ? (
               <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Analyzing with AI...
+                <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin" />
+                Analysing...
               </>
             ) : "Analyse Soil"}
           </button>
 
+          {soilAnalysisError && (
+            <div className="mt-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 font-bold text-center animate-shake">
+              ⚠️ {soilAnalysisError}
+            </div>
+          )}
+
           {soilAnalysisResult && (
-            <div className="mt-10 p-4 md:p-10 rounded-[2.5rem] border-2 bg-gradient-to-br from-white to-green-50/30 dark:from-slate-800 dark:to-green-950/10 border-green-600/20 shadow-2xl shadow-green-900/5 animate-fade-in-up">
+            <div className="mt-10 p-8 rounded-2xl border-2 border-[#16a34a] bg-white shadow-xl animate-fade-in-up">
+              <h3 className="m-0 mb-6 text-xl font-black text-gray-900 flex items-center gap-2">
+                🌱 Soil Improvement Tips
+              </h3>
+              <div className="flex flex-col gap-4">
+                {soilAnalysisResult.tips.map((tip, i) => (
+                  <div key={i} className="flex gap-4 items-start">
+                    <span className="w-3 h-3 bg-[#16a34a] rounded-full mt-1.5 flex-shrink-0" />
+                    <p className="m-0 text-gray-700 text-lg font-bold leading-relaxed">
+                      {tip}{!tip.endsWith('.') && '.'}
+                    </p>
+                  </div>
+                ))}
+              </div>
               
-              {/* Header Row */}
-              <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
-                <h3 className="m-0 text-2xl font-black tracking-tight text-gray-900 dark:text-white flex items-center gap-3">
-                  <span className="bg-green-100 dark:bg-green-900/30 w-10 h-10 flex items-center justify-center rounded-xl">🧪</span>
-                  Soil Analysis Result
-                </h3>
-                <span className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest text-white shadow-lg ${getSoilStatus().overall.color}`}>
-                  {getSoilStatus().overall.label}
-                </span>
-              </div>
-
-              {/* Three Mini Stat Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm hover-lift group">
-                  <p className="m-0 mb-2 text-gray-400 text-[10px] font-black uppercase tracking-widest opacity-60">Soil pH</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-3xl font-black text-gray-900 dark:text-white">{soilInputs.ph}</span>
-                    <span className={`px-3 py-1 rounded-lg text-[11px] font-bold uppercase tracking-tighter ${getSoilStatus().phStatus.color}`}>
-                      {getSoilStatus().phStatus.label}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm hover-lift">
-                  <p className="m-0 mb-2 text-gray-400 text-[10px] font-black uppercase tracking-widest opacity-60">Nitrogen (N)</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-3xl font-black text-gray-900 dark:text-white">{soilInputs.nitrogen} <small className="text-sm font-medium opacity-40">mg/kg</small></span>
-                    <span className={`px-3 py-1 rounded-lg text-[11px] font-bold uppercase tracking-tighter ${getSoilStatus().nStatus.color}`}>
-                      {getSoilStatus().nStatus.label}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm hover-lift">
-                  <p className="m-0 mb-2 text-gray-400 text-[10px] font-black uppercase tracking-widest opacity-60">Moisture (%)</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-3xl font-black text-gray-900 dark:text-white">{soilInputs.moisture}%</span>
-                    <span className={`px-3 py-1 rounded-lg text-[11px] font-bold uppercase tracking-tighter ${getSoilStatus().mStatus.color}`}>
-                      {getSoilStatus().mStatus.label}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* AI Advice Section */}
-              <div className="mb-10">
-                <h4 className="m-0 mb-6 text-gray-500 dark:text-slate-400 text-xs font-black uppercase tracking-[0.2em] flex items-center gap-3">
-                  <span className="w-8 h-[2px] bg-green-600/30" />
-                  💡 AI Recommendations
-                </h4>
-                <div className="flex flex-col gap-5">
-                  {soilAnalysisResult.tips.map((tip, i) => {
-                    const sentences = tip.split(". ").filter(s => s.trim().length > 0).slice(0, 3);
-                    return sentences.map((sentence, sIdx) => {
-                      const words = sentence.trim().split(" ");
-                      const head = words.slice(0, 2).join(" ");
-                      const tail = words.slice(2).join(" ");
-                      return (
-                        <div key={`${i}-${sIdx}`} className="bg-green-500/5 dark:bg-green-400/5 border-l-4 border-green-600 p-5 rounded-r-2xl animate-fade-in-up flex gap-3 items-start">
-                          <span className="text-green-600 text-lg">●</span>
-                          <p className="m-0 text-gray-700 dark:text-slate-300 text-lg font-medium leading-relaxed">
-                            <span className="font-black text-gray-900 dark:text-white uppercase text-base">{head}</span> {tail}{!sentence.endsWith(".") && "."}
-                          </p>
-                        </div>
-                      );
-                    });
-                  })}
-                </div>
-              </div>
-
-              {/* Final Action Button */}
               <button
-                onClick={() => navigate('/chat', { state: { prefill: `My soil has pH: ${soilInputs.ph}, Nitrogen: ${soilInputs.nitrogen} mg/kg, and Moisture: ${soilInputs.moisture}%. Based on the analysis I just received, I have more questions about improving my soil health.` } })}
-                className="w-full bg-[#16a34a] text-white rounded-2xl py-5 px-8 text-lg font-black shadow-xl shadow-green-600/20 transition-all hover:bg-green-700 active:scale-[0.98] ripple flex items-center justify-center gap-4"
+                onClick={() => navigate('/chat', { state: { prefill: `I have more questions about my soil (pH ${soilInputs.ph}, N ${soilInputs.nitrogen}, Moisture ${soilInputs.moisture}%):` } })}
+                className="mt-8 w-full py-3 px-6 bg-green-50 text-[#16a34a] border border-[#16a34a] rounded-xl font-black text-sm hover:bg-green-100 transition-all cursor-pointer"
               >
-                Ask AI More Questions <span className="text-2xl animate-pulse">→</span>
+                Ask More Questions →
               </button>
-
             </div>
           )}
         </div>
