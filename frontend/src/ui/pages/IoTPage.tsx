@@ -145,7 +145,7 @@ export default function IoTPage() {
       
       setIsAiLoading(true);
       try {
-        const prompt = `Current soil moisture is ${sensorData.soil_moisture}%. Status: ${sensorData.soil_moisture < 30 ? 'Low' : sensorData.soil_moisture > 60 ? 'Waterlogged' : 'Optimal'}. Give a 2-sentence summary of irrigation status and advice.`;
+        const prompt = `Current soil moisture is ${sensorData.soil_moisture}%. Status: ${sensorData.soil_moisture < 30 ? 'Low' : sensorData.soil_moisture > 60 ? 'Waterlogged' : 'Optimal'}. Give a 2-sentence summary of irrigation status and advice. Reply in English only.`;
         const res = await fetch("http://127.0.0.1:8000/api/v1/chat/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

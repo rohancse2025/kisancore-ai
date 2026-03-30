@@ -79,9 +79,6 @@ export default function HomePage() {
   const [recommendedCrop, setRecommendedCrop] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [weatherLoading, setWeatherLoading] = useState(true);
-  const [soilAiLoading, setSoilAiLoading] = useState(false);
-  const [soilAnalysisError, setSoilAnalysisError] = useState<string | null>(null);
-
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -112,81 +109,30 @@ export default function HomePage() {
     return { phStatus, nStatus, mStatus, overall };
   };
 
-  const fetchAIAdvice = async (prompt: string) => {
-    try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/chat/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: prompt, history: [] })
-      });
-      const data = await res.json();
-      return data.reply;
-    } catch (e) {
-      console.error("AI Advice Error:", e);
-      return null;
-    }
-  };
-
-  const analyzeSoil = async () => {
-    if (!soilInputs.ph || !soilInputs.nitrogen || !soilInputs.moisture) return;
-    setSoilAiLoading(true);
-    setSoilAnalysisError(null);
-    setSoilAnalysisResult(null);
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-    const prompt = `My soil has pH: ${soilInputs.ph}, Nitrogen: ${soilInputs.nitrogen} mg/kg, Moisture: ${soilInputs.moisture}%. Give me 3 short specific tips to improve this soil for farming. Keep each tip under 15 words.`;
-
-    try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/chat/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: prompt, history: [] }),
-        signal: controller.signal
-      });
-
-      if (res.status === 429) {
-        setSoilAnalysisError("AI Limit Reached. Our models are busy—please try again in 5 minutes.");
-        return;
-      }
-      
-      const data = await res.json();
-      console.log("Soil AI Response:", data);
-      
-      if (!data.reply) throw new Error("Empty response");
-      
-      const tips = data.reply.split(/\n|\. /).map((t: string) => t.trim()).filter((t: string) => t.length > 5).slice(0, 3);
-      setSoilAnalysisResult({ tips });
-
-    } catch (err: any) {
-      console.error("Soil Analysis Error:", err);
-      if (err.name === 'AbortError') {
-        setSoilAnalysisError("Request timed out. Backend is slow or offline.");
-      } else if (err.message.includes("429")) {
-        setSoilAnalysisError("AI Limit Reached. Please try again in a few minutes.");
-      } else {
-        setSoilAnalysisError("Backend offline or error occurred. Please check your connection.");
-      }
-    } finally {
-      clearTimeout(timeoutId);
-      setSoilAiLoading(false);
-    }
+  const analyzeSoil = () => {
+    const ph = parseFloat(soilInputs.ph);
+    const n = parseFloat(soilInputs.nitrogen);
+    const m = parseFloat(soilInputs.moisture);
+    if (isNaN(ph) || isNaN(n) || isNaN(m)) return;
+    
+    const tips: string[] = [];
+    if (ph < 5.5) tips.push("Add lime to increase soil pH");
+    else if (ph > 7.5) tips.push("Add sulfur to reduce soil pH");
+    else tips.push("Soil pH is in good range (6-7.5)");
+    
+    if (n < 40) tips.push("Apply urea fertilizer to boost nitrogen");
+    else if (n > 100) tips.push("Reduce nitrogen fertilizer application");
+    else tips.push("Nitrogen levels are adequate");
+    
+    if (m < 30) tips.push("Increase irrigation — soil is too dry");
+    else if (m > 70) tips.push("Improve drainage — soil is too wet");
+    else tips.push("Soil moisture is at optimal level");
+    
+    setSoilAnalysisResult({ tips });
   };
 
   useEffect(() => {
     const fetchData = async () => {
-      // Session cache to prevent skeleton flashing on back-navigation
-      const sessionCache = sessionStorage.getItem('home_data_cache');
-      if (sessionCache) {
-        const { sensor, crop, irrigation: irr } = JSON.parse(sessionCache);
-        setSensorData(sensor);
-        setRecommendedCrop(crop);
-        setIrrigation(irr);
-        setIsLoading(false);
-        return;
-      }
-
       try {
         const sensorRes = await fetch('http://127.0.0.1:8000/api/v1/sensor-data');
         const data: SensorData = await sensorRes.json();
@@ -196,17 +142,16 @@ export default function HomePage() {
         const cropJson: CropRecommendation = await cropRes.json();
         setRecommendedCrop(cropJson.crop);
         
-        const irrigationPrompt = `Current farm data: Temp ${data.temperature}°C, Humidity ${data.humidity}%, Soil Moisture ${data.soil_moisture}%. Provide a very brief (max 15 words) irrigation recommendation for an Indian farmer. Start with "Status: ON/OFF/MODERATE - ".`;
-        const aiIrrigation = await fetchAIAdvice(irrigationPrompt);
-        let irrObj = null;
-        if (aiIrrigation) {
-          const status = aiIrrigation.includes("ON") ? "ON" : aiIrrigation.includes("MODERATE") ? "MODERATE" : "OFF";
-          irrObj = { status, message: aiIrrigation.split("-")[1]?.trim() || aiIrrigation };
-          setIrrigation(irrObj);
+        let irrStatus = "OFF";
+        let irrMessage = "No irrigation needed";
+        if (data.soil_moisture < 30) {
+          irrStatus = "ON";
+          irrMessage = "Soil is dry — irrigate now";
+        } else if (data.soil_moisture <= 60) {
+          irrStatus = "MODERATE";
+          irrMessage = "Moderate irrigation recommended";
         }
-        
-        // Save to session cache
-        sessionStorage.setItem('home_data_cache', JSON.stringify({ sensor: data, crop: cropJson.crop, irrigation: irrObj }));
+        setIrrigation({ status: irrStatus, message: irrMessage });
 
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -221,7 +166,7 @@ export default function HomePage() {
       const cached = localStorage.getItem(CACHE_KEY);
       if (cached) {
         const { data, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < 10 * 60 * 1000) {
+        if (Date.now() - timestamp < 2 * 60 * 1000) {
           setWeatherData(data);
           setWeatherLoading(false);
           return;
@@ -248,7 +193,10 @@ export default function HomePage() {
 
     fetchData();
     fetchWeather();
-  }, []); // Fetch exactly once on mount to prevent flickering
+
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, []); // Fetch and then poll every 30s
 
   const getWeatherEmoji = (condition: string, temp: number) => {
     const c = condition.toLowerCase();
@@ -561,22 +509,10 @@ export default function HomePage() {
 
           <button
             onClick={analyzeSoil}
-            disabled={soilAiLoading}
-            className={`w-full py-4.5 bg-[#16a34a] text-white border-none rounded-xl text-lg font-black cursor-pointer shadow-lg shadow-green-600/30 transition-all hover:bg-green-700 active:scale-[0.98] ripple flex items-center justify-center gap-3 ${soilAiLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            className="w-full py-4.5 bg-[#16a34a] text-white border-none rounded-xl text-lg font-black cursor-pointer shadow-lg shadow-green-600/30 transition-all hover:bg-green-700 active:scale-[0.98] ripple flex items-center justify-center gap-3"
           >
-            {soilAiLoading ? (
-              <>
-                <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin" />
-                Analysing...
-              </>
-            ) : "Analyse Soil"}
+            Analyse Soil
           </button>
-
-          {soilAnalysisError && (
-            <div className="mt-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 font-bold text-center animate-shake">
-              ⚠️ {soilAnalysisError}
-            </div>
-          )}
 
           {soilAnalysisResult && (
             <div className="mt-10 p-8 rounded-2xl border-2 border-[#16a34a] bg-white shadow-xl animate-fade-in-up">
