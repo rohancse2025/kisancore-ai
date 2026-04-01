@@ -1,92 +1,77 @@
+#include <WiFi.h>
+#include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <DHT.h>
-#include <HTTPClient.h>
-#include <WiFi.h>
 
-// --- CONFIGURATION ---
-const char *WIFI_SSID = "YOUR_WIFI_SSID"; // TODO: Fill with your WiFi SSID
-const char *WIFI_PASSWORD = "YOUR_WIFI_PASSWORD"; // TODO: Fill with your WiFi Password
+const char* WIFI_SSID = "YOUR_WIFI_SSID";
+const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+// MUST BE YOUR LAPTOP'S IP ON THE SAME WIFI NETWORK
+const char* BACKEND_URL = "http://10.197.108.36:8000/api/v1/iot/data";
 
-const char *BACKEND_URL = "http://10.197.108.36:8000/api/v1/iot/data";
-
-// --- SENSOR PINS ---
-#define DHTPIN 4      // GPIO Pin for DHT22
+#define DHTPIN 4
 #define DHTTYPE DHT22
-#define SOIL_PIN 34   // GPIO Pin for Capacitive Soil Moisture Sensor (Analog)
+#define SOIL_PIN 34
 
-// Calibration values for Soil Moisture (V1.2)
-// These may need adjustment based on your specific sensor
-const int AirValue = 3500;   // Value in dry air
-const int WaterValue = 1500; // Value in water
+// Calibrate these values based on your sensor
+const int AIR_VALUE = 3500;
+const int WATER_VALUE = 1500;
 
 DHT dht(DHTPIN, DHTTYPE);
 
-// Interval for reading sensor data (in milliseconds)
-const unsigned long interval = 10000;
 unsigned long previousMillis = 0;
+const unsigned long INTERVAL = 10000;
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
-
-  Serial.println("\n--- KisanCore AI IoT Node ---");
-  Serial.println("Sensors: DHT22 (GPIO 4), Soil Moisture (GPIO 34)");
-
-  // Initialize DHT sensor
+  
   dht.begin();
-
-  // Initialize WiFi
-  connectToWiFi();
+  connectWiFi();
 }
 
 void loop() {
-  unsigned long currentMillis = millis();
-
-  // Check WiFi connection status
+  // Reconnect WiFi if disconnected
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi connection lost. Reconnecting...");
-    connectToWiFi();
+    connectWiFi();
   }
 
-  // Task execution every 10 seconds
-  if (currentMillis - previousMillis >= interval) {
-    previousMillis = currentMillis;
+  unsigned long now = millis();
 
-    // 1. Read DHT22 (Digital)
+  if (now - previousMillis >= INTERVAL) {
+    previousMillis = now;
+
+    // Read DHT
     float humidity = dht.readHumidity();
     float temperature = dht.readTemperature();
 
-    // 2. Read Soil Moisture (Analog)
+    // Read Soil Sensor
     int soilRaw = analogRead(SOIL_PIN);
-    // Convert raw analog reading to percentage
-    // Map: AirValue (0%) to WaterValue (100%)
-    float soilMoisture = map(soilRaw, AirValue, WaterValue, 0, 100);
-    
-    // Constrain to 0-100% range
-    if (soilMoisture > 100) soilMoisture = 100;
-    if (soilMoisture < 0) soilMoisture = 0;
 
-    // Check if DHT reads failed
+    // FIXED soil moisture calculation (no map())
+    float soilMoisture = (float)(soilRaw - AIR_VALUE) * 100.0 / (WATER_VALUE - AIR_VALUE);
+    soilMoisture = constrain(soilMoisture, 0, 100);
+
+    // Check DHT errors
     if (isnan(humidity) || isnan(temperature)) {
-      Serial.println("Error: Failed to read from DHT sensor!");
-      return; 
+      Serial.println("❌ DHT22 read failed!");
+      return;
     }
 
-    // Serial Debugging
-    Serial.println("-------------------------");
-    Serial.print("Temperature: "); Serial.print(temperature); Serial.println(" °C");
-    Serial.print("Humidity:    "); Serial.print(humidity); Serial.println(" %");
-    Serial.print("Soil Moister: "); Serial.print(soilMoisture); Serial.print(" % (Raw: "); Serial.print(soilRaw); Serial.println(")");
+    // Debug Output
+    Serial.println("----- Sensor Data -----");
+    Serial.printf("Temperature: %.1f °C\n", temperature);
+    Serial.printf("Humidity: %.1f %%\n", humidity);
+    Serial.printf("Soil Moisture: %.1f %%\n", soilMoisture);
+    Serial.println("-----------------------");
 
-    // Send data to backend
-    sendDataToServer(temperature, humidity, soilMoisture);
+    // Send Data
+    sendData(temperature, humidity, soilMoisture);
   }
 }
 
-void connectToWiFi() {
-  Serial.print("Connecting to WiFi: ");
-  Serial.println(WIFI_SSID);
-
+// WiFi Connection Function
+void connectWiFi() {
+  Serial.print("Connecting to WiFi");
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   int attempts = 0;
@@ -97,48 +82,67 @@ void connectToWiFi() {
   }
 
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\nWiFi Connected!");
+    Serial.println("\n✅ Connected!");
     Serial.print("IP Address: ");
     Serial.println(WiFi.localIP());
   } else {
-    Serial.println("\nWiFi Connection Failed! Will retry in next loop.");
+    Serial.println("\n❌ WiFi failed. Will retry...");
   }
 }
 
-void sendDataToServer(float temp, float hum, float soil) {
-  if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
-
-    Serial.println("Sending data to server...");
-
-    http.begin(BACKEND_URL);
-    http.addHeader("Content-Type", "application/json");
-
-    // Prepare JSON payload
-    StaticJsonDocument<256> doc;
-    doc["temperature"] = temp;
-    doc["humidity"] = hum;
-    doc["soil_moisture"] = soil;
-
-    String jsonPayload;
-    serializeJson(doc, jsonPayload);
-
-    // Make POST request
-    int httpResponseCode = http.POST(jsonPayload);
-
-    if (httpResponseCode > 0) {
-      String response = http.getString();
-      Serial.print("HTTP Response code: ");
-      Serial.println(httpResponseCode);
-      Serial.print("Server Response: ");
-      Serial.println(response);
-    } else {
-      Serial.print("Error code: ");
-      Serial.println(httpResponseCode);
-    }
-
-    http.end();
-  } else {
-    Serial.println("WiFi not connected. Cannot send data.");
+// Send Data to Server
+void sendData(float temp, float hum, float soil) {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("❌ WiFi not connected, skipping POST");
+    return;
   }
+
+  WiFiClient client;
+  HTTPClient http;
+
+  // Use WiFiClient with begin() to prevent connection issues on ESP32
+  http.begin(client, BACKEND_URL);
+  // Add a connection timeout to prevent hanging forever
+  http.setTimeout(5000); 
+  http.addHeader("Content-Type", "application/json");
+
+  StaticJsonDocument<256> doc;
+  doc["temperature"] = temp;
+  doc["humidity"] = hum;
+  doc["soil_moisture"] = soil;
+
+  String payload;
+  serializeJson(doc, payload);
+
+  Serial.println("📤 Sending JSON:");
+  Serial.println(payload);
+
+  int maxRetries = 3;
+  int retryCount = 0;
+  int httpCode = -1;
+
+  while (retryCount < maxRetries) {
+    httpCode = http.POST(payload);
+
+    if (httpCode > 0) {
+      Serial.printf("✅ HTTP Response code: %d\n", httpCode);
+      String response = http.getString();
+      Serial.println("Server Response:");
+      Serial.println(response);
+      break; // Success, exit retry loop
+    } else {
+      Serial.printf("❌ POST failed. Error: %s (-%d)\n", http.errorToString(httpCode).c_str(), -httpCode);
+      retryCount++;
+      if (retryCount < maxRetries) {
+        Serial.printf("🔄 Retrying... (%d/%d)\n", retryCount, maxRetries);
+        delay(2000); // Wait 2s before retrying
+      }
+    }
+  }
+
+  if (retryCount >= maxRetries) {
+    Serial.println("🚨 All POST retries failed. Check network or server configuration.");
+  }
+
+  http.end();
 }
