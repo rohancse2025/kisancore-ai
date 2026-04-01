@@ -11,6 +11,8 @@ class IOTData(BaseModel):
     humidity: float
     soil_moisture: float
 
+import time
+
 # --- IN-MEMORY STORAGE ---
 latest_reading = {
     "temperature": 0.0,
@@ -18,7 +20,8 @@ latest_reading = {
     "soil_moisture": 0.0,
     "irrigation_needed": False,
     "suggestion": "No data",
-    "timestamp": "Never"
+    "timestamp": "Never",
+    "unix_timestamp": 0
 }
 
 # --- ROUTES ---
@@ -51,7 +54,8 @@ async def post_iot_data(data: IOTData):
         "soil_moisture": data.soil_moisture,
         "irrigation_needed": irrigation_needed,
         "suggestion": message,
-        "timestamp": formatted_time
+        "timestamp": formatted_time,
+        "unix_timestamp": int(time.time() * 1000)
     })
     
     return {
@@ -63,3 +67,17 @@ async def post_iot_data(data: IOTData):
 @router.get("/latest")
 async def get_latest_data():
     return latest_reading
+
+@router.delete("/clear")
+async def clear_iot_data():
+    global latest_reading
+    latest_reading.update({
+        "temperature": 0.0,
+        "humidity": 0.0,
+        "soil_moisture": 0.0,
+        "irrigation_needed": False,
+        "suggestion": "No data",
+        "timestamp": "Never",
+        "unix_timestamp": 0
+    })
+    return {"status": "cleared"}

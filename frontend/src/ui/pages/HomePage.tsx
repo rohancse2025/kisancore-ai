@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSensor } from '../../context/SensorContext';
 
 // Interfaces for fetched data
 interface SensorData {
@@ -73,13 +74,31 @@ const getDynamicTips = (temp: number, humidity: number, moisture: number, condit
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [sensorData, setSensorData] = useState<SensorData | null>(null);
+  
+  const { temperature, humidity, soil_moisture, isOnline } = useSensor();
+  const sensorData = { temperature, humidity, soil_moisture };
+  
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
-  const [irrigation, setIrrigation] = useState<IrrigationSuggestion | null>(null);
   const [recommendedCrop, setRecommendedCrop] = useState<string | null>(null);
+  const [hasFetchedCrop, setHasFetchedCrop] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Only compute irrigation when ESP is actually live and soil_moisture is a real reading
+  let irrigation: IrrigationSuggestion | null = null;
+  if (isOnline && soil_moisture !== null && soil_moisture !== -999) {
+    let irrStatus = "OFF";
+    let irrMessage = "No irrigation needed";
+    if (soil_moisture < 30) {
+      irrStatus = "ON";
+      irrMessage = "Soil is dry — irrigate now";
+    } else if (soil_moisture <= 60) {
+      irrStatus = "MODERATE";
+      irrMessage = "Moderate irrigation recommended";
+    }
+    irrigation = { status: irrStatus, message: irrMessage };
+  }
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -88,78 +107,97 @@ export default function HomePage() {
   }, []);
 
   const [soilInputs, setSoilInputs] = useState({ ph: "", nitrogen: "", moisture: "" });
-  const [soilAnalysisResult, setSoilAnalysisResult] = useState<{tips: string[]} | null>(null);
+  const [soilAnalysisResult, setSoilAnalysisResult] = useState<{
+    tips: string[];
+    score: number;
+    status: {
+      ph: { label: string; color: string; border: string; };
+      n: { label: string; color: string; border: string; };
+      m: { label: string; color: string; border: string; };
+    };
+  } | null>(null);
+  const [soilAiVerdict, setSoilAiVerdict] = useState<string | null>(null);
+  const [isSoilAiLoading, setIsSoilAiLoading] = useState(false);
 
-  const getSoilStatus = () => {
-    const ph = parseFloat(soilInputs.ph);
-    const n = parseFloat(soilInputs.nitrogen);
-    const m = parseFloat(soilInputs.moisture);
-    
-    const phStatus = ph < 6.0 ? { label: "Acidic", color: "text-red-600 bg-red-50" } : ph > 7.5 ? { label: "Alkaline", color: "text-orange-600 bg-orange-50" } : { label: "Neutral", color: "text-green-600 bg-green-50" };
-    const nStatus = n < 30 ? { label: "Low", color: "text-red-600 bg-red-50" } : n > 80 ? { label: "High", color: "text-orange-600 bg-orange-50" } : { label: "Good", color: "text-green-600 bg-green-50" };
-    const mStatus = m < 30 ? { label: "Dry", color: "text-red-600 bg-red-50" } : m > 60 ? { label: "Wet", color: "text-orange-600 bg-orange-50" } : { label: "Optimal", color: "text-green-600 bg-green-50" };
-
-    let overall = { label: "Healthy", color: "bg-green-600" };
-    if (phStatus.label === "Acidic" || nStatus.label === "Low" || mStatus.label === "Dry") {
-      overall = { label: "Poor", color: "bg-red-600" };
-    } else if (phStatus.label === "Alkaline" || nStatus.label === "High" || mStatus.label === "Wet") {
-      overall = { label: "Needs Attention", color: "bg-orange-500" };
-    }
-
-    return { phStatus, nStatus, mStatus, overall };
-  };
-
-  const analyzeSoil = () => {
+  const analyzeSoil = async () => {
     const ph = parseFloat(soilInputs.ph);
     const n = parseFloat(soilInputs.nitrogen);
     const m = parseFloat(soilInputs.moisture);
     if (isNaN(ph) || isNaN(n) || isNaN(m)) return;
     
+    // Status badges logic
+    const phStatus = ph < 6.0 ? { label: "Acidic", color: "text-amber-700 bg-amber-50", border: "border-amber-200" } : ph > 7.5 ? { label: "Alkaline", color: "text-amber-700 bg-amber-50", border: "border-amber-200" } : { label: "Optimal", color: "text-green-700 bg-green-50", border: "border-green-200" };
+    const nStatus = n < 30 ? { label: "Low", color: "text-red-700 bg-red-50", border: "border-red-200" } : n > 80 ? { label: "High", color: "text-amber-700 bg-amber-50", border: "border-amber-200" } : { label: "Optimal", color: "text-green-700 bg-green-50", border: "border-green-200" };
+    const mStatus = m < 30 ? { label: "Dry", color: "text-red-700 bg-red-50", border: "border-red-200" } : m > 60 ? { label: "Wet", color: "text-amber-700 bg-amber-50", border: "border-amber-200" } : { label: "Optimal", color: "text-green-700 bg-green-50", border: "border-green-200" };
+
     const tips: string[] = [];
-    if (ph < 5.5) tips.push("Add lime to increase soil pH");
-    else if (ph > 7.5) tips.push("Add sulfur to reduce soil pH");
-    else tips.push("Soil pH is in good range (6-7.5)");
+    let score = 10;
+
+    if (ph < 5.5) { tips.push("Add lime to increase soil pH"); score -= 2; }
+    else if (ph > 7.5) { tips.push("Add sulfur to reduce soil pH"); score -= 2; }
+    else { tips.push("Soil pH is in good range (6.0-7.5)"); }
     
-    if (n < 40) tips.push("Apply urea fertilizer to boost nitrogen");
-    else if (n > 100) tips.push("Reduce nitrogen fertilizer application");
-    else tips.push("Nitrogen levels are adequate");
+    if (n < 40) { tips.push("Apply urea fertilizer to boost nitrogen"); score -= 3; }
+    else if (n > 100) { tips.push("Reduce nitrogen fertilizer application"); score -= 2; }
+    else { tips.push("Nitrogen levels are adequate"); }
     
-    if (m < 30) tips.push("Increase irrigation — soil is too dry");
-    else if (m > 70) tips.push("Improve drainage — soil is too wet");
-    else tips.push("Soil moisture is at optimal level");
+    if (m < 30) { tips.push("Increase irrigation — soil is too dry"); score -= 2; }
+    else if (m > 70) { tips.push("Improve drainage — soil is too wet"); score -= 2; }
+    else { tips.push("Soil moisture is at optimal level"); }
+
+    score = Math.max(1, score);
     
-    setSoilAnalysisResult({ tips });
+    setSoilAnalysisResult({ tips, score, status: { ph: phStatus, n: nStatus, m: mStatus } });
+
+    // AI Fetch Logic
+    setSoilAiVerdict(null);
+    setIsSoilAiLoading(true);
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    try {
+      const prompt = `Soil pH: ${ph}, Nitrogen: ${n} mg/kg, Moisture: ${m}%. Give ONE sentence expert verdict on this soil in simple English. Max 20 words only.`;
+      const res = await fetch("http://127.0.0.1:8000/api/v1/chat/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: prompt, history: [] }),
+        signal: controller.signal
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSoilAiVerdict(data.reply);
+      }
+    } catch (err) {
+      console.error("AI Verdict Error:", err);
+    } finally {
+      clearTimeout(timeoutId);
+      setIsSoilAiLoading(false);
+    }
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const sensorRes = await fetch('http://127.0.0.1:8000/api/v1/sensor-data');
-        const data: SensorData = await sensorRes.json();
-        setSensorData(data);
-
-        const cropRes = await fetch(`http://127.0.0.1:8000/api/v1/recommend-crop?temperature=${data.temperature}&humidity=${data.humidity}&ph=6.5&rainfall=100`);
-        const cropJson: CropRecommendation = await cropRes.json();
-        setRecommendedCrop(cropJson.crop);
-        
-        let irrStatus = "OFF";
-        let irrMessage = "No irrigation needed";
-        if (data.soil_moisture < 30) {
-          irrStatus = "ON";
-          irrMessage = "Soil is dry — irrigate now";
-        } else if (data.soil_moisture <= 60) {
-          irrStatus = "MODERATE";
-          irrMessage = "Moderate irrigation recommended";
+    if (temperature !== null && humidity !== null && !hasFetchedCrop) {
+      setHasFetchedCrop(true);
+      const fetchCrop = async () => {
+        try {
+          const cropRes = await fetch(`http://127.0.0.1:8000/api/v1/recommend-crop?temperature=${temperature}&humidity=${humidity}&ph=6.5&rainfall=100`);
+          const cropJson = await cropRes.json();
+          setRecommendedCrop(cropJson.crop);
+        } catch (error) {
+          console.error("Error fetching crop recommendation:", error);
+        } finally {
+          setIsLoading(false);
         }
-        setIrrigation({ status: irrStatus, message: irrMessage });
+      };
+      fetchCrop();
+    } else if (temperature === null && !hasFetchedCrop) {
+      const timeout = setTimeout(() => setIsLoading(false), 5000);
+      return () => clearTimeout(timeout);
+    }
+  }, [temperature, humidity, hasFetchedCrop]);
 
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
+  useEffect(() => {
     const fetchWeather = async () => {
       // 10-minute weather cache logic
       const CACHE_KEY = 'weather_cache_v2';
@@ -191,12 +229,8 @@ export default function HomePage() {
       }
     };
 
-    fetchData();
     fetchWeather();
-
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
-  }, []); // Fetch and then poll every 30s
+  }, []);
 
   const getWeatherEmoji = (condition: string, temp: number) => {
     const c = condition.toLowerCase();
@@ -328,7 +362,14 @@ export default function HomePage() {
 
       {/* 3. LIVE FARM DATA */}
       <section className="mb-14">
-        <h2 className="text-xl text-gray-900 dark:text-white mb-6 font-black uppercase tracking-widest text-xs opacity-50">Live Farm Data</h2>
+        <div className="flex items-center gap-3 mb-6">
+          <h2 className="text-xl text-gray-900 dark:text-white font-black uppercase tracking-widest text-xs opacity-50 m-0">Live Farm Data</h2>
+          {isOnline ? (
+            <span className="bg-green-100 text-green-700 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-green-200 animate-pulse tracking-widest">LIVE</span>
+          ) : sensorData.temperature !== null ? (
+            <span className="bg-orange-100 text-orange-700 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-orange-200 tracking-widest">OFFLINE - LAST DATA</span>
+          ) : null}
+        </div>
         <div className={`grid gap-6 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#ef4444] flex flex-col justify-between hover-lift">
             <div className="w-14 h-14 bg-red-50 dark:bg-red-900/20 rounded-full flex justify-center items-center">
@@ -393,12 +434,19 @@ export default function HomePage() {
             <div className="mt-6">
               <div className="min-h-[44px]">
                 {isLoading ? <Skeleton className="h-9 w-24" /> : (
-                  <h3 className={`m-0 mb-1 text-[36px] font-black tracking-tight leading-none ${irrigation?.status === "ON" ? "text-red-500" : irrigation?.status === "MODERATE" ? "text-orange-500" : "text-green-600"}`}>
-                    {irrigation?.status || "N/A"}
+                  <h3 className={`m-0 mb-1 text-[36px] font-black tracking-tight leading-none ${
+                    !isOnline ? 'text-gray-400' :
+                    irrigation?.status === "ON" ? "text-red-500" :
+                    irrigation?.status === "MODERATE" ? "text-orange-500" :
+                    "text-green-600"
+                  }`}>
+                    {!isOnline ? "---" : (irrigation?.status || "---")}
                   </h3>
                 )}
               </div>
-              <p className="m-0 text-[14px] text-gray-400 font-bold uppercase tracking-wider pl-0.5 mt-1">Irrigation</p>
+              <p className="m-0 text-[14px] text-gray-400 font-bold uppercase tracking-wider pl-0.5 mt-1">
+                {!isOnline ? "Irrigation (Offline)" : "Irrigation"}
+              </p>
             </div>
           </div>
         </div>
@@ -516,23 +564,72 @@ export default function HomePage() {
 
           {soilAnalysisResult && (
             <div className="mt-10 p-8 rounded-2xl border-2 border-[#16a34a] bg-white shadow-xl animate-fade-in-up">
-              <h3 className="m-0 mb-6 text-xl font-black text-gray-900 flex items-center gap-2">
-                🌱 Soil Improvement Tips
-              </h3>
-              <div className="flex flex-col gap-4">
-                {soilAnalysisResult.tips.map((tip, i) => (
-                  <div key={i} className="flex gap-4 items-start">
-                    <span className="w-3 h-3 bg-[#16a34a] rounded-full mt-1.5 flex-shrink-0" />
-                    <p className="m-0 text-gray-700 text-lg font-bold leading-relaxed">
-                      {tip}{!tip.endsWith('.') && '.'}
-                    </p>
+              
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="m-0 text-xl font-black text-gray-900 flex items-center gap-2">
+                  🌱 Soil Health Result
+                </h3>
+                <div className="bg-green-600 text-white font-black text-xl px-4 py-1.5 rounded-xl shadow-sm">
+                  {soilAnalysisResult.score}/10
+                </div>
+              </div>
+
+              {/* AI Verdict */}
+              {(isSoilAiLoading || soilAiVerdict) && (
+                <div className="mb-6 p-4 rounded-xl bg-green-50 border border-green-200">
+                  <div className="font-black text-green-700 text-sm mb-1 uppercase tracking-widest flex items-center gap-1.5">
+                    <span className="text-base">🤖</span> AI Verdict:
                   </div>
-                ))}
+                  {isSoilAiLoading ? (
+                    <div className="animate-pulse flex flex-col gap-2 mt-2">
+                      <div className="h-4 bg-green-200 rounded w-full"></div>
+                      <div className="h-4 bg-green-200 rounded w-2/3"></div>
+                    </div>
+                  ) : (
+                    <p className="m-0 mt-1 text-green-900 text-lg font-medium italic leading-relaxed">
+                      "{soilAiVerdict}"
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Instant Mini Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className={`p-4 rounded-xl border ${soilAnalysisResult.status.ph.border} ${soilAnalysisResult.status.ph.color}`}>
+                  <p className="m-0 text-xs font-bold uppercase tracking-wider opacity-60 mb-1">pH Level</p>
+                  <p className="m-0 text-lg font-black">{soilAnalysisResult.status.ph.label}</p>
+                </div>
+                <div className={`p-4 rounded-xl border ${soilAnalysisResult.status.n.border} ${soilAnalysisResult.status.n.color}`}>
+                  <p className="m-0 text-xs font-bold uppercase tracking-wider opacity-60 mb-1">Nitrogen</p>
+                  <p className="m-0 text-lg font-black">{soilAnalysisResult.status.n.label}</p>
+                </div>
+                <div className={`p-4 rounded-xl border ${soilAnalysisResult.status.m.border} ${soilAnalysisResult.status.m.color}`}>
+                  <p className="m-0 text-xs font-bold uppercase tracking-wider opacity-60 mb-1">Moisture</p>
+                  <p className="m-0 text-lg font-black">{soilAnalysisResult.status.m.label}</p>
+                </div>
+              </div>
+
+              <div className="w-full h-[1px] bg-gray-100 mb-6" />
+
+              {/* Action Tips */}
+              <h4 className="m-0 mb-4 text-sm font-bold text-gray-500 uppercase tracking-widest">Recommended Actions</h4>
+              <div className="flex flex-col gap-4">
+                {soilAnalysisResult.tips.map((tip, i) => {
+                  const isGood = tip.includes("good") || tip.includes("adequate") || tip.includes("optimal");
+                  return (
+                    <div key={i} className={`flex gap-4 items-start p-4 rounded-xl border-l-4 ${isGood ? 'bg-green-50 border-green-500 text-green-800' : 'bg-amber-50 border-amber-500 text-amber-800'}`}>
+                      <span className="text-lg flex-shrink-0 mt-0.5">{isGood ? '✅' : '⚠️'}</span>
+                      <p className="m-0 text-base font-bold leading-relaxed">
+                        {tip}{!tip.endsWith('.') && '.'}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
               
               <button
                 onClick={() => navigate('/chat', { state: { prefill: `I have more questions about my soil (pH ${soilInputs.ph}, N ${soilInputs.nitrogen}, Moisture ${soilInputs.moisture}%):` } })}
-                className="mt-8 w-full py-3 px-6 bg-green-50 text-[#16a34a] border border-[#16a34a] rounded-xl font-black text-sm hover:bg-green-100 transition-all cursor-pointer"
+                className="mt-8 w-full py-3.5 px-6 bg-green-50 text-[#16a34a] border border-[#16a34a] rounded-xl font-black text-sm hover:bg-green-100 transition-all cursor-pointer ripple"
               >
                 Ask More Questions →
               </button>

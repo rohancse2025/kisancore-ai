@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSensor } from '../../context/SensorContext';
 
 // --- HELPER: COUNT UP ANIMATION ---
 const CountUp = ({ end, duration = 1500, decimals = 0 }: { end: number, duration?: number, decimals?: number }) => {
@@ -74,117 +75,120 @@ const DotIndicators = ({ value, min, max, activeColor }: { value: number | null,
 };
 
 export default function IoTPage() {
-  const [sensorData, setSensorData] = useState<SensorData | null>(null);
-  const [lastUpdateDate, setLastUpdateDate] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  const [aiIrrigation, setAiIrrigation] = useState<string | null>(null);
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const lastAiFetch = useRef<number>(0);
   const navigate = useNavigate();
+  const { temperature, humidity, soil_moisture, timestamp, isOnline, lastUpdateDate, clearSensorData, refreshSensorData } = useSensor();
+  
+  // Create a compatible sensorData object for the existing code
+  const sensorData = temperature !== null ? { temperature, humidity, soil_moisture, timestamp } : null;
+  const isLoading = temperature === null;
+  const isStale = sensorData !== null && !isOnline;
+  const minsAgo = lastUpdateDate ? Math.floor((Date.now() - lastUpdateDate) / 60000) : 0;
+  
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshSensorData();
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
 
-  const fetchData = useCallback(async () => {
-    try {
-      const res = await fetch('http://127.0.0.1:8000/api/v1/iot/latest');
-      if (!res.ok) throw new Error("Backend unreachable");
-      const data: SensorData = await res.json();
-      
-      if (data.temperature !== undefined) {
-        setSensorData(data);
-        setLastUpdateDate(Date.now());
-        setError(null);
-      }
-    } catch (err) {
-      console.error("IoT Fetch Error:", err);
-      // We don't set error here to keep the last known values visible, 
-      // but the "Offline" status will handle it visually.
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  // Connectivity display string
+  const lastUpdateStr = timestamp || "Never";
 
+  // --- LOGIC: AUTO-CLEAR AFTER 10 MINUTES ---
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, [fetchData]);
+    if (!lastUpdateDate) return;
+    const checkStaleData = setInterval(() => {
+      if (Date.now() - lastUpdateDate > 600000) {
+        clearSensorData();
+      }
+    }, 1000);
+    return () => clearInterval(checkStaleData);
+  }, [lastUpdateDate, clearSensorData]);
 
-  // Connectivity logic
-  const isOnline = lastUpdateDate && (Date.now() - lastUpdateDate < 30000);
-  const lastUpdateStr = sensorData?.timestamp || "Never";
+  const isTempOnline = Boolean(isOnline && sensorData?.temperature != null && sensorData.temperature !== -999 && sensorData.temperature >= 0 && sensorData.temperature <= 60);
+  const isHumOnline  = Boolean(isOnline && sensorData?.humidity     != null && sensorData.humidity     !== -999 && sensorData.humidity     >= 0 && sensorData.humidity     <= 100);
+  const isSoilOnline = Boolean(isOnline && sensorData?.soil_moisture != null && sensorData.soil_moisture !== -999 && sensorData.soil_moisture >= 0 && sensorData.soil_moisture <= 100);
 
-  // --- LOGIC: TEMPERATURE ---
+  // --- BADGE HELPERS ---
   const getTempBadge = (temp: number | null) => {
-    if (temp === null) return null;
+    if (temp === null || temp === -999) return <span className="bg-red-50 text-red-600 text-xs font-bold px-2.5 py-1 rounded-full border border-red-100">Disconnected</span>;
     if (temp < 15) return <span className="bg-blue-50 text-blue-600 text-xs font-bold px-2.5 py-1 rounded-full border border-blue-100">Too Cold</span>;
     if (temp > 35) return <span className="bg-red-50 text-red-600 text-xs font-bold px-2.5 py-1 rounded-full border border-red-100">Too Hot</span>;
     return <span className="bg-green-50 text-green-600 text-xs font-bold px-2.5 py-1 rounded-full border border-green-100">Optimal</span>;
   };
 
-  // --- LOGIC: HUMIDITY ---
   const getHumidityBadge = (hum: number | null) => {
-    if (hum === null) return null;
+    if (hum === null || hum === -999) return <span className="bg-red-50 text-red-600 text-xs font-bold px-2.5 py-1 rounded-full border border-red-100">Disconnected</span>;
     if (hum < 30) return <span className="bg-orange-50 text-orange-600 text-xs font-bold px-2.5 py-1 rounded-full border border-orange-100">Too Dry</span>;
     if (hum > 70) return <span className="bg-blue-50 text-blue-600 text-xs font-bold px-2.5 py-1 rounded-full border border-blue-100">Too Humid</span>;
     return <span className="bg-green-50 text-green-600 text-xs font-bold px-2.5 py-1 rounded-full border border-green-100">Optimal</span>;
   };
 
-  // --- LOGIC: SOIL MOISTURE ---
   const getMoistureBadge = (moist: number | null) => {
     if (moist === null) return null;
+    if (moist === -999) return <span className="bg-red-50 text-red-600 text-xs font-bold px-2.5 py-1 rounded-full border border-red-100">Disconnected</span>;
     if (moist < 30) return <span className="bg-orange-50 text-orange-600 text-xs font-bold px-2.5 py-1 rounded-full border border-orange-100">Too Dry</span>;
     if (moist > 60) return <span className="bg-teal-50 text-teal-600 text-xs font-bold px-2.5 py-1 rounded-full border border-teal-100">Waterlogged</span>;
     return <span className="bg-green-50 text-green-600 text-xs font-bold px-2.5 py-1 rounded-full border border-green-100">Optimal</span>;
   };
 
-  // --- LOGIC: AI IRRIGATION ANALYSIS ---
-  useEffect(() => {
-    const fetchAiIrrigation = async () => {
-      if (!sensorData?.soil_moisture || Date.now() - lastAiFetch.current < 300000) return; // 5 min cache
-      
-      setIsAiLoading(true);
-      try {
-        const prompt = `Current soil moisture is ${sensorData.soil_moisture}%. Status: ${sensorData.soil_moisture < 30 ? 'Low' : sensorData.soil_moisture > 60 ? 'Waterlogged' : 'Optimal'}. Give a 2-sentence summary of irrigation status and advice. Reply in English only.`;
-        const res = await fetch("http://127.0.0.1:8000/api/v1/chat/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: prompt, history: [] })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setAiIrrigation(data.reply);
-          lastAiFetch.current = Date.now();
-        }
-      } catch (err) {
-        console.error("AI Irrigation error:", err);
-      } finally {
-        setIsAiLoading(false);
-      }
-    };
-
-    if (sensorData) fetchAiIrrigation();
-  }, [sensorData]);
-
   const renderIrrigationCard = () => {
     const moist = sensorData?.soil_moisture;
     if (moist === null || moist === undefined) return null;
 
+    // ESP32 is offline — don't show irrigation commands based on stale data
+    if (!isOnline) {
+      return (
+        <div className="mt-4 p-8 rounded-3xl border-2 border-gray-200 bg-gray-50 text-gray-600 animate-fade-in-up">
+          <div className="flex items-center gap-4">
+            <span className="text-4xl">📡</span>
+            <div>
+              <h2 className="text-2xl font-black mb-1 m-0 text-gray-700">ESP32 OFFLINE</h2>
+              <p className="m-0 text-sm font-bold uppercase tracking-widest opacity-60">
+                {isStale ? `Last data received ${minsAgo} min ago — reconnect ESP32 for live irrigation status` : "Waiting for ESP32 to connect..."}
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Soil sensor disconnected — show a fault card instead
+    if (moist === -999) {
+      return (
+        <div className="mt-4 p-8 rounded-3xl border-2 border-red-200 bg-red-50 text-red-900 animate-fade-in-up">
+          <div className="flex items-center gap-4">
+            <span className="text-4xl">⚠️</span>
+            <div>
+              <h2 className="text-2xl font-black mb-1 m-0">SOIL SENSOR DISCONNECTED</h2>
+              <p className="m-0 text-sm opacity-70 font-bold uppercase tracking-widest">Re-connect the sensor wire to GPIO 34</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     let bg = "bg-white border-gray-100";
-    let status = "Irrigation Status";
+    let status = "OFF";
+    let message = "No irrigation needed";
     let icon = "🚿";
 
+    // AI-like synchronized sentences
     if (moist < 30) {
+      bg = "bg-red-50 border-red-200 text-red-900";
+      status = "ON";
+      message = `Attention required: the current moisture level is critically low at ${moist}%. The soil is excessively dry, increasing plant stress. I strongly recommend initiating an irrigation cycle now to restore optimal water levels before the temperature peaks.`;
+      icon = "⚠️";
+    } else if (moist <= 60) {
       bg = "bg-orange-50 border-orange-200 text-orange-900";
-      status = "⚠️ Irrigation Required";
-    } else if (moist >= 30 && moist <= 60) {
-      bg = "bg-green-50 border-green-200 text-green-800";
-      status = "✅ No Irrigation Needed";
-      icon = "🌿";
+      status = "MODERATE";
+      message = `System condition normal: soil moisture is holding at an acceptable ${moist}%. A moderate, scheduled irrigation cycle is recommended to maintain optimal root nutrient absorption and prevent the topsoil from drying out.`;
+      icon = "💧";
     } else {
-      bg = "bg-blue-50 border-blue-200 text-blue-900";
-      status = "💧 Soil is Waterlogged";
-      icon = "🌊";
+      bg = "bg-green-50 border-green-200 text-green-900";
+      status = "OFF";
+      message = `Status check complete: soil moisture is currently high at ${moist}%. The soil is fully saturated. No further irrigation is necessary at this time, as adding more water may risk waterlogging the root system.`;
+      icon = "✅";
     }
 
     return (
@@ -193,8 +197,8 @@ export default function IoTPage() {
           <div className="flex items-center gap-4">
             <span className="text-4xl">{icon}</span>
             <div>
-              <h2 className="text-2xl font-black mb-1 m-0">{status}</h2>
-              <p className="m-0 text-sm opacity-70 font-bold uppercase tracking-widest">AI Analysis Engine</p>
+              <h2 className="text-2xl font-black mb-1 m-0">STATUS: {status}</h2>
+              <p className="m-0 text-sm opacity-70 font-bold uppercase tracking-widest text-[#16a34a] flex items-center gap-1.5"><span className="text-base">🤖</span> Local AI Analysis Engine</p>
             </div>
           </div>
 
@@ -202,38 +206,20 @@ export default function IoTPage() {
             onClick={() => navigate('/chat', { state: { prefill: `Soil moisture is ${moist}%. Should I change my irrigation schedule?` } })}
             className="bg-white/50 backdrop-blur-sm border-2 border-current px-5 py-2.5 rounded-xl text-sm font-black transition-all hover:bg-white hover:shadow-md ripple"
           >
-            🤖 Professional Advice →
+            🤖 Ask Global AI →
           </button>
         </div>
 
-        <div className="mt-6 p-5 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 text-lg font-medium leading-relaxed italic">
-          {isAiLoading ? (
-            <div className="flex items-center gap-2 text-sm">
-              <div className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-              <div className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-              <div className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
-              <span className="ml-2 font-bold uppercase tracking-tighter">AI is thinking...</span>
-            </div>
-          ) : (
-            aiIrrigation || `The current moisture level is ${moist}%. ${moist < 30 ? 'Soil is dry, consider turning on the water.' : 'Moisture is adequate.'}`
-          )}
+        <div className="mt-6 p-5 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 text-[17px] font-bold text-gray-800 leading-relaxed italic shadow-sm">
+          "{message}"
         </div>
+
+
       </div>
     );
   };
 
-  if (isLoading && !sensorData) {
-    return (
-      <div className="pb-20 space-y-8">
-        <div className="h-32 bg-gray-200 rounded-2xl animate-pulse" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <SkeletonCard />
-          <SkeletonCard />
-          <SkeletonCard />
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="pb-20 font-sans text-gray-900">
@@ -253,14 +239,44 @@ export default function IoTPage() {
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-3xl md:text-4xl font-extrabold m-0">📡 IoT Dashboard</h1>
-            {isOnline && (
+            {isOnline ? (
               <div className="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm">
                 <div className="w-2.5 h-2.5 bg-green-400 rounded-full pulse-dot" />
                 <span>LIVE</span>
               </div>
+            ) : isStale ? (
+              <div className="flex items-center gap-2 bg-orange-500/20 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm text-orange-200">
+                <div className="w-2.5 h-2.5 bg-orange-400 rounded-full" />
+                <span>STALE</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm">
+                <div className="w-2.5 h-2.5 bg-gray-400 rounded-full" />
+                <span>WAITING</span>
+              </div>
             )}
           </div>
-          <p className="text-white/80 text-lg m-0">Real-time sensor data from your farm</p>
+          <div className="flex justify-between items-center text-white/80 text-lg m-0 mt-2">
+            <p className="m-0">{isOnline ? "ESP32 Connected — Live" : isStale ? "ESP32 Disconnected — Showing last data" : "Waiting for ESP32..."}</p>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={handleRefresh}
+                className={`bg-white/20 hover:bg-white/30 text-white text-xs px-4 py-2 rounded-xl font-bold transition-all shadow-sm active:scale-95 flex items-center gap-2 ${isRefreshing ? 'opacity-70 cursor-wait' : ''}`}
+                disabled={isRefreshing}
+              >
+                <span className={`text-[10px] ${isRefreshing ? 'animate-spin' : ''}`}>⟳</span> Refresh
+              </button>
+              
+              {isStale && (
+                <button 
+                  onClick={clearSensorData}
+                  className="bg-white/20 hover:bg-white/30 text-white text-xs px-4 py-2 rounded-xl font-bold transition-all shadow-sm active:scale-95"
+                >
+                  Clear Last Data
+                </button>
+              )}
+            </div>
+          </div>
         </div>
         {/* Subtle background decoration */}
         <div className="absolute top-0 right-0 -mr-10 -mt-10 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
@@ -270,66 +286,78 @@ export default function IoTPage() {
       <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
         <span className="text-green-600">📊</span> Live Sensor Readings
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        
-        {/* TEMPERATURE CARD */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col border-t-4 border-t-red-500 relative hover-lift animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-          <div className="flex justify-between items-start mb-4">
-            <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-2xl shadow-inner">
-              🌡️
-            </div>
-            {getTempBadge(sensorData?.temperature || null)}
-          </div>
-          <h3 className="m-0 text-4xl font-black text-gray-900">
-            {sensorData?.temperature !== undefined && sensorData?.temperature !== null ? <CountUp end={sensorData.temperature} decimals={1} /> : "--"}°C
-          </h3>
-          <p className="text-gray-500 font-bold text-sm mb-4 uppercase tracking-wider">Soil Temp</p>
-          
-          <DotIndicators value={sensorData?.temperature || null} min={0} max={50} activeColor="bg-red-500" />
-          
-          <p className="text-xs text-gray-400 m-0 italic">Optimal range: 15-35°C</p>
+      {isLoading && !sensorData ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
         </div>
+      ) : (
+        <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 transition-all duration-500 ${isStale ? 'opacity-60 saturate-50 sepia-[.2]' : ''}`}>
+          
+          {/* TEMPERATURE CARD */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col border-t-4 border-t-red-500 relative hover-lift animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            <div className="flex justify-between items-start mb-4">
+              <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-2xl shadow-inner">
+                🌡️
+              </div>
+              {getTempBadge(sensorData?.temperature || null)}
+            </div>
+            <h3 className="m-0 text-4xl font-black text-gray-900">
+              {sensorData?.temperature !== undefined && sensorData?.temperature !== null ? <CountUp end={sensorData.temperature} decimals={1} /> : "--"}°C
+            </h3>
+            <p className="text-gray-500 font-bold text-sm mb-4 uppercase tracking-wider">Soil Temp</p>
+            
+            <DotIndicators value={sensorData?.temperature || null} min={0} max={50} activeColor="bg-red-500" />
+            
+            <p className="text-xs text-gray-400 m-0 italic">Optimal range: 15-35°C</p>
+          </div>
 
-        {/* HUMIDITY CARD */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col border-t-4 border-t-blue-500 relative hover-lift animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-          <div className="flex justify-between items-start mb-4">
-            <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-2xl shadow-inner">
-              💧
+          {/* HUMIDITY CARD */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col border-t-4 border-t-blue-500 relative hover-lift animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            <div className="flex justify-between items-start mb-4">
+              <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-2xl shadow-inner">
+                💧
+              </div>
+              {getHumidityBadge(sensorData?.humidity || null)}
             </div>
-            {getHumidityBadge(sensorData?.humidity || null)}
+            <h3 className="m-0 text-4xl font-black text-gray-900">
+              {sensorData?.humidity !== undefined && sensorData?.humidity !== null ? <CountUp end={sensorData.humidity} /> : "--"}%
+            </h3>
+            <p className="text-gray-500 font-bold text-sm mb-4 uppercase tracking-wider">Air Humidity</p>
+            
+            <DotIndicators value={sensorData?.humidity || null} min={0} max={100} activeColor="bg-blue-500" />
+            
+            <p className="text-xs text-gray-400 m-0 italic">Optimal range: 30-70%</p>
           </div>
-          <h3 className="m-0 text-4xl font-black text-gray-900">
-            {sensorData?.humidity !== undefined && sensorData?.humidity !== null ? <CountUp end={sensorData.humidity} /> : "--"}%
-          </h3>
-          <p className="text-gray-500 font-bold text-sm mb-4 uppercase tracking-wider">Air Humidity</p>
-          
-          <DotIndicators value={sensorData?.humidity || null} min={0} max={100} activeColor="bg-blue-500" />
-          
-          <p className="text-xs text-gray-400 m-0 italic">Optimal range: 30-70%</p>
-        </div>
 
-        {/* SOIL MOISTURE CARD */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col border-t-4 border-t-green-500 relative hover-lift animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-          <div className="flex justify-between items-start mb-4">
-            <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-2xl shadow-inner">
-              🌱
+          {/* SOIL MOISTURE CARD */}
+          <div className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col border-t-4 relative hover-lift animate-fade-in-up ${sensorData?.soil_moisture === -999 ? 'border-t-red-400 opacity-60' : 'border-t-green-500'}`} style={{ animationDelay: '0.5s' }}>
+            <div className="flex justify-between items-start mb-4">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-inner ${sensorData?.soil_moisture === -999 ? 'bg-red-50' : 'bg-green-50'}`}>
+                🌱
+              </div>
+              {getMoistureBadge(sensorData?.soil_moisture ?? null)}
             </div>
-            {getMoistureBadge(sensorData?.soil_moisture || null)}
+            <h3 className="m-0 text-4xl font-black text-gray-900">
+              {sensorData?.soil_moisture !== undefined && sensorData?.soil_moisture !== null && sensorData.soil_moisture !== -999 ? <CountUp end={sensorData.soil_moisture} /> : "--"}%
+            </h3>
+            <p className="text-gray-500 font-bold text-sm mb-4 uppercase tracking-wider">Soil Moisture</p>
+            
+            <DotIndicators value={sensorData?.soil_moisture === -999 ? null : (sensorData?.soil_moisture ?? null)} min={0} max={100} activeColor="bg-green-500" />
+            
+            {sensorData?.soil_moisture === -999 ? (
+              <p className="text-xs text-red-500 m-0 font-bold">⚠️ Sensor disconnected — check wire</p>
+            ) : (
+              <p className="text-xs text-gray-400 m-0 italic">Optimal range: 30-60%</p>
+            )}
           </div>
-          <h3 className="m-0 text-4xl font-black text-gray-900">
-            {sensorData?.soil_moisture !== undefined && sensorData?.soil_moisture !== null ? <CountUp end={sensorData.soil_moisture} /> : "--"}%
-          </h3>
-          <p className="text-gray-500 font-bold text-sm mb-4 uppercase tracking-wider">Soil Moisture</p>
-          
-          <DotIndicators value={sensorData?.soil_moisture || null} min={0} max={100} activeColor="bg-green-500" />
-          
-          <p className="text-xs text-gray-400 m-0 italic">Optimal range: 30-60%</p>
         </div>
-      </div>
+      )}
 
       <div className="text-sm text-gray-400 mb-10 flex items-center justify-center gap-2 bg-gray-50 py-2 rounded-full border border-gray-100 max-w-fit mx-auto px-6">
         <span className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-        Last updated: <strong className="text-gray-600 ml-1">{lastUpdateStr}</strong>
+        Last updated: <strong className="text-gray-600 ml-1">{isStale ? `${lastUpdateStr} (${minsAgo} minutes ago)` : lastUpdateStr}</strong>
       </div>
 
       {/* IRRIGATION STATUS */}
@@ -344,16 +372,16 @@ export default function IoTPage() {
       </h2>
       <div className="flex flex-wrap gap-4">
         <div className={`flex items-center gap-2 px-5 py-2.5 rounded-full border-2 font-bold transition-all transition-700 shadow-sm
-          ${isOnline ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-600 opacity-60'}`}>
-          <span>🌡️</span> Temp Sensor: {isOnline ? 'Online' : 'Offline'}
+          ${isOnline && isTempOnline ? 'bg-green-50 border-green-200 text-green-700' : isStale ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
+          <span>🌡️</span> Temp Sensor: {isOnline && isTempOnline ? 'Online' : isStale ? `Last seen ${minsAgo}m ago` : 'Waiting...'}
         </div>
         <div className={`flex items-center gap-2 px-5 py-2.5 rounded-full border-2 font-bold transition-all transition-700 shadow-sm
-          ${isOnline ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-600 opacity-60'}`}>
-          <span>💧</span> Humidity Sensor: {isOnline ? 'Online' : 'Offline'}
+          ${isOnline && isHumOnline ? 'bg-green-50 border-green-200 text-green-700' : isStale ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
+          <span>💧</span> Humidity Sensor: {isOnline && isHumOnline ? 'Online' : isStale ? `Last seen ${minsAgo}m ago` : 'Waiting...'}
         </div>
         <div className={`flex items-center gap-2 px-5 py-2.5 rounded-full border-2 font-bold transition-all transition-700 shadow-sm
-          ${isOnline ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-600 opacity-60'}`}>
-          <span>🌱</span> Soil Sensor: {isOnline ? 'Online' : 'Offline'}
+          ${isOnline && isSoilOnline ? 'bg-green-50 border-green-200 text-green-700' : isOnline && sensorData?.soil_moisture === -999 ? 'bg-red-50 border-red-200 text-red-700' : isStale ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
+          <span>🌱</span> Soil Sensor: {isOnline && isSoilOnline ? 'Online' : isOnline && sensorData?.soil_moisture === -999 ? '⚠️ Disconnected' : isStale ? `Last seen ${minsAgo}m ago` : 'Waiting...'}
         </div>
       </div>
 

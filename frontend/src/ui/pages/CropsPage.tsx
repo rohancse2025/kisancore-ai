@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSensor } from '../../context/SensorContext';
 
 // Helper for farmer-friendly hints
 const getSliderHint = (name: string, value: number) => {
@@ -38,24 +39,18 @@ export default function CropsPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const { temperature, humidity, isOnline } = useSensor();
+
   useEffect(() => {
-    const fetchSensorData = async () => {
-      try {
-        const res = await fetch("http://127.0.0.1:8000/api/v1/sensor-data");
-        if (res.ok) {
-          const data = await res.json();
-          setInputs(prev => ({
-            ...prev,
-            temperature: data.temperature ?? prev.temperature,
-            humidity: data.humidity ?? prev.humidity
-          }));
-        }
-      } catch (err) {
-        console.error("Failed to fetch sensor data:", err);
-      }
-    };
-    fetchSensorData();
-  }, []);
+    // Always auto-fill from the last known IoT data regardless of online status
+    if (temperature !== null && humidity !== null) {
+      setInputs(prev => ({
+        ...prev,
+        temperature: temperature,
+        humidity: humidity
+      }));
+    }
+  }, [temperature, humidity]);
 
   // --- CROP RECOMMENDATION STATE ---
   const [inputs, setInputs] = useState({
@@ -228,9 +223,15 @@ export default function CropsPage() {
                           <label className="font-bold text-gray-700 text-sm flex items-center">
                             {slider.label}
                             {(slider.name === "temperature" || slider.name === "humidity") && (
-                              <span className="ml-2 text-green-600 text-[10px] font-black uppercase flex items-center gap-1 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
-                                <span className="text-[8px] animate-pulse">🔴</span> Live
-                              </span>
+                              isOnline ? (
+                                <span className="ml-2 text-green-600 text-[10px] font-black uppercase flex items-center gap-1 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                                  <span className="text-[8px] animate-pulse">🔴</span> Live
+                                </span>
+                              ) : (
+                                <span className="ml-2 text-orange-600 text-[10px] font-black uppercase flex items-center gap-1 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">
+                                  Offline - Last Data
+                                </span>
+                              )
                             )}
                           </label>
                           <p className="text-[11px] text-gray-400 italic mt-0.5 font-medium">{slider.hint}</p>
