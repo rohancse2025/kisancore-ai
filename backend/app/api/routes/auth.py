@@ -108,6 +108,25 @@ def update_profile(phone: str, req: UpdateProfileRequest, db: Session = Depends(
   db.refresh(farmer)
   return {"status": "updated", "farmer": farmer}
 
+@router.delete("/profile")
+def delete_profile(phone: str, db: Session = Depends(get_db)):
+  farmer = db.query(Farmer).filter(Farmer.phone == phone).first()
+  if not farmer:
+    raise HTTPException(404, detail="Farmer not found")
+  
+  from app.database import CropRecord
+  # 1. Delete Crop Records
+  db.query(CropRecord).filter(CropRecord.farmer_id == farmer.id).delete()
+  
+  # 2. Delete Farmer History
+  db.query(FarmerHistory).filter(FarmerHistory.farmer_id == farmer.id).delete()
+  
+  # 3. Delete Farmer
+  db.delete(farmer)
+  db.commit()
+  
+  return {"status": "deleted"}
+
 @router.post("/history")
 def save_history(farmer_id: int, type: str, data: str, db: Session = Depends(get_db)):
   history = FarmerHistory(farmer_id=farmer_id, type=type, data=data)

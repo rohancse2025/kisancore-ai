@@ -1,31 +1,54 @@
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, Form
 from pydantic import BaseModel
-from twilio.rest import Client
-from twilio.twiml.messaging_response import MessagingResponse
+import requests
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 router = APIRouter()
 
-ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
-AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
-FROM_PHONE = os.getenv("TWILIO_PHONE")
+FAST2SMS_KEY = os.getenv("FAST2SMS_API_KEY", "")
 
 class SMSRequest(BaseModel):
   to_phone: str
   message_type: str
   data: dict
 
-def send_sms(to: str, message: str):
+def send_sms_fast2sms(phone: str, message: str):
+  if not FAST2SMS_KEY:
+    return False, "Fast2SMS key not configured"
   try:
-    client = Client(ACCOUNT_SID, AUTH_TOKEN)
-    client.messages.create(
-      body=message, from_=FROM_PHONE, to=to)
-    return True
+    clean_phone = phone.replace("+91", "").strip()
+    url = "https://www.fast2sms.com/dev/bulkV2"
+    payload = {
+      "route": "q",
+      "message": message,
+      "language": "english",
+      "flash": 0,
+      "numbers": clean_phone,
+    }
+    headers = {
+      "authorization": FAST2SMS_KEY,
+      "Content-Type": "application/json"
+    }
+    response = requests.post(url, json=payload, headers=headers, timeout=10)
+    result = response.json()
+    print(f"Fast2SMS Response: {result}")
+    
+    if result.get("return") is True:
+        return True, "Sent"
+    else:
+        # result.get("message") is often a list
+        msg = result.get("message", "Unknown error")
+        if isinstance(msg, list): msg = msg[0]
+        return False, msg
   except Exception as e:
-    print(f"SMS Error: {e}")
-    return False
+    print(f"Fast2SMS Exception: {e}")
+    return False, str(e)
+
+def send_sms(to: str, message: str):
+  success, _ = send_sms_fast2sms(to, message)
+  return success
 
 @router.post("/send")
 def send_alert(req: SMSRequest):
@@ -149,8 +172,18 @@ async def handle_incoming_sms(From: str = Form(...), Body: str = Form(...)):
     else:
         response_msg = "Command not recognized. Valid commands: PUMP ON [mins], PUMP OFF, AUTO, STATUS."
 
-    # Return Twilio TwiML XML response natively
-    twiml = MessagingResponse()
-    twiml.message(response_msg)
+    # Return TwiML XML response manually to avoid Twilio dependency
+    xml_response = f"""<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Message>{response_msg}</Message>
+</Response>"""
     
-    return Response(content=str(twiml), media_type="application/xml")
+    return Response(content=xml_response, media_type="application/xml")
+
+@router.get("/test")
+def test_sms(phone: str):
+    success, detail = send_sms_fast2sms(phone, "KisanCore: This is a test message from your new Fast2SMS integration. It's working! 🌾")
+    if success:
+        return {"status": "success", "message": f"Test SMS sent to {phone}", "details": detail}
+    else:
+        return {"status": "error", "message": "Failed to send test SMS.", "reason": detail}

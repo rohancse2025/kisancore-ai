@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Routes, Route, useNavigate, useLocation, Link } from "react-router-dom";
+import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
 import CropsPage from "./pages/CropsPage";
 import ScanPage from "./pages/ScanPage";
@@ -12,6 +13,8 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const farmer = JSON.parse(localStorage.getItem('kisancore_farmer') || 'null');
+  const isLoggedIn = !!farmer;
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: any) => {
@@ -180,16 +183,43 @@ export default function App() {
             {deferredPrompt && (
               <button 
                 onClick={handleInstallClick}
-                className="hidden md:flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-xs font-black transition-all shadow-lg shadow-green-600/20 active:scale-95"
+                className="hidden md:flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-xs font-black transition-all shadow-lg shadow-green-600/20 active:scale-95 pl-0"
               >
                 📲 Install App
               </button>
             )}
 
+            {/* LOGIN/PROFILE BUTTON (Desktop) */}
+            {!isLoggedIn ? (
+              <button 
+                onClick={() => navigate('/login')}
+                className="hidden md:flex items-center gap-2 bg-green-600 text-white hover:bg-green-700 px-6 py-2.5 rounded-xl text-xs font-black transition-all shadow-lg shadow-green-600/20 active:scale-95 group/login"
+              >
+                <span>Login 👨‍🌾</span>
+                <span className="group-hover:translate-x-1 transition-transform">→</span>
+              </button>
+            ) : (
+              <div className="hidden md:flex items-center gap-4">
+                <Link 
+                  to="/profile"
+                  className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700/50 hover:bg-gray-100 dark:hover:bg-slate-700 px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-600 transition-all no-underline"
+                >
+                  <span className="text-lg">👤</span>
+                  <span className="text-xs font-bold text-gray-700 dark:text-slate-300">{farmer.name?.split(' ')[0] || 'Farmer'}</span>
+                </Link>
+                <button 
+                  onClick={() => { localStorage.removeItem('kisancore_farmer'); window.location.reload(); }}
+                  className="text-gray-400 hover:text-red-500 transition-all font-black text-[10px] uppercase tracking-widest pl-0"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+
             {/* MOBILE MENU TOGGLE */}
             <button 
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="md:hidden w-10 h-10 flex flex-col justify-center items-center gap-1.5 cursor-pointer bg-transparent border-none outline-none pl-0 mt-2"
+              className="md:hidden w-10 h-10 flex flex-col justify-center items-center gap-1.5 cursor-pointer bg-transparent border-none outline-none pl-0"
             >
               <div className={`h-0.5 w-6 bg-green-600 rounded-full transition-all ${showMobileMenu ? 'rotate-45 translate-y-2' : ''}`} />
               <div className={`h-0.5 w-6 bg-green-600 rounded-full transition-all ${showMobileMenu ? 'opacity-0' : ''}`} />
@@ -230,13 +260,20 @@ export default function App() {
                </div>
             </div>
 
-            {/* INSTALL BUTTON (Mobile) */}
-            {deferredPrompt && (
+            {/* LOGIN BUTTON (Mobile) */}
+            {!isLoggedIn ? (
               <button 
-                onClick={handleInstallClick}
-                className="mt-4 w-full flex items-center justify-center gap-2 bg-green-600 text-white py-4 rounded-2xl text-lg font-black shadow-lg"
+                onClick={() => navigate('/login')}
+                className="mt-4 w-full flex items-center justify-center gap-2 bg-white border-2 border-green-600 text-green-600 py-4 rounded-2xl text-lg font-black shadow-sm"
               >
-                📲 Install App
+                Login 👨‍🌾
+              </button>
+            ) : (
+              <button 
+                onClick={() => { localStorage.removeItem('kisancore_farmer'); window.location.reload(); }}
+                className="mt-4 w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 py-4 rounded-2xl text-lg font-black shadow-sm"
+              >
+                Logout
               </button>
             )}
           </div>
@@ -250,6 +287,7 @@ export default function App() {
           className={`max-w-[1200px] mx-auto p-5 md:px-12 md:py-8 transition-all animate-fade-in`}
         >
           <Routes>
+            <Route path="/login" element={<LoginPage />} />
             <Route path="/" element={<HomePage />} />
             <Route path="/crops" element={<CropsPage />} />
             <Route path="/scan" element={<ScanPage />} />

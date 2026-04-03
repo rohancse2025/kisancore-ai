@@ -32,7 +32,7 @@ export default function ProfilePage() {
 
     const fetchProfile = async () => {
       try {
-        const res = await fetch(`/api/v1/auth/profile?phone=${farmer.phone}`);
+        const res = await fetch(`/api/v1/auth/profile?phone=${encodeURIComponent(farmer.phone)}`);
         if (res.ok) {
           const data = await res.json();
           setFormData({
@@ -53,28 +53,76 @@ export default function ProfilePage() {
     fetchProfile();
   }, [navigate]);
 
+  const handleLogout = () => {
+    localStorage.removeItem('kisancore_farmer');
+    navigate('/');
+    window.location.reload();
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm("⚠️ Are you absolutely sure? This will permanently delete your farm data, crop records, and profile history. This action cannot be undone.")) {
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/v1/auth/profile?phone=${encodeURIComponent(formData.phone)}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        localStorage.removeItem('kisancore_farmer');
+        navigate('/');
+        window.location.reload();
+      } else {
+        const result = await res.json();
+        alert(result.detail || "Failed to delete account");
+      }
+    } catch (err) {
+      alert("Error deleting account. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setMessage({ text: '', type: '' });
 
+    // Only send fields that the backend expects
+    const updateData = {
+      name: formData.name,
+      location: formData.location,
+      farm_size: formData.farm_size,
+      farm_size_unit: formData.farm_size_unit,
+      soil_type: formData.soil_type,
+      primary_crop: formData.primary_crop,
+      irrigation_type: formData.irrigation_type,
+      soil_ph: formData.soil_ph,
+      nitrogen: formData.nitrogen,
+      potassium: formData.potassium,
+      sms_alerts_enabled: formData.sms_alerts_enabled,
+      sms_phone: formData.sms_phone
+    };
+
     try {
-      const res = await fetch(`/api/v1/auth/profile?phone=${formData.phone}`, {
+      const res = await fetch(`/api/v1/auth/profile?phone=${encodeURIComponent(formData.phone)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(updateData)
       });
 
+      const result = await res.json();
+
       if (res.ok) {
-        const result = await res.json();
         localStorage.setItem('kisancore_farmer', JSON.stringify(result.farmer));
         setMessage({ text: 'Profile updated successfully!', type: 'success' });
         setTimeout(() => setMessage({ text: '', type: '' }), 3000);
       } else {
-        throw new Error("Failed to update");
+        throw new Error(result.detail || "Failed to update profile");
       }
-    } catch (err) {
-      setMessage({ text: 'Error updating profile. Please try again.', type: 'error' });
+    } catch (err: any) {
+      setMessage({ text: err.message || 'Error updating profile. Please try again.', type: 'error' });
     } finally {
       setSaving(false);
     }
@@ -293,10 +341,32 @@ export default function ProfilePage() {
           <button 
             type="button"
             onClick={() => navigate('/')}
-            className="px-10 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 font-black rounded-2xl hover:bg-gray-200 transition-all transition-colors"
+            className="px-10 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 font-black rounded-2xl hover:bg-gray-200 transition-all"
           >
             Cancel
           </button>
+        </div>
+
+        {/* Danger Zone */}
+        <div className="md:col-span-2 mt-12 pt-8 border-t border-gray-100 dark:border-slate-800">
+           <h3 className="text-xs font-black text-red-500 uppercase tracking-widest mb-6">Danger Zone</h3>
+           <div className="flex flex-col md:flex-row gap-4">
+              <button 
+                type="button"
+                onClick={handleLogout}
+                className="flex-1 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-400 font-black py-4 rounded-2xl hover:bg-gray-100 transition-all"
+              >
+                Logout Session
+              </button>
+              <button 
+                type="button"
+                onClick={handleDelete}
+                className="flex-1 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 text-red-600 font-black py-4 rounded-2xl hover:bg-red-100 transition-all"
+              >
+                Permanently Delete Account
+              </button>
+           </div>
+           <p className="text-[10px] text-gray-400 mt-4 text-center font-medium">Deleting your account will remove all crop data and history forever.</p>
         </div>
 
       </form>

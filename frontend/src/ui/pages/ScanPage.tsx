@@ -95,19 +95,19 @@ export default function ScanPage() {
       const jsonStr = data.reply.replace(/```json|```/g, "").trim();
       const aiResult = JSON.parse(jsonStr);
       
-      setResult({
-        disease: aiResult.disease || detectedDisease,
-        confidence: aiResult.confidence || 95.0,
-        severity: aiResult.severity || "Moderate",
-        treatment: aiResult.treatment || "Consult an expert.",
-        prevention: aiResult.prevention || "Maintain good hygiene."
-      });
-    } catch (err) {
-      console.error("Analysis Error:", err);
-      setResult(MOCK_RESULT); // Fallback to mock if AI fails
-    } finally {
-      setIsAnalyzing(false);
-    }
+        setResult({
+          disease: aiResult.disease || detectedDisease,
+          confidence: aiResult.confidence || 95.0,
+          severity: aiResult.severity || "Moderate",
+          treatment: aiResult.treatment || "Consult an expert.",
+          prevention: aiResult.prevention || "Maintain good hygiene."
+        });
+      } catch (err) {
+        console.error("Analysis Error:", err);
+        setResult(MOCK_RESULT); // Fallback to mock if AI fails
+      } finally {
+        setIsAnalyzing(false);
+      }
   };
 
   const severityColor = (s: string) =>
