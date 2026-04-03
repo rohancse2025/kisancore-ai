@@ -7,3 +7,9 @@ Suggested structure:
 - `simulator/`
 - `schemas/` (JSON schemas for telemetry)
 
+ESP32 GPIO26 -> Relay IN pin
+Relay VCC -> 5V
+Relay GND -> GND
+Relay NO -> Fan/Pump positive
+Fan/Pump negative -> Power supply negative
+

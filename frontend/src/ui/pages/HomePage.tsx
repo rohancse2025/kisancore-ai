@@ -158,7 +158,7 @@ export default function HomePage() {
 
     try {
       const prompt = `Soil pH: ${ph}, Nitrogen: ${n} mg/kg, Moisture: ${m}%. Give ONE sentence expert verdict on this soil in simple English. Max 20 words only.`;
-      const res = await fetch("http://127.0.0.1:8000/api/v1/chat/", {
+      const res = await fetch("/api/v1/chat/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: prompt, history: [] }),
@@ -181,7 +181,7 @@ export default function HomePage() {
       setHasFetchedCrop(true);
       const fetchCrop = async () => {
         try {
-          const cropRes = await fetch(`http://127.0.0.1:8000/api/v1/recommend-crop?temperature=${temperature}&humidity=${humidity}&ph=6.5&rainfall=100`);
+          const cropRes = await fetch(`/api/v1/recommend-crop?temperature=${temperature}&humidity=${humidity}&ph=6.5&rainfall=100`);
           const cropJson = await cropRes.json();
           setRecommendedCrop(cropJson.crop);
         } catch (error) {
@@ -217,7 +217,7 @@ export default function HomePage() {
           navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
         );
         const { latitude, longitude } = pos.coords;
-        const res = await fetch(`http://127.0.0.1:8000/api/v1/weather?lat=${latitude}&lon=${longitude}`);
+        const res = await fetch(`/api/v1/weather?lat=${latitude}&lon=${longitude}`);
         if (!res.ok) throw new Error('Weather API failed');
         const data: WeatherData = await res.json();
         setWeatherData(data);

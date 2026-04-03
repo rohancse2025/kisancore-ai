@@ -21,7 +21,9 @@ latest_reading = {
     "irrigation_needed": False,
     "suggestion": "No data",
     "timestamp": "Never",
-    "unix_timestamp": 0
+    "unix_timestamp": 0,
+    "manual_override": None, # "ON", "OFF", or None
+    "override_expiry_time": 0
 }
 
 # --- ROUTES ---
@@ -33,19 +35,38 @@ async def post_iot_data(data: IOTData):
     now = datetime.now()
     formatted_time = now.strftime("%I:%M %p")
     
-    # Irrigation Logic
-    irrigation_needed = False
-    message = "No data"
-
-    if data.soil_moisture < 30:
+    # --- MANUAL OVERRIDE AND SAFETY CHECK LOGIC ---
+    # 1. Check if an override is active and expired
+    if latest_reading["manual_override"] is not None:
+        if time.time() > latest_reading["override_expiry_time"]:
+            latest_reading["manual_override"] = None
+            message = "Override timer completed. Switched to Auto Mode."
+            # Optionally send SMS here via an import if needed
+            
+    # 2. Safety Autoshutoff (if moisture >= 60% and we are manually pumping)
+    if data.soil_moisture >= 60 and latest_reading["manual_override"] == "ON":
+        latest_reading["manual_override"] = None
+        irrigation_needed = False
+        message = f"SAFETY TRIGGER: Moisture reached {data.soil_moisture}%. Pumping automatically turned OFF to prevent waterlogging."
+    
+    # 3. Apply Override OR Fallback to Auto
+    if latest_reading["manual_override"] == "ON":
         irrigation_needed = True
-        message = "Irrigation needed. Soil is dry."
-    elif 30 <= data.soil_moisture <= 60:
+        message = "Manual Override: Pump is ON."
+    elif latest_reading["manual_override"] == "OFF":
         irrigation_needed = False
-        message = "Soil moisture is optimal."
+        message = "Manual Override: Pump is OFF."
     else:
-        irrigation_needed = False
-        message = "Soil is wet enough. No irrigation needed."
+        # Standard Autonomous logic
+        if data.soil_moisture < 30:
+            irrigation_needed = True
+            message = "Irrigation needed. Soil is dry."
+        elif 30 <= data.soil_moisture <= 60:
+            irrigation_needed = False
+            message = "Soil moisture is optimal."
+        else:
+            irrigation_needed = False
+            message = "Soil is wet enough. No irrigation needed."
 
     # Update latest reading
     latest_reading.update({
@@ -60,9 +81,36 @@ async def post_iot_data(data: IOTData):
     
     return {
         "status": "ok", 
+        "relay_command": "ON" if irrigation_needed else "OFF",
         "irrigation_needed": irrigation_needed,
         "message": message
     }
+
+class OverrideRequest(BaseModel):
+    command: str  # "ON", "OFF"
+    duration_minutes: Optional[int] = 60
+
+@router.post("/override")
+async def set_override(req: OverrideRequest):
+    global latest_reading
+    if req.command not in ["ON", "OFF"]:
+        return {"status": "error", "message": "Invalid command"}
+    
+    latest_reading["manual_override"] = req.command
+    # Give a default safe 60 min expiration for manual commands, unless overwritten 
+    if req.command == "ON":
+        latest_reading["override_expiry_time"] = time.time() + (req.duration_minutes * 60)
+    else:
+        latest_reading["override_expiry_time"] = time.time() + 86400  # Stays theoretically off for longer unless cleared
+    
+    return {"status": "ok", "message": f"Pump overridden to {req.command}"}
+
+@router.delete("/override")
+async def clear_override():
+    global latest_reading
+    latest_reading["manual_override"] = None
+    latest_reading["override_expiry_time"] = 0
+    return {"status": "ok", "message": "Override cleared. Switched to Auto Mode."}
 
 @router.get("/latest")
 async def get_latest_data():

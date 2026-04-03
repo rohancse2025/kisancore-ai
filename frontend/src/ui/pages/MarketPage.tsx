@@ -44,7 +44,7 @@ export default function MarketPage() {
     setIsLoading(true);
     setHasSearched(true);
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/v1/market-prices?commodity=${c}&state=${s}`);
+      const res = await fetch(`/api/v1/market-prices?commodity=${c}&state=${s}`);
       const data = await res.json();
       setPrices(data);
     } catch (error) {

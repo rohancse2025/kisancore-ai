@@ -49,7 +49,7 @@ export default function WeatherPage() {
       async (position) => {
         const { latitude, longitude } = position.coords;
         try {
-          const res = await fetch(`http://127.0.0.1:8000/api/v1/weather?lat=${latitude}&lon=${longitude}`);
+          const res = await fetch(`/api/v1/weather?lat=${latitude}&lon=${longitude}`);
           if (!res.ok) throw new Error("Weather fetch failed");
           const data: WeatherData = await res.json();
           setWeather(data);

@@ -10,6 +10,7 @@ const char* BACKEND_URL = "http://10.186.223.36:8000/api/v1/iot/data";
 #define DHTPIN 5
 #define DHTTYPE DHT22
 #define SOIL_PIN 34
+#define RELAY_PIN 26
 
 const int AIR_VALUE = 3500;
 const int WATER_VALUE = 1500;
@@ -23,6 +24,8 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   dht.begin();
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, LOW);
   connectToWiFi();
 }
 
@@ -109,7 +112,17 @@ void sendDataToServer(float temp, float hum, float soil) {
 
   int code = http.POST(payload);
   if (code > 0) {
-    Serial.println("✅ HTTP " + String(code) + ": " + http.getString());
+    String response = http.getString();
+    Serial.println("✅ HTTP " + String(code) + ": " + response);
+    if (code == 200) {
+      if (response.indexOf("ON") >= 0) {
+        digitalWrite(RELAY_PIN, HIGH);
+        Serial.println("RELAY ON - Irrigation started");
+      } else {
+        digitalWrite(RELAY_PIN, LOW);  
+        Serial.println("RELAY OFF - No irrigation");
+      }
+    }
   } else {
     Serial.println("❌ Failed: " + String(code));
   }

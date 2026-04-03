@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import health, sensor, crop, irrigation, chat, weather, crops_ai, market, iot
+from app.api.routes import health, sensor, crop, irrigation, chat, weather, crops_ai, market, iot, auth, sms
 
 api_router = APIRouter()
 api_router.include_router(health.router, tags=["health"], prefix="/health")
@@ -12,3 +12,5 @@ api_router.include_router(weather.router, tags=["weather"], prefix="/weather")
 api_router.include_router(crops_ai.router, tags=["crops-ai"], prefix="/crops")
 api_router.include_router(market.router, tags=["market"], prefix="/market-prices")
 api_router.include_router(iot.router, tags=["iot"], prefix="/iot")
+api_router.include_router(auth.router, tags=["auth"], prefix="/auth")
+api_router.include_router(sms.router, tags=["sms"], prefix="/sms")

@@ -123,7 +123,7 @@ export default function ChatPage() {
         role: msg.sender === 'user' ? 'user' : 'assistant',
         content: msg.text
       }));
-      const response = await fetch("http://127.0.0.1:8000/api/v1/chat/stream", {
+      const response = await fetch("/api/v1/chat/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMsg.text, history: historyPayload })

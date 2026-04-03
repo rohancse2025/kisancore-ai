@@ -8,11 +8,16 @@ from app.core.settings import settings
 app = FastAPI(title=settings.app_name)
 
 cors_origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
+# Always allow "null" origin so standalone file:// HTML pages can reach the API
+if "null" not in cors_origins:
+    cors_origins.append("null")
 if cors_origins:
+    _allow_origins = ["*"] if "*" in cors_origins else cors_origins
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=cors_origins,
-        allow_credentials=True,
+        allow_origins=_allow_origins,
+        # Credentials cannot be used with wildcard; disable only in that case
+        allow_credentials=_allow_origins != ["*"],
         allow_methods=["*"],
         allow_headers=["*"],
     )

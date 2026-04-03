@@ -83,12 +83,33 @@ export default function IoTPage() {
   const isLoading = temperature === null;
   const isStale = sensorData !== null && !isOnline;
   const minsAgo = lastUpdateDate ? Math.floor((Date.now() - lastUpdateDate) / 60000) : 0;
-  
   const [isRefreshing, setIsRefreshing] = useState(false);
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await refreshSensorData();
     setTimeout(() => setIsRefreshing(false), 500);
+  };
+
+  const [overrideDuration, setOverrideDuration] = useState(60);
+  const [isSendingOverride, setIsSendingOverride] = useState(false);
+
+  const handleOverride = async (command: string) => {
+    setIsSendingOverride(true);
+    try {
+      if (command === "AUTO") {
+        await fetch('/api/v1/iot/override', { method: 'DELETE' });
+      } else {
+        await fetch('/api/v1/iot/override', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command, duration_minutes: overrideDuration })
+        });
+      }
+      setTimeout(() => handleRefresh(), 800); // refresh UI to pull new override state
+    } catch (e) {
+      console.error(e);
+    }
+    setIsSendingOverride(false);
   };
 
   // Connectivity display string
@@ -365,6 +386,50 @@ export default function IoTPage() {
         <span>🚿</span> Irrigation Status
       </h2>
       {renderIrrigationCard()}
+
+      {/* MANUAL PUMP CONTROLS */}
+      <div className="mt-8 bg-white border border-gray-200 rounded-3xl p-6 shadow-sm">
+        <h3 className="font-bold mb-4 flex items-center gap-2">🕹️ Manual Pump Controls</h3>
+        <p className="text-sm text-gray-500 mb-6">Remotely override autonomous AI decisions. Safety sensors will automatically turn off the pump if moisture reaches 60%.</p>
+        
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-xl border border-gray-200">
+            <span className="text-sm font-bold text-gray-600 px-2">Timer:</span>
+            <input 
+              type="number" 
+              value={overrideDuration} 
+              onChange={(e) => setOverrideDuration(Number(e.target.value))}
+              className="w-20 px-3 py-1.5 rounded-lg border border-gray-300 text-center font-bold"
+              min="1" max="180"
+            />
+            <span className="text-sm font-bold text-gray-600 px-2">mins</span>
+          </div>
+
+          <button 
+            onClick={() => handleOverride('ON')}
+            disabled={isSendingOverride}
+            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50"
+          >
+            Force Pump ON
+          </button>
+          
+          <button 
+            onClick={() => handleOverride('OFF')}
+            disabled={isSendingOverride}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50"
+          >
+            Force Pump OFF
+          </button>
+          
+          <button 
+            onClick={() => handleOverride('AUTO')}
+            disabled={isSendingOverride}
+            className="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50"
+          >
+            Clear (Auto Mode)
+          </button>
+        </div>
+      </div>
 
       {/* SENSOR HEALTH */}
       <h2 className="text-xl font-bold mb-6 mt-12 flex items-center gap-2">
