@@ -1,12 +1,7 @@
-const CACHE_NAME = 'kisancore-v2';
+const CACHE_NAME = 'kisancore-v16';
 const APP_SHELL = [
   '/',
   '/index.html',
-  '/crops',
-  '/scan',
-  '/iot',
-  '/market',
-  '/chat',
 ];
 
 const DB_NAME = 'kisancore-db';

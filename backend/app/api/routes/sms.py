@@ -176,8 +176,48 @@ async def handle_incoming_sms(From: str = Form(...), Body: str = Form(...)):
         if mode is None: mode = "AUTO"
         response_msg = f"Farm Status: Temp {temp}C, Air Humidity {hum}%, Soil Moisture {soil}%. Mode: {mode}. -KisanCore AI"
         
+    elif text.startswith("REGISTER"):
+        parts = text.split()
+        if len(parts) > 1:
+            phone_to_register = parts[1]
+            clean = phone_to_register.replace("+91", "").strip()
+            if len(clean) == 10 and clean.isdigit():
+                iot.latest_reading["farmer_sms_phone"] = clean
+                response_msg = f"KisanCore: Phone {clean} registered for safety alerts. Commands: PUMP ON [mins], PUMP OFF, AUTO, STATUS."
+            else:
+                response_msg = "Invalid number. Send: REGISTER 9876543210"
+        else:
+            response_msg = "Send: REGISTER 9876543210"
+
+    elif text == "HELP":
+        response_msg = (
+            "KisanCore SMS Commands:\n"
+            "PUMP ON - Start pump (auto stops when full)\n"
+            "PUMP ON 30 - Pump ON for 30 minutes\n" 
+            "PUMP OFF - Stop pump immediately\n"
+            "AUTO - Return to automatic AI control\n"
+            "STATUS - Get live farm sensor readings\n"
+            "REGISTER 9876543210 - Get safety SMS alerts\n"
+            "-KisanCore AI"
+        )
+
+    elif text == "DAILY":
+        temp = iot.latest_reading.get("temperature", "--")
+        hum = iot.latest_reading.get("humidity", "--")
+        soil = iot.latest_reading.get("soil_moisture", "--")
+        irr = "ON" if iot.latest_reading.get("irrigation_needed") else "OFF"
+        mode = iot.latest_reading.get("manual_override") or "AUTO"
+        response_msg = (
+            f"KisanCore Daily Report:\n"
+            f"Temp: {temp}C | Humidity: {hum}%\n"
+            f"Soil: {soil}% | Pump: {irr}\n"
+            f"Mode: {mode}\n"
+            f"Send HELP for all commands.\n"
+            f"-KisanCore AI"
+        )
+        
     else:
-        response_msg = "Command not recognized. Valid commands: PUMP ON [mins], PUMP OFF, AUTO, STATUS."
+        response_msg = "Unknown command. Send HELP for list of commands. -KisanCore AI"
 
     # Return TwiML XML response for Twilio
     xml_response = f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -198,11 +238,15 @@ def sms_status():
                       not sid.startswith("ACxx") and 
                       token != "your_auth_token_here")
     
+    # Import iot dynamically to get current state
+    import app.api.routes.iot as iot_module
+    
     return {
         "configured": configured,
         "sid_set": bool(sid and not sid.startswith("ACxx")),
         "token_set": bool(token and token != "your_auth_token_here"),
         "from_number": from_num if from_num else "NOT SET",
+        "registered_farm_phone": iot_module.latest_reading.get("farmer_sms_phone", "None registered"),
         "instructions": "Fill TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_SMS_FROM in backend/.env" if not configured else "Ready to send SMS"
     }
 

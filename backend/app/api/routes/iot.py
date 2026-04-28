@@ -23,7 +23,8 @@ latest_reading = {
     "timestamp": "Never",
     "unix_timestamp": 0,
     "manual_override": None, # "ON", "OFF", or None
-    "override_expiry_time": 0
+    "override_expiry_time": 0,
+    "farmer_sms_phone": "" 
 }
 
 # --- ROUTES ---
@@ -41,13 +42,30 @@ async def post_iot_data(data: IOTData):
         if time.time() > latest_reading["override_expiry_time"]:
             latest_reading["manual_override"] = None
             message = "Override timer completed. Switched to Auto Mode."
-            # Optionally send SMS here via an import if needed
+            # Timer expiry notification
+            timer_msg = (
+                f"KisanCore: Your pump timer has ended. "
+                f"Pump is now in AUTO mode. "
+                f"Send STATUS to check soil moisture. -KisanCore AI"
+            )
+            if latest_reading.get("farmer_sms_phone"):
+                from app.api.routes.sms import send_sms
+                send_sms(latest_reading["farmer_sms_phone"], timer_msg)
             
     # 2. Safety Autoshutoff (if moisture >= 60% and we are manually pumping)
     if data.soil_moisture >= 60 and latest_reading["manual_override"] == "ON":
         latest_reading["manual_override"] = None
         irrigation_needed = False
         message = f"SAFETY TRIGGER: Moisture reached {data.soil_moisture}%. Pumping automatically turned OFF to prevent waterlogging."
+        # Safety SMS notification
+        safety_msg = (
+            f"KisanCore SAFETY: Pump auto-OFF. "
+            f"Soil moisture reached {data.soil_moisture}% — waterlogging prevented. "
+            f"Send STATUS to check farm. -KisanCore AI"
+        )
+        if latest_reading.get("farmer_sms_phone"):
+            from app.api.routes.sms import send_sms
+            send_sms(latest_reading["farmer_sms_phone"], safety_msg)
     
     # 3. Apply Override OR Fallback to Auto
     if latest_reading["manual_override"] == "ON":

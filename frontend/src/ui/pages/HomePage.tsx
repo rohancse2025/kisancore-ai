@@ -331,7 +331,7 @@ export default function HomePage({ lang }: { lang: string }) {
       try {
         const commodities = ['Potato', 'Onion', 'Tomato', 'Wheat', 'Maize', 'Soybean', 'Cotton'];
         const results = await Promise.allSettled(
-          commodities.map(c => axios.get(`${import.meta.env.VITE_API_URL || ''}/api/v1/market?state=${marketRegion}&commodity=${c}`))
+          commodities.map(c => axios.get(`${import.meta.env.VITE_API_URL || ''}/api/v1/market-prices?state=${marketRegion}&commodity=${c}`))
         );
         
         const trends = results.map((res, i) => {
