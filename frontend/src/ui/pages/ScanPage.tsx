@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import SpeakButton from '../../components/SpeakButton';
+import { API_BASE_URL } from '../../config';
 
 const MOCK_RESULT = {
   disease: "Tomato Early Blight",
@@ -85,7 +86,7 @@ export default function ScanPage({ lang }: { lang: string }) {
       // 2. Fetch professional AI advice for this disease
       const prompt = `My plant has been diagnosed with "${detectedDisease}". Give me a JSON response with: "disease" (the name), "confidence" (a number between 90-99), "severity" (Mild/Moderate/Severe), "treatment" (2 sentences of medicine/action), and "prevention" (2 sentences of future advice). Return ONLY JSON. Use English only for all text values.`;
       
-      const res = await fetch("/api/v1/chat/", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/chat/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: prompt, history: [] })

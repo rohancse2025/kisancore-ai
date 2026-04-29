@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from '../../hooks/useTranslation';
 import SpeakButton from '../../components/SpeakButton';
 import CropSearchInput from '../../components/CropSearchInput';
+import { API_BASE_URL } from '../../config';
 
 interface MarketPrice {
   market: string;
@@ -46,7 +47,7 @@ export default function MarketPage({ lang }: { lang: string }) {
     setIsLoading(true);
     setHasSearched(true);
     try {
-      const res = await fetch(`/api/v1/market-prices?commodity=${c}&state=${s}`);
+      const res = await fetch(`${API_BASE_URL}/api/v1/market-prices?commodity=${c}&state=${s}`);
       const data = await res.json();
       setPrices(data);
     } catch (error) {

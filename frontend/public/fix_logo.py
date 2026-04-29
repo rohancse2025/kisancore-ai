@@ -29,15 +29,16 @@ def create_perfect_logo():
     if bbox:
         l, t, r, b = bbox
         # Add a nice 10% padding so it looks breathable
-        padding = 30
+        # Remove extra padding to maximize logo size
+        padding = 0
         logo = crop.crop((max(0, l-padding), max(0, t-padding), min(crop.width, r+padding), min(crop.height, b+padding)))
         
         # Create final 512x512 square with the sampled background color
         size = 1024 # high res
         final = Image.new('RGB', (size, size), bg_color)
         
-        # Scale logo to fill 85% of the square
-        target_size = int(size * 0.85)
+        # Scale logo to fill 100% of the square for 'Full Bleed' look
+        target_size = size
         scale = min(target_size / logo.width, target_size / logo.height)
         new_w, new_h = int(logo.width * scale), int(logo.height * scale)
         logo_scaled = logo.resize((new_w, new_h), Image.LANCZOS)

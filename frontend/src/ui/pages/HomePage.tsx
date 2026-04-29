@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
 
 const Skeleton = ({ className }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 dark:bg-slate-700 rounded ${className}`} />
@@ -66,6 +67,7 @@ export default function HomePage({ lang }: { lang: string }) {
   const [isLoading, setIsLoading] = useState(true);
   const [irrigation, setIrrigation] = useState<any>(null);
   const [marketPrice, setMarketPrice] = useState<any>(null);
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
   
   const [recommendedCrop, setRecommendedCrop] = useState<any>(null);
   const [isRecLoading, setIsRecLoading] = useState(false);
@@ -100,11 +102,72 @@ export default function HomePage({ lang }: { lang: string }) {
 
   // 3. New Farm Stats & Actions Logic
   const [activeCropsList, setActiveCropsList] = useState<any[]>([]);
+  const [coords, setCoords] = useState<{lat: number, lon: number} | null>(null);
+  
+  // High Accuracy Master Location Fetch
   useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+        () => {
+          // Fallback to Ludhiana if GPS fails
+          setCoords({ lat: 30.9010, lon: 75.8573 });
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      );
+    } else {
+      setCoords({ lat: 30.9010, lon: 75.8573 });
+    }
+  }, []);
+
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const syncFarmerToBackend = async (updatedFarmer: any) => {
+    const token = localStorage.getItem('kisancore_token');
+    if (!token) return;
+
+    setIsSyncing(true);
     try {
-      const stored = JSON.parse(farmer?.active_crops || '[]');
-      setActiveCropsList(Array.isArray(stored) ? stored : []);
-    } catch { setActiveCropsList([]); }
+      const res = await fetch(`${API_BASE_URL}/api/v1/auth/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: updatedFarmer.name,
+          location: updatedFarmer.location,
+          farm_size: updatedFarmer.farm_size,
+          farm_size_unit: updatedFarmer.farm_size_unit || 'acres',
+          soil_type: updatedFarmer.soil_type || '',
+          primary_crop: updatedFarmer.primary_crop || '',
+          active_crops: updatedFarmer.active_crops,
+          irrigation_type: updatedFarmer.irrigation_type || '',
+          soil_ph: updatedFarmer.soil_ph || 6.5,
+          nitrogen: updatedFarmer.nitrogen || 50.0,
+          potassium: updatedFarmer.potassium || 40.0,
+          sms_alerts_enabled: updatedFarmer.sms_alerts_enabled || 'false',
+          sms_phone: updatedFarmer.sms_phone || ''
+        })
+      });
+      
+      if (!res.ok) console.error("Failed to sync farmer data");
+    } catch (err) {
+      console.error("Sync error:", err);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    const raw = farmer?.active_crops;
+    let stored: any[] = [];
+    if (Array.isArray(raw)) {
+      stored = raw;
+    } else if (typeof raw === 'string') {
+      try { stored = JSON.parse(raw); } catch { stored = []; }
+    }
+    setActiveCropsList(Array.isArray(stored) ? stored : []);
   }, [farmer?.active_crops]);
 
   const addQuickCrop = () => {
@@ -128,6 +191,9 @@ export default function HomePage({ lang }: { lang: string }) {
     localStorage.setItem('kisancore_farmer', JSON.stringify(updatedFarmer));
     setCropModalTab('list'); 
     
+    // Sync to backend
+    syncFarmerToBackend(updatedFarmer);
+    
     // Force refresh
     window.dispatchEvent(new Event('storage'));
   };
@@ -141,6 +207,9 @@ export default function HomePage({ lang }: { lang: string }) {
     // Update farmer in localStorage
     const updatedFarmer = { ...farmer, active_crops: JSON.stringify(updated) };
     localStorage.setItem('kisancore_farmer', JSON.stringify(updatedFarmer));
+    
+    // Sync to backend
+    syncFarmerToBackend(updatedFarmer);
     
     // Force refresh
     window.dispatchEvent(new Event('storage'));
@@ -190,44 +259,26 @@ export default function HomePage({ lang }: { lang: string }) {
   }, []);
 
   useEffect(() => {
+    if (!coords) return;
+    
     const fetchWeather = async () => {
-      // Default to Ludhiana, Punjab (Agricultural hub) if geolocation fails or is denied
-      let lat = 30.9010;
-      let lon = 75.8573;
-
-      const getAndFetch = async (latitude: number, longitude: number) => {
-        try {
-          const res = await axios.get(`${import.meta.env.VITE_API_URL || ''}/api/v1/weather?lat=${latitude}&lon=${longitude}`);
-          setWeatherData(res.data);
-        } catch (err) {
-          console.error("Weather fetch failed", err);
-        } finally {
-          setWeatherLoading(false);
-        }
-      };
-
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            getAndFetch(pos.coords.latitude, pos.coords.longitude);
-          },
-          () => {
-            // Fallback to default
-            getAndFetch(lat, lon);
-          }
-        );
-      } else {
-        // No geolocation support
-        getAndFetch(lat, lon);
+      setWeatherLoading(true);
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/v1/weather?lat=${coords.lat}&lon=${coords.lon}`);
+        setWeatherData(res.data);
+      } catch (err) {
+        console.error("Weather fetch failed", err);
+      } finally {
+        setWeatherLoading(false);
       }
     };
     fetchWeather();
-  }, []);
+  }, [coords]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL || ''}/api/v1/iot/latest`);
+        const res = await axios.get(`${API_BASE_URL}/api/v1/iot/latest`);
         const data = res.data;
         
         setSensorData({
@@ -240,6 +291,10 @@ export default function HomePage({ lang }: { lang: string }) {
           needed: data.irrigation_needed, 
           message: data.suggestion 
         });
+        
+        if (data.unix_timestamp && data.unix_timestamp > 0) {
+          setLastUpdated(data.unix_timestamp);
+        }
       } catch (err) {
         console.error("Dashboard data fetch failed", err);
       } finally {
@@ -272,28 +327,26 @@ export default function HomePage({ lang }: { lang: string }) {
   // SMART LOCATION HIERARCHY
   useEffect(() => {
     const resolveLocation = async () => {
-      // 1. Try Live GPS first
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-          try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`);
-            const data = await res.json();
-            const state = data.address.state || 'Karnataka';
-            const city = data.address.district || data.address.state_district || data.address.city || data.address.county || data.address.suburb || 'Bangalore';
-            
-            setMarketRegion(state);
-            setMarketDistrict(city);
-            setLocationSource('GPS');
-          } catch (e) {
-             fallbackLocation();
-          }
-        }, () => fallbackLocation());
-      } else {
-        fallbackLocation();
+      // 1. Use Coords if available (from high-accuracy GPS)
+      if (coords && (coords.lat !== 30.9010 || coords.lon !== 75.8573)) {
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${coords.lat}&lon=${coords.lon}&format=json&accept-language=en`);
+          const data = await res.json();
+          const state = data.address.state || 'Punjab';
+          const locality = data.address.village || data.address.hamlet || data.address.suburb || data.address.town || data.address.neighbourhood || '';
+          const dist = data.address.district || data.address.state_district || data.address.city || data.address.county || '';
+          const city = (locality && dist && locality !== dist) ? `${locality}, ${dist}` : (locality || dist || 'Ludhiana');
+          
+          setMarketRegion(state);
+          setMarketDistrict(city);
+          setLocationSource('GPS');
+          return; // Success
+        } catch (e) {
+           console.error("Reverse geocoding failed", e);
+        }
       }
-    };
-
-    const fallbackLocation = () => {
+      
+      // 2. Fallback to Profile or Default
       if (isLoggedIn && farmer?.location) {
          const parts = farmer.location.split(', ');
          setMarketRegion(parts[0] || 'Punjab');
@@ -307,17 +360,21 @@ export default function HomePage({ lang }: { lang: string }) {
     };
 
     resolveLocation();
-  }, [isLoggedIn, farmer?.location]);
+  }, [coords, isLoggedIn, farmer?.location]);
 
   // Sync Farmer state with local storage on storage events
   useEffect(() => {
     const handleSync = () => {
       const updated = JSON.parse(localStorage.getItem('kisancore_farmer') || 'null');
       if (updated) {
-        try {
-          const crops = JSON.parse(updated.active_crops || '[]');
-          setActiveCropsList(Array.isArray(crops) ? crops : []);
-        } catch { setActiveCropsList([]); }
+        const raw = updated?.active_crops;
+        let stored: any[] = [];
+        if (Array.isArray(raw)) {
+          stored = raw;
+        } else if (typeof raw === 'string') {
+          try { stored = JSON.parse(raw); } catch { stored = []; }
+        }
+        setActiveCropsList(Array.isArray(stored) ? stored : []);
       }
     };
     window.addEventListener('storage', handleSync);
@@ -331,7 +388,7 @@ export default function HomePage({ lang }: { lang: string }) {
       try {
         const commodities = ['Potato', 'Onion', 'Tomato', 'Wheat', 'Maize', 'Soybean', 'Cotton'];
         const results = await Promise.allSettled(
-          commodities.map(c => axios.get(`${import.meta.env.VITE_API_URL || ''}/api/v1/market-prices?state=${marketRegion}&commodity=${c}`))
+          commodities.map(c => axios.get(`${API_BASE_URL}/api/v1/market-prices?state=${marketRegion}&commodity=${c}`))
         );
         
         const trends = results.map((res, i) => {
@@ -347,9 +404,37 @@ export default function HomePage({ lang }: { lang: string }) {
             market: data?.market || `${marketDistrict} Mandi`,
             isLive: !!data
           };
-        }).sort((a, b) => b.price - a.price);
-        setTrendingCrops(trends);
-        if (trends.length > 0) setMarketPrice(trends[0]);
+        });
+
+        // Season-aware rotation
+        const now = new Date();
+        const month = now.getMonth() + 1;
+        const getSeasonalBonus = (name: string): number => {
+          if (month >= 6 && month <= 11) {
+            if (name === 'Cotton') return 800;
+            if (name === 'Soybean') return 700;
+            if (name === 'Maize') return 300;
+          }
+          if (month >= 11 || month <= 4) {
+            if (name === 'Wheat') return 900;
+            if (name === 'Potato') return 600;
+            if (name === 'Onion') return 500;
+          }
+          if (month >= 3 && month <= 6) {
+            if (name === 'Tomato') return 700;
+            if (name === 'Onion') return 400;
+          }
+          return 0;
+        };
+
+        const sortedTrends = [...trends].sort((a, b) => {
+          const aScore = a.price + getSeasonalBonus(a.name);
+          const bScore = b.price + getSeasonalBonus(b.name);
+          return bScore - aScore;
+        });
+
+        setTrendingCrops(sortedTrends);
+        if (sortedTrends.length > 0) setMarketPrice(sortedTrends[0]);
       } catch (err) {
         console.error("Market fetch failed", err);
       } finally {
@@ -397,13 +482,19 @@ export default function HomePage({ lang }: { lang: string }) {
   // AI Recommendation Logic
   useEffect(() => {
     const fetchRecommendation = async () => {
+      const existing = JSON.parse(localStorage.getItem('rec_crop_cache') || 'null');
+      if (existing && existing.date !== new Date().toDateString()) {
+        localStorage.removeItem('rec_crop_cache');
+      }
+      
       if (!isLoggedIn || (!sensorData.temperature && !weatherData)) return;
 
       const isSensorConnected = sensorData.temperature !== null && sensorData.temperature !== 0;
       
       // Cache logic
       const cached = JSON.parse(localStorage.getItem('rec_crop_cache') || 'null');
-      if (cached && (Date.now() - cached.ts) < 2 * 60 * 1000) {
+      const today = new Date().toDateString();
+      if (cached && cached.date === today && (Date.now() - cached.ts) < 30 * 60 * 1000) {
         setRecommendedCrop(cached.crop);
         return;
       }
@@ -430,15 +521,14 @@ export default function HomePage({ lang }: { lang: string }) {
         // Pass the top trending crop name as a bias hint if possible
         const topDemandCrop = trendingCrops.length > 0 ? trendingCrops[0].name : '';
         
-        const res = await axios.post(`${import.meta.env.VITE_API_URL || ''}/api/v1/crops`, {
+        const res = await axios.post(`${API_BASE_URL}/api/v1/crops`, {
           nitrogen: nitrogenToUse,
           phosphorus: phosphorusToUse,
           potassium: potassiumToUse,
           temperature: tempToUse,
           humidity: humToUse,
           ph: 6.5,
-          rainfall: rainfallToUse,
-          market_trend: topDemandCrop // Influencing via hint
+          rainfall: rainfallToUse
         });
         
         if (res.data.crops && res.data.crops.length > 0) {
@@ -450,7 +540,7 @@ export default function HomePage({ lang }: { lang: string }) {
           if (matchesMarket) finalCrop = matchesMarket;
           
           setRecommendedCrop(finalCrop);
-          localStorage.setItem('rec_crop_cache', JSON.stringify({ crop: finalCrop, ts: Date.now() }));
+          localStorage.setItem('rec_crop_cache', JSON.stringify({ crop: finalCrop, ts: Date.now(), date: new Date().toDateString() }));
         }
       } catch (err) {
         console.error("Failed to fetch recommendation", err);
@@ -529,7 +619,8 @@ export default function HomePage({ lang }: { lang: string }) {
           {!isLoggedIn ? (
             <>
               <div className="inline-block bg-[#16a34a] text-white text-sm font-bold px-4 py-1 rounded-full mb-6 whitespace-nowrap shadow-lg animate-fade-in-up [animation-delay:100ms]">
-                🌿 AI Powered Farming
+                <img src="/kisancore_final_v12_zoom.png" alt="" className="w-5 h-5 inline-block mr-2 -mt-0.5 rounded-md" />
+                AI Powered Farming
               </div>
               
               <h1 className="text-white text-[32px] md:text-[54px] font-bold leading-tight mb-6 tracking-tight drop-shadow-md animate-fade-in-up [animation-delay:300ms]">
@@ -572,7 +663,8 @@ export default function HomePage({ lang }: { lang: string }) {
           ) : (
             <>
               <div className="inline-block bg-[#16a34a] text-white text-sm font-bold px-4 py-1 rounded-full mb-6 whitespace-nowrap shadow-lg animate-fade-in-up [animation-delay:100ms]">
-                🌿 KisanCore AI V2.0
+                <img src="/kisancore_final_v12_zoom.png" alt="" className="w-5 h-5 inline-block mr-2 -mt-0.5 rounded-md" />
+                KisanCore AI V2.0
               </div>
               
               <h1 className="text-white text-[32px] md:text-[54px] font-bold leading-tight mb-6 tracking-tight drop-shadow-md animate-fade-in-up [animation-delay:300ms]">
@@ -689,11 +781,13 @@ export default function HomePage({ lang }: { lang: string }) {
       <section className="mb-14">
         <div className="flex items-center gap-3 mb-6">
           <h2 className="text-xl text-gray-900 dark:text-white font-black uppercase tracking-widest text-xs opacity-50 m-0">{t('home_sensor_data')}</h2>
-          {isPageOnline ? (
+          {lastUpdated && (Date.now() - lastUpdated < 60000) ? (
             <span className="bg-green-100 text-green-700 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-green-200 animate-pulse tracking-widest">{t('common_online')}</span>
-          ) : sensorData.temperature !== null ? (
+          ) : lastUpdated ? (
             <span className="bg-orange-100 text-orange-700 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-orange-200 tracking-widest">{t('common_offline')} - LAST DATA</span>
-          ) : null}
+          ) : (
+            <span className="bg-gray-100 text-gray-500 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-gray-200 tracking-widest">NOT CONNECTED</span>
+          )}
         </div>
         <div className={`grid gap-6 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
           {/* TEMPERATURE */}

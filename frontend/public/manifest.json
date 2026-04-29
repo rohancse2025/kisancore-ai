@@ -10,13 +10,13 @@
   "categories": ["agriculture", "utilities"],
   "icons": [
     {
-      "src": "/kisancore_windows.png",
+      "src": "/kisancore_final_v12_zoom.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/kisancore_final.png",
+      "src": "/kisancore_final_v12_zoom.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

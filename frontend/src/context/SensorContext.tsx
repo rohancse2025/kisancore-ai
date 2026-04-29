@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 
 interface SensorData {
   temperature: number | null;
@@ -26,7 +27,7 @@ export const SensorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const clearSensorData = async () => {
     try {
       // Wipe the backend cache first so the poller doesn't immediately refill
-      await fetch('/api/v1/iot/clear', { method: 'DELETE' });
+      await fetch(`${API_BASE_URL}/api/v1/iot/clear`, { method: 'DELETE' });
     } catch (err) {
       console.error("Clear IoT cache error:", err);
     }
@@ -42,7 +43,7 @@ export const SensorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const refreshSensorData = async () => {
     try {
-      const res = await fetch('/api/v1/iot/latest');
+      const res = await fetch(`${API_BASE_URL}/api/v1/iot/latest`);
       if (res.ok) {
         const data = await res.json();
         if (data.temperature !== undefined) {

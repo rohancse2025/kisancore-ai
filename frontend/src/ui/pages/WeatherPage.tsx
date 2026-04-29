@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 
 type WeatherData = {
   temperature: number;
@@ -49,7 +50,7 @@ export default function WeatherPage() {
       async (position) => {
         const { latitude, longitude } = position.coords;
         try {
-          const res = await fetch(`/api/v1/weather?lat=${latitude}&lon=${longitude}`);
+          const res = await fetch(`${API_BASE_URL}/api/v1/weather?lat=${latitude}&lon=${longitude}`);
           if (!res.ok) throw new Error("Weather fetch failed");
           const data: WeatherData = await res.json();
           setWeather(data);

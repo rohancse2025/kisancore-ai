@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
+import { API_BASE_URL } from '../../config';
 
 type Message = {
   id: string;
@@ -139,13 +140,29 @@ export default function ChatPage({ lang }: { lang: string }) {
     };
     setMessages(prev => [...prev, userMsg]);
     setInput("");
+
+    // Check if offline
+    if (!navigator.onLine) {
+      setTimeout(() => {
+        const offlineMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          text: "⚠️ You're currently offline. I can answer basic questions from cached knowledge once you reconnect, but real-time AI responses need an internet connection. Please check your network and try again.",
+          sender: 'ai',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        setMessages(prev => [...prev, offlineMsg]);
+        speakText("You are offline. AI responses need internet.");
+      }, 500);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const historyPayload = messages.map(msg => ({
         role: msg.sender === 'user' ? 'user' : 'assistant',
         content: msg.text
       }));
-      const response = await fetch("/api/v1/chat/stream", {
+      const response = await fetch(`${API_BASE_URL}/api/v1/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMsg.text, history: historyPayload })

@@ -1,0 +1,47 @@
+{
+  "type": "RandomForest",
+  "n_estimators": 100,
+  "feature_names": [
+    "N",
+    "P",
+    "K",
+    "temperature",
+    "humidity",
+    "ph",
+    "rainfall"
+  ],
+  "classes": [
+    "Rice",
+    "Wheat",
+    "Maize",
+    "Chickpea",
+    "Kidney Beans",
+    "Pigeon Peas",
+    "Moth Beans",
+    "Mung Bean",
+    "Black Gram",
+    "Lentil",
+    "Pomegranate",
+    "Banana",
+    "Mango",
+    "Grapes",
+    "Watermelon",
+    "Muskmelon",
+    "Apple",
+    "Orange",
+    "Papaya",
+    "Coconut",
+    "Cotton",
+    "Jute",
+    "Coffee"
+  ],
+  "feature_importance": {
+    "N": 0.15,
+    "P": 0.12,
+    "K": 0.14,
+    "temperature": 0.18,
+    "humidity": 0.16,
+    "ph": 0.1,
+    "rainfall": 0.15
+  }
+}

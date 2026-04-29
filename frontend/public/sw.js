@@ -1,7 +1,15 @@
-const CACHE_NAME = 'kisancore-v16';
+const CACHE_NAME = 'kisancore-v17';
+const ML_MODEL_CACHE = 'kisancore-ml-v1';
 const APP_SHELL = [
   '/',
   '/index.html',
+  '/offline.html',
+  '/manifest.json'
+];
+
+const MODEL_FILES = [
+  '/models/crop-recommender/model.json',
+  '/models/crop-recommender/weights.bin'
 ];
 
 const DB_NAME = 'kisancore-db';
@@ -77,10 +85,10 @@ async function replayQueue() {
 self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => 
-      cache.addAll(APP_SHELL).catch(e => 
-        console.log('Cache install error:', e))
-    )
+    Promise.all([
+      caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)),
+      caches.open(ML_MODEL_CACHE).then(cache => cache.addAll(MODEL_FILES).catch(() => console.log('ML models not found yet')))
+    ])
   );
 });
 
@@ -88,7 +96,7 @@ self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => 
       Promise.all(keys
-        .filter(k => k !== CACHE_NAME)
+        .filter(k => k !== CACHE_NAME && k !== ML_MODEL_CACHE)
         .map(k => caches.delete(k))
       )
     )
@@ -98,13 +106,22 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
+  
+  // Custom Offline Page for Navigation
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('/offline.html'))
+    );
+    return;
+  }
+
   const isApi = url.pathname.startsWith('/api/');
   const isAuth = url.pathname.includes('/auth/login') || url.pathname.includes('/auth/register');
   const isPostPut = ['POST', 'PUT'].includes(event.request.method);
 
   if (isApi) {
     if (isPostPut && !isAuth) {
-      // Special handling for POST/PUT Background Sync
+      // Background Sync for Mutations
       event.respondWith(
         fetch(event.request.clone())
           .catch(async () => {
@@ -132,7 +149,7 @@ self.addEventListener('fetch', event => {
           })
       );
     } else {
-      // Normal API fetch (GET or Auth)
+      // Network-first with cache fallback for GET API
       event.respondWith(
         fetch(event.request)
           .then(response => {
@@ -154,15 +171,15 @@ self.addEventListener('fetch', event => {
     return;
   }
   
-  // App Shell / Static Assets
+  // Cache-first for Static Assets (JS, CSS, Images)
   event.respondWith(
     caches.match(event.request)
       .then(cached => cached || 
         fetch(event.request)
           .then(response => {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache =>
-              cache.put(event.request, clone));
+            const cacheToUse = url.pathname.startsWith('/models/') ? ML_MODEL_CACHE : CACHE_NAME;
+            caches.open(cacheToUse).then(cache => cache.put(event.request, clone));
             return response;
           })
       )

@@ -140,12 +140,13 @@ def daily_summary(phone: str,
   return {"status": "sent" if success else "failed"}
 
 @router.post("/webhook")
-async def handle_incoming_sms(From: str = Form(...), Body: str = Form(...)):
-    # Import iot dynamically to avoid circular imports
+async def handle_incoming_whatsapp(From: str = Form(...), Body: str = Form(...)):
     import app.api.routes.iot as iot
     import time
     
+    sender = From.replace("whatsapp:", "").strip()
     text = Body.strip().upper()
+    print(f"DEBUG: Incoming WhatsApp from {sender}: {text}")
     response_msg = ""
     
     if text.startswith("PUMP ON"):
@@ -153,51 +154,37 @@ async def handle_incoming_sms(From: str = Form(...), Body: str = Form(...)):
         parts = text.split()
         if len(parts) > 2 and parts[2].isdigit():
             duration = int(parts[2])
-            
         iot.latest_reading["manual_override"] = "ON"
         iot.latest_reading["override_expiry_time"] = time.time() + (duration * 60)
-        response_msg = f"KisanCore: Pump activated manually for {duration} mins."
-        
+        response_msg = f"✅ KisanCore: Pump activated for {duration} mins via WhatsApp."
+
     elif text == "PUMP OFF":
         iot.latest_reading["manual_override"] = "OFF"
         iot.latest_reading["override_expiry_time"] = time.time() + 86400
-        response_msg = "KisanCore: Pump turned OFF manually."
-        
+        response_msg = "🛑 KisanCore: Pump turned OFF manually."
+
     elif text == "AUTO":
         iot.latest_reading["manual_override"] = None
         iot.latest_reading["override_expiry_time"] = 0
-        response_msg = "KisanCore: Pump restored to Autonomous AI Mode."
-        
+        response_msg = "🤖 KisanCore: Pump restored to Autonomous AI Mode."
+
     elif text == "STATUS":
         temp = iot.latest_reading.get("temperature", "--")
         hum = iot.latest_reading.get("humidity", "--")
         soil = iot.latest_reading.get("soil_moisture", "--")
-        mode = iot.latest_reading.get("manual_override", "AUTO")
-        if mode is None: mode = "AUTO"
-        response_msg = f"Farm Status: Temp {temp}C, Air Humidity {hum}%, Soil Moisture {soil}%. Mode: {mode}. -KisanCore AI"
-        
-    elif text.startswith("REGISTER"):
-        parts = text.split()
-        if len(parts) > 1:
-            phone_to_register = parts[1]
-            clean = phone_to_register.replace("+91", "").strip()
-            if len(clean) == 10 and clean.isdigit():
-                iot.latest_reading["farmer_sms_phone"] = clean
-                response_msg = f"KisanCore: Phone {clean} registered for safety alerts. Commands: PUMP ON [mins], PUMP OFF, AUTO, STATUS."
-            else:
-                response_msg = "Invalid number. Send: REGISTER 9876543210"
-        else:
-            response_msg = "Send: REGISTER 9876543210"
+        mode = iot.latest_reading.get("manual_override") or "AUTO"
+        irr = "ON 💧" if iot.latest_reading.get("irrigation_needed") else "OFF"
+        response_msg = f"📡 Farm Status:\nTemp: {temp}°C | Humidity: {hum}%\nSoil: {soil}% | Pump: {irr}\nMode: {mode}\n-KisanCore AI"
 
     elif text == "HELP":
         response_msg = (
-            "KisanCore SMS Commands:\n"
-            "PUMP ON - Start pump (auto stops when full)\n"
-            "PUMP ON 30 - Pump ON for 30 minutes\n" 
-            "PUMP OFF - Stop pump immediately\n"
-            "AUTO - Return to automatic AI control\n"
-            "STATUS - Get live farm sensor readings\n"
-            "REGISTER 9876543210 - Get safety SMS alerts\n"
+            "🌾 KisanCore WhatsApp Commands:\n"
+            "💧 PUMP ON — Start pump\n"
+            "⏱ PUMP ON 30 — Pump for 30 mins\n"
+            "🛑 PUMP OFF — Stop pump\n"
+            "🤖 AUTO — AI auto-control\n"
+            "📡 STATUS — Live sensor data\n"
+            "📋 DAILY — Daily farm report\n"
             "-KisanCore AI"
         )
 
@@ -205,26 +192,21 @@ async def handle_incoming_sms(From: str = Form(...), Body: str = Form(...)):
         temp = iot.latest_reading.get("temperature", "--")
         hum = iot.latest_reading.get("humidity", "--")
         soil = iot.latest_reading.get("soil_moisture", "--")
-        irr = "ON" if iot.latest_reading.get("irrigation_needed") else "OFF"
+        irr = "ON 💧" if iot.latest_reading.get("irrigation_needed") else "OFF"
         mode = iot.latest_reading.get("manual_override") or "AUTO"
         response_msg = (
-            f"KisanCore Daily Report:\n"
-            f"Temp: {temp}C | Humidity: {hum}%\n"
+            f"📋 KisanCore Daily Report:\n"
+            f"Temp: {temp}°C | Humidity: {hum}%\n"
             f"Soil: {soil}% | Pump: {irr}\n"
-            f"Mode: {mode}\n"
-            f"Send HELP for all commands.\n"
-            f"-KisanCore AI"
+            f"Mode: {mode}\nSend HELP for commands.\n-KisanCore AI"
         )
-        
     else:
-        response_msg = "Unknown command. Send HELP for list of commands. -KisanCore AI"
+        response_msg = "❓ Unknown command. Send HELP for all commands. -KisanCore AI"
 
-    # Return TwiML XML response for Twilio
     xml_response = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Message>{response_msg}</Message>
 </Response>"""
-    
     return Response(content=xml_response, media_type="application/xml")
 
 @router.get("/status")
@@ -247,7 +229,10 @@ def sms_status():
         "token_set": bool(token and token != "your_auth_token_here"),
         "from_number": from_num if from_num else "NOT SET",
         "registered_farm_phone": iot_module.latest_reading.get("farmer_sms_phone", "None registered"),
-        "instructions": "Fill TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_SMS_FROM in backend/.env" if not configured else "Ready to send SMS"
+        "instructions": "Fill TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_SMS_FROM in backend/.env" if not configured else "Ready to send SMS",
+        "whatsapp_configured": bool(os.getenv("TWILIO_WHATSAPP_FROM", "").startswith("whatsapp:")),
+        "whatsapp_from": os.getenv("TWILIO_WHATSAPP_FROM", "NOT SET"),
+        "whatsapp_setup": "1. twilio.com → Messaging → WhatsApp sandbox 2. Farmer sends 'join <keyword>' to +14155238886 3. Set webhook to YOUR_NGROK_URL/api/v1/sms/webhook 4. Add TWILIO_WHATSAPP_FROM=whatsapp:+14155238886 to .env"
     }
 
 @router.get("/test")

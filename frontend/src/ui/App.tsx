@@ -180,11 +180,15 @@ export default function App() {
         {/* LEFT: LOGO */}
         <Link 
           to="/" 
-          className="flex items-center gap-2.5 no-underline group"
+          className="flex items-center gap-3 no-underline group"
           onClick={() => setShowMobileMenu(false)}
         >
-          <span className="text-2xl animate-bounce group-hover:animate-none group-hover:rotate-12 transition-transform">🌿</span>
-          <span className="text-green-600 dark:text-green-500 font-black text-xl md:text-2xl tracking-tight">
+          <img 
+            src="/kisancore_final_v12_zoom.png" 
+            alt="KisanCore AI" 
+            className="w-10 h-10 object-contain rounded-2xl shadow-sm group-hover:scale-110 transition-transform"
+          />
+          <span className="text-[#16a34a] dark:text-green-500 font-black text-2xl tracking-tight">
             KisanCore AI
           </span>
         </Link>
@@ -422,8 +426,8 @@ export default function App() {
       {!isChatPage && !isLoginPage && (
         <footer className="border-t border-gray-100 dark:border-slate-800 py-16 px-8 text-center bg-white dark:bg-slate-900 pl-0">
           <div className="flex flex-col items-center gap-4">
-             <span className="text-xl">🌿</span>
-             <p className="text-sm font-black text-green-600 uppercase tracking-widest m-0">KisanCore AI</p>
+             <img src="/kisancore_final_v12_zoom.png" alt="Logo" className="w-12 h-12 object-contain rounded-2xl mx-auto" />
+             <p className="text-lg font-black text-[#16a34a] uppercase tracking-widest m-0">KisanCore AI</p>
              <p className="text-gray-400 text-xs m-0">© 2026 {t('app_footer_credit')}</p>
           </div>
         </footer>

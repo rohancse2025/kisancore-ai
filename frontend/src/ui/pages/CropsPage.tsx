@@ -4,6 +4,8 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { useSensor } from '../../context/SensorContext';
 import SpeakButton from '../../components/SpeakButton';
 import CropSearchInput from '../../components/CropSearchInput';
+import { recommendCropOffline } from '../../lib/offline-crop-rules';
+import { API_BASE_URL } from '../../config';
 
 // Helper for farmer-friendly hints
 const getSliderHint = (name: string, value: number) => {
@@ -66,6 +68,7 @@ export default function CropsPage({ lang }: { lang: string }) {
   type AICrop = {
     name: string; emoji: string; reason: string;
     water_needed: string; best_season: string; profit_potential: string;
+    offline?: boolean;
   };
   const [aiCrops, setAiCrops] = useState<AICrop[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -96,7 +99,7 @@ export default function CropsPage({ lang }: { lang: string }) {
 
     let suggestion = '';
     try {
-      const res = await fetch('/api/v1/chat/', {
+      const res = await fetch(`${API_BASE_URL}/api/v1/chat/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -127,11 +130,29 @@ export default function CropsPage({ lang }: { lang: string }) {
     setAiCrops([]);
     setError(null);
 
+    // Check if offline
+    if (!navigator.onLine) {
+      const offline = recommendCropOffline(inputs.N, inputs.P, inputs.K, inputs.temperature, inputs.humidity, inputs.ph, inputs.rainfall);
+      setTimeout(() => {
+        setAiCrops([{
+          name: offline.crop,
+          emoji: '🌱',
+          reason: offline.reason,
+          water_needed: inputs.rainfall > 150 ? 'High' : 'Moderate',
+          best_season: 'Current',
+          profit_potential: 'High',
+          offline: true
+        }]);
+        setIsLoading(false);
+      }, 800); // Simulate local processing
+      return;
+    }
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     try {
-      const res = await fetch("/api/v1/crops", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/crops`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -148,10 +169,22 @@ export default function CropsPage({ lang }: { lang: string }) {
       const data = await res.json();
       setAiCrops(data.crops || []);
     } catch (err: any) {
+      // Fallback to offline rule-based system on network error
+      const offline = recommendCropOffline(inputs.N, inputs.P, inputs.K, inputs.temperature, inputs.humidity, inputs.ph, inputs.rainfall);
+      setAiCrops([{
+        name: offline.crop,
+        emoji: '🌱',
+        reason: offline.reason,
+        water_needed: inputs.rainfall > 150 ? 'High' : 'Moderate',
+        best_season: 'Current',
+        profit_potential: 'High',
+        offline: true
+      }]);
+      
       if (err.name === 'AbortError') {
-        setError("Recommendation timed out. Please check your backend connection.");
+        console.warn("Recommendation timed out, using offline fallback.");
       } else {
-        setError(err.message || "Failed to get AI recommendations. Please try again.");
+        console.error("API failed, using offline fallback:", err.message);
       }
     } finally {
       clearTimeout(timeoutId);
@@ -188,13 +221,28 @@ export default function CropsPage({ lang }: { lang: string }) {
     setFertLoading(true);
     setFertResult(null);
 
+    // Offline check
+    if (!navigator.onLine) {
+      setTimeout(() => {
+        let advice = "";
+        if (fertInputs.N < 30) advice += "Apply 50kg Urea per acre to boost nitrogen. ";
+        if (fertInputs.P < 25) advice += "Add 40kg DAP at sowing time. ";
+        if (fertInputs.K < 30) advice += "Apply 25kg MOP for better grain quality. ";
+        if (advice === "") advice = "Soil NPK levels look balanced for this crop. Maintain organic matter.";
+        
+        setFertResult(advice + " (Calculated Offline)");
+        setFertLoading(false);
+      }, 800);
+      return;
+    }
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     const prompt = `I am growing ${fertInputs.crop} on ${fertInputs.soil} soil. My soil has Nitrogen: ${fertInputs.N} PPM, Phosphorus: ${fertInputs.P} PPM, Potassium: ${fertInputs.K} PPM. Give me exact fertilizer recommendations — which fertilizers to apply, how much per acre, and when to apply. Provide 3 short, professional sentences. Reply in English only.`;
 
     try {
-      const res = await fetch("/api/v1/chat/", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/chat/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: prompt, history: [] }),
@@ -209,13 +257,14 @@ export default function CropsPage({ lang }: { lang: string }) {
       setFertResult(data.reply);
     } catch (err: any) {
       console.error("Fertilizer Advisor Error:", err);
-      if (err.name === 'AbortError') {
-        setFertResult("Request timed out. Please ensure the backend is running and try again.");
-      } else if (err.message.includes("429")) {
-        setFertResult("AI Limit Reached. Please try again in 5 minutes.");
-      } else {
-        setFertResult("Sorry, I couldn't get a recommendation right now. Please check your connection.");
-      }
+      // Offline fallback on error
+      let advice = "";
+      if (fertInputs.N < 30) advice += "Apply 50kg Urea per acre to boost nitrogen. ";
+      if (fertInputs.P < 25) advice += "Add 40kg DAP at sowing time. ";
+      if (fertInputs.K < 30) advice += "Apply 25kg MOP for better grain quality. ";
+      if (advice === "") advice = "Soil NPK levels look balanced for this crop. Maintain organic matter.";
+      
+      setFertResult(advice + " (Offline Fallback)");
     } finally {
       clearTimeout(timeoutId);
       setFertLoading(false);
@@ -363,6 +412,11 @@ export default function CropsPage({ lang }: { lang: string }) {
                             <SpeakButton text={`${crop.name}. ${crop.reason}`} lang={lang} />
                           </div>
                           <h3 className={`text-2xl font-black ${c.t} tracking-tight m-0`}>{crop.name}</h3>
+                          {crop.offline && (
+                            <div className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-black uppercase self-center border border-amber-200">
+                              📡 Offline Mode
+                            </div>
+                          )}
                           <p className="text-sm text-gray-500 italic m-0 leading-relaxed font-medium">{crop.reason}</p>
                           
                           <div className="flex flex-col gap-3 mt-4 text-left border-t border-gray-50 pt-5">

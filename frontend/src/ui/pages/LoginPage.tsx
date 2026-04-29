@@ -24,11 +24,13 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
       navigator.geolocation.getCurrentPosition(async (position) => {
         try {
           const { latitude, longitude } = position.coords;
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=en`);
           const data = await res.json();
           const state = data.address.state || 'Punjab';
-          const district = data.address.city || data.address.county || data.address.suburb || 'Ludhiana';
-          setFormData(prev => ({ ...prev, location: `${state}, ${district}` }));
+          const locality = data.address.village || data.address.hamlet || data.address.suburb || data.address.town || data.address.neighbourhood || '';
+          const dist = data.address.district || data.address.state_district || data.address.city || data.address.county || '';
+          const city = (locality && dist && locality !== dist) ? `${locality}, ${dist}` : (locality || dist || 'Ludhiana');
+          setFormData(prev => ({ ...prev, location: `${state}, ${city}` }));
         } catch (err) {
           setError("Detection failed. Please select manually.");
         } finally {
@@ -89,7 +91,9 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
     <div className="min-h-[80vh] flex flex-col justify-center py-12 px-6 animate-fade-in">
       {/* Reverted Header: Simple Green Banner */}
       <div className="bg-green-600 max-w-md w-full mx-auto p-10 rounded-t-[2.5rem] text-white text-center shadow-lg">
-        <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 border border-white/30 backdrop-blur-sm">🌿</div>
+        <div className="w-20 h-20 bg-white/20 rounded-[1.25rem] flex items-center justify-center mx-auto mb-6 border border-white/30 backdrop-blur-sm overflow-hidden shadow-xl">
+          <img src="/kisancore_final_v12_zoom.png" alt="Logo" className="w-14 h-14 object-contain" />
+        </div>
         <h1 className="text-3xl font-black m-0 mb-2">KisanCore AI</h1>
         <p className="opacity-90 font-bold m-0 uppercase tracking-widest text-[10px]">Smart Farming for Indian Farmers</p>
       </div>

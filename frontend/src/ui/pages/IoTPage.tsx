@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useSensor } from '../../context/SensorContext';
 import SpeakButton from '../../components/SpeakButton';
+import { API_BASE_URL } from '../../config';
 
 // --- HELPER: COUNT UP ANIMATION ---
 const CountUp = ({ end, duration = 1500, decimals = 0 }: { end: number, duration?: number, decimals?: number }) => {
@@ -100,9 +101,9 @@ export default function IoTPage({ lang }: { lang: string }) {
     setIsSendingOverride(true);
     try {
       if (command === "AUTO") {
-        await fetch('/api/v1/iot/override', { method: 'DELETE' });
+        await fetch(`${API_BASE_URL}/api/v1/iot/override`, { method: 'DELETE' });
       } else {
-        await fetch('/api/v1/iot/override', {
+        await fetch(`${API_BASE_URL}/api/v1/iot/override`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ command, duration_minutes: overrideDuration })

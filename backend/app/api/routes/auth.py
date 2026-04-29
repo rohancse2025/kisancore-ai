@@ -34,6 +34,7 @@ class UpdateProfileRequest(BaseModel):
     farm_size_unit: str = "acres"
     soil_type: str = ""
     primary_crop: str = ""
+    active_crops: str = "[]"
     irrigation_type: str = ""
     soil_ph: float = 6.5
     nitrogen: float = 50.0
@@ -101,11 +102,7 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     
     return {
         "token": create_token(req.phone),
-        "farmer": {
-            "name": farmer.name,
-            "phone": farmer.phone,
-            "location": farmer.location
-        }
+        "farmer": farmer
     }
 
 @router.post("/login")
@@ -120,14 +117,7 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         
     return {
         "token": create_token(req.phone),
-        "farmer": {
-            "name": farmer.name,
-            "phone": farmer.phone,
-            "location": farmer.location,
-            "soil_ph": farmer.soil_ph,
-            "nitrogen": farmer.nitrogen,
-            "farm_size": farmer.farm_size
-        }
+        "farmer": farmer
     }
 
 @router.get("/profile")
@@ -149,6 +139,7 @@ def update_profile(req: UpdateProfileRequest, phone: str = Depends(get_current_p
     farmer.farm_size_unit = req.farm_size_unit
     farmer.soil_type = req.soil_type
     farmer.primary_crop = req.primary_crop
+    farmer.active_crops = req.active_crops
     farmer.irrigation_type = req.irrigation_type
     farmer.soil_ph = req.soil_ph
     farmer.nitrogen = req.nitrogen

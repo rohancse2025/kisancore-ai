@@ -31,6 +31,7 @@ latest_reading = {
 
 @router.post("/data")
 async def post_iot_data(data: IOTData):
+    print(f"IOT DEBUG: Received data -> Temp: {data.temperature}, Hum: {data.humidity}, Soil: {data.soil_moisture}")
     global latest_reading
     # Get current time formatted as "10:30 AM"
     now = datetime.now()

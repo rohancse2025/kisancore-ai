@@ -22,7 +22,8 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
     nitrogen: 50.0,
     potassium: 40.0,
     sms_alerts_enabled: 'false',
-    sms_phone: ''
+    sms_phone: '',
+    active_crops: '[]'
   });
 
   useEffect(() => {
@@ -46,6 +47,7 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
             soil_ph: data.soil_ph || 6.5,
             nitrogen: data.nitrogen || 50.0,
             potassium: data.potassium || 40.0,
+            active_crops: data.active_crops || '[]',
           });
         }
       } catch (err) {
@@ -118,7 +120,8 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
       nitrogen: formData.nitrogen,
       potassium: formData.potassium,
       sms_alerts_enabled: formData.sms_alerts_enabled,
-      sms_phone: formData.sms_phone
+      sms_phone: formData.sms_phone,
+      active_crops: formData.active_crops
     };
 
     try {

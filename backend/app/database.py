@@ -3,8 +3,13 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import datetime
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./kisancore.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+from app.core.settings import settings
+
+engine = create_engine(
+    settings.sqlalchemy_database_url,
+    connect_args={"check_same_thread": False} if "sqlite" in settings.sqlalchemy_database_url else {},
+    pool_pre_ping=True
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
