@@ -4,7 +4,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { useSensor } from '../../context/SensorContext';
 import SpeakButton from '../../components/SpeakButton';
 import CropSearchInput from '../../components/CropSearchInput';
-import { recommendCropOffline } from '../../lib/offline-crop-rules';
+import { recommendCropOffline } from '../../services/offline-crop-rules';
 import { API_BASE_URL } from '../../config';
 
 // Helper for farmer-friendly hints
