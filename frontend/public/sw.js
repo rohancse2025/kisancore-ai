@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kisancore-v18';
+const CACHE_NAME = 'kisancore-v19';
 const ML_MODEL_CACHE = 'kisancore-ml-v1';
 const APP_SHELL = [
   '/',

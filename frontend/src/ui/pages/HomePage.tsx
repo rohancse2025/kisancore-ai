@@ -158,6 +158,7 @@ export default function HomePage({ lang }: { lang: string }) {
  
   // State for Crop Modal View (List or Add)
   const [cropModalTab, setCropModalTab] = useState<'list' | 'add'>('list');
+  const [isTimelineOpen, setIsTimelineOpen] = useState(false);
 
   // 3. New Farm Stats & Actions Logic
   const [activeCropsList, setActiveCropsList] = useState<any[]>([]);
@@ -1285,8 +1286,6 @@ export default function HomePage({ lang }: { lang: string }) {
             
             {/* 6. DYNAMIC FIELD MONITOR: MULTI-FIELD HARVEST TIMELINE */}
             {(() => {
-              const [isTimelineOpen, setIsTimelineOpen] = useState(false);
-              
               if (!activeCropsList || activeCropsList.length === 0) return (
                 <div className="mt-2 bg-slate-50 dark:bg-slate-900/50 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl p-8 flex flex-col items-center gap-4 text-center">
                    <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex items-center justify-center text-3xl">{!isLoggedIn ? '🔐' : '🏜️'}</div>
