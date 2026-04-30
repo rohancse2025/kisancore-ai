@@ -239,5 +239,6 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
         </form>
       </div>
     </div>
+  </div>
   );
 }
