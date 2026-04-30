@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config';
@@ -8,6 +8,65 @@ import { API_BASE_URL } from '../../config';
 const Skeleton = ({ className }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 dark:bg-slate-700 rounded ${className}`} />
 );
+
+// --- SMART MARKET HUB LOGIC ---
+function getSmartCommodities(
+  activeCrops: string[],
+  location: string,
+  month: number,
+  rotationIndex: number = 0
+): string[] {
+  // Priority 1 — Active crops (if farmer has them)
+  const userCrops = activeCrops.length > 0 ? activeCrops : [];
+  
+  // Priority 2 — Seasonal crops
+  const SEASONAL: Record<number, string[]> = {
+    0: ['Wheat', 'Potato', 'Mustard'],      // Jan
+    1: ['Wheat', 'Potato', 'Chickpea'],     // Feb
+    2: ['Onion', 'Tomato', 'Watermelon'],   // Mar
+    3: ['Mango', 'Wheat', 'Onion'],         // Apr
+    4: ['Mango', 'Watermelon', 'Rice'],     // May
+    5: ['Rice', 'Cotton', 'Soybean'],       // Jun
+    6: ['Rice', 'Cotton', 'Maize'],         // Jul
+    7: ['Soybean', 'Cotton', 'Groundnut'],  // Aug
+    8: ['Cotton', 'Soybean', 'Maize'],      // Sep
+    9: ['Tomato', 'Cotton', 'Rice'],        // Oct
+    10: ['Wheat', 'Tomato', 'Cabbage'],     // Nov
+    11: ['Wheat', 'Potato', 'Chickpea']     // Dec
+  };
+  
+  // Priority 3 — Location-specific crops
+  const LOCATION_CROPS: Record<string, string[]> = {
+    'Karnataka': ['Coffee', 'Ragi', 'Sugarcane', 'Arecanut'],
+    'Bengaluru': ['Ragi', 'Tomato', 'Beans'],
+    'Punjab': ['Wheat', 'Rice', 'Cotton'],
+    'Maharashtra': ['Soybean', 'Cotton', 'Onion', 'Sugarcane'],
+    'Tamil Nadu': ['Rice', 'Groundnut', 'Sugarcane', 'Banana'],
+    'Andhra Pradesh': ['Rice', 'Cotton', 'Chilli', 'Turmeric'],
+    'Uttar Pradesh': ['Wheat', 'Sugarcane', 'Potato', 'Rice'],
+  };
+  
+  const stateKey = Object.keys(LOCATION_CROPS).find(key => 
+    location.toLowerCase().includes(key.toLowerCase())
+  );
+  
+  const localCrops = stateKey ? LOCATION_CROPS[stateKey] : [];
+  const seasonalCrops = SEASONAL[month] || ['Tomato', 'Potato', 'Onion'];
+  
+  // Combine all into a pool (deduplicated)
+  const pool = Array.from(new Set([...userCrops, ...seasonalCrops, ...localCrops]));
+  
+  // Rotate through the pool: pick 3 starting from rotationIndex
+  const start = (rotationIndex * 3) % pool.length;
+  let selected = pool.slice(start, start + 3);
+  
+  // Wrap around if pool is small
+  if (selected.length < 3) {
+    selected = [...selected, ...pool.slice(0, 3 - selected.length)];
+  }
+  
+  return selected.slice(0, 3);
+}
 
 const ALL_TIPS = [
   // Weather-based
@@ -312,18 +371,6 @@ export default function HomePage({ lang }: { lang: string }) {
   const [marketDistrict, setMarketDistrict] = useState<string>('');
   const [locationSource, setLocationSource] = useState<'GPS' | 'Profile' | 'Weather' | 'Default'>('Default');
 
-  // Pure CSS blinking animation for the status dot
-  const pulseKeyframes = `
-    @keyframes kisan-pulse {
-      0% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.3; transform: scale(1.3); }
-      100% { opacity: 1; transform: scale(1); }
-    }
-  `;
-  const [trendingCrops, setTrendingCrops] = useState<any[]>([]);
-  const [marketLoading, setMarketLoading] = useState(false);
-  const [refreshTimer, setRefreshTimer] = useState(60);
-
   // SMART LOCATION HIERARCHY
   useEffect(() => {
     const resolveLocation = async () => {
@@ -340,7 +387,7 @@ export default function HomePage({ lang }: { lang: string }) {
           setMarketRegion(state);
           setMarketDistrict(city);
           setLocationSource('GPS');
-          return; // Success
+          return;
         } catch (e) {
            console.error("Reverse geocoding failed", e);
         }
@@ -358,83 +405,59 @@ export default function HomePage({ lang }: { lang: string }) {
         setLocationSource('Default');
       }
     };
-
     resolveLocation();
   }, [coords, isLoggedIn, farmer?.location]);
 
-  // Sync Farmer state with local storage on storage events
-  useEffect(() => {
-    const handleSync = () => {
-      const updated = JSON.parse(localStorage.getItem('kisancore_farmer') || 'null');
-      if (updated) {
-        const raw = updated?.active_crops;
-        let stored: any[] = [];
-        if (Array.isArray(raw)) {
-          stored = raw;
-        } else if (typeof raw === 'string') {
-          try { stored = JSON.parse(raw); } catch { stored = []; }
-        }
-        setActiveCropsList(Array.isArray(stored) ? stored : []);
-      }
-    };
-    window.addEventListener('storage', handleSync);
-    return () => window.removeEventListener('storage', handleSync);
-  }, []);
+  const [trendingCrops, setTrendingCrops] = useState<any[]>([]);
+  const [marketLoading, setMarketLoading] = useState(false);
+  const [refreshTimer, setRefreshTimer] = useState(60);
+  const [rotationCounter, setRotationCounter] = useState(0);
 
+  // SMART MARKET HUB FETCHING
   useEffect(() => {
     const fetchMarketTrends = async () => {
       if (!marketRegion) return;
       setMarketLoading(true);
+      
+      const activeCrops = farmer?.active_crops ? JSON.parse(farmer.active_crops).map((c: any) => c.crop_name) : [];
+      const location = farmer?.location || marketRegion || 'Karnataka';
+      const month = new Date().getMonth();
+      
+      const smartCommodities = getSmartCommodities(activeCrops, location, month, rotationCounter);
+      
       try {
-        const commodities = ['Potato', 'Onion', 'Tomato', 'Wheat', 'Maize', 'Soybean', 'Cotton'];
         const results = await Promise.allSettled(
-          commodities.map(c => axios.get(`${API_BASE_URL}/api/v1/market-prices?state=${marketRegion}&commodity=${c}`))
+          smartCommodities.map(c => axios.get(`${API_BASE_URL}/api/v1/market-prices?state=${marketRegion}&commodity=${c}`))
         );
         
         const trends = results.map((res, i) => {
           const data = (res.status === 'fulfilled' && res.value.data?.[0]) ? res.value.data[0] : null;
-          const baseRates: Record<string, number> = {
-            'Potato': 1200, 'Onion': 1500, 'Tomato': 1800, 'Wheat': 2100, 
-            'Maize': 2000, 'Soybean': 4500, 'Cotton': 6000
-          };
+          const name = smartCommodities[i];
+          
+          // Price Change Logic (Persistent comparison)
+          const lastPrices = JSON.parse(localStorage.getItem('last_market_prices') || '{}');
+          const currentPrice = data?.max_price || (1200 + Math.floor(Math.random() * 500));
+          const lastPrice = lastPrices[name];
+          
+          let changePercent = 0;
+          if (lastPrice) {
+            changePercent = Math.round(((currentPrice - lastPrice) / lastPrice) * 100);
+          }
+          
+          lastPrices[name] = currentPrice;
+          localStorage.setItem('last_market_prices', JSON.stringify(lastPrices));
+
           return { 
-            name: commodities[i], 
-            price: data?.max_price || (baseRates[commodities[i]] + Math.floor(Math.random() * 500)),
+            name, 
+            price: currentPrice,
+            change: changePercent,
             quality: data?.grade || 'Standard',
             market: data?.market || `${marketDistrict} Mandi`,
             isLive: !!data
           };
         });
 
-        // Season-aware rotation
-        const now = new Date();
-        const month = now.getMonth() + 1;
-        const getSeasonalBonus = (name: string): number => {
-          if (month >= 6 && month <= 11) {
-            if (name === 'Cotton') return 800;
-            if (name === 'Soybean') return 700;
-            if (name === 'Maize') return 300;
-          }
-          if (month >= 11 || month <= 4) {
-            if (name === 'Wheat') return 900;
-            if (name === 'Potato') return 600;
-            if (name === 'Onion') return 500;
-          }
-          if (month >= 3 && month <= 6) {
-            if (name === 'Tomato') return 700;
-            if (name === 'Onion') return 400;
-          }
-          return 0;
-        };
-
-        const sortedTrends = [...trends].sort((a, b) => {
-          const aScore = a.price + getSeasonalBonus(a.name);
-          const bScore = b.price + getSeasonalBonus(b.name);
-          return bScore - aScore;
-        });
-
-        setTrendingCrops(sortedTrends);
-        if (sortedTrends.length > 0) setMarketPrice(sortedTrends[0]);
+        setTrendingCrops(trends);
       } catch (err) {
         console.error("Market fetch failed", err);
       } finally {
@@ -443,7 +466,11 @@ export default function HomePage({ lang }: { lang: string }) {
     };
 
     fetchMarketTrends();
-    const pollInterval = setInterval(fetchMarketTrends, 60000);
+    
+    const pollInterval = setInterval(() => {
+      setRotationCounter(prev => prev + 1);
+    }, 60000);
+
     const timerInterval = setInterval(() => {
       setRefreshTimer(prev => prev <= 1 ? 60 : prev - 1);
     }, 1000);
@@ -452,7 +479,7 @@ export default function HomePage({ lang }: { lang: string }) {
       clearInterval(pollInterval);
       clearInterval(timerInterval);
     };
-  }, [marketRegion, marketDistrict]);
+  }, [marketRegion, marketDistrict, rotationCounter]);
 
   const getWeatherEmoji = (condition: string, temp: number) => {
     const c = condition.toLowerCase();
@@ -1063,97 +1090,98 @@ export default function HomePage({ lang }: { lang: string }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 anim-fade-in">
         {/* Market Hub Column */}
         <section className="animate-fade-in-up">
-          <div className="flex justify-between items-center mb-6">
-            <style dangerouslySetInnerHTML={{ __html: pulseKeyframes }} />
+          <div className="flex justify-between items-end mb-6">
             <div>
               <h2 className="text-xl text-gray-900 dark:text-white font-black uppercase tracking-widest text-xs opacity-50 flex items-center gap-2 m-0 mb-1">
                 📈 Market Hub: {marketDistrict}, {marketRegion}
               </h2>
               <div className="flex items-center gap-2">
-                 <div 
-                   style={{ 
-                     width: '8px', height: '8px', borderRadius: '50%', 
-                     backgroundColor: locationSource === 'GPS' ? '#3b82f6' : locationSource === 'Profile' ? '#16a34a' : '#94a3b8',
-                     animation: 'kisan-pulse 1.5s infinite ease-in-out',
-                     boxShadow: locationSource === 'GPS' ? '0 0 10px #3b82f6' : locationSource === 'Profile' ? '0 0 10px #16a34a' : 'none'
-                   }} 
-                 />
+                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
                  <p className="m-0 text-[10px] text-gray-400 font-black uppercase tracking-widest">
-                   {locationSource === 'GPS' ? 'LIVE GPS ACTIVE' : locationSource === 'Profile' ? 'SYNCED WITH PROFILE' : 'REGIONAL ESTIMATE'}
+                   {locationSource === 'GPS' ? 'LIVE GPS ACTIVE' : 'REGIONAL ESTIMATE'}
                  </p>
-                 <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded ml-2 font-mono">
-                   🔄 {refreshTimer}s
-                 </span>
+                 <div className="group relative ml-2">
+                   <button className="text-[10px] text-gray-400 hover:text-gray-600 font-black flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded transition-colors">
+                     ℹ️ Why these?
+                   </button>
+                   <div className="absolute left-0 top-full mt-2 w-64 p-3 bg-gray-900 text-white text-[10px] font-bold rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[200] shadow-2xl leading-relaxed">
+                     <p className="m-0 mb-1 text-green-400 uppercase tracking-widest font-black">Smart Logic Active:</p>
+                     Showing: Your active crops + Seasonal picks for {new Date().toLocaleString('default', { month: 'long' })} + {marketRegion} specialties. 
+                     <br/><br/>
+                     Rotating every 60s to show more opportunities.
+                   </div>
+                 </div>
               </div>
             </div>
+            <Link to="/market" className="text-[10px] font-black text-green-600 hover:text-green-700 uppercase tracking-widest no-underline flex items-center gap-1 group">
+              View All Prices <span className="group-hover:translate-x-1 transition-transform">→</span>
+            </Link>
           </div>
           
-          <div className="bg-white dark:bg-slate-800 rounded-[32px] p-8 shadow-sm border border-gray-100 dark:border-slate-700 min-h-[440px] flex flex-col hover-lift transition-all relative overflow-hidden">
-            
-            {/* MAIN STRATEGIC WINNER - HYBRID CHOICE */}
+          <div className="flex flex-col gap-4 min-h-[440px]">
             {marketLoading ? (
-              <div className="flex flex-col items-center justify-center h-full gap-4 text-center py-20 relative z-10">
-                 <div className="w-16 h-16 bg-gray-100 rounded-full animate-pulse flex items-center justify-center text-3xl">💹</div>
-                 <p className="text-gray-400 font-bold italic truncate w-full">Analyzing Strategically in {marketRegion}...</p>
-              </div>
+              [1, 2, 3].map(i => (
+                <div key={i} className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-gray-100 dark:border-slate-700 flex items-center gap-4 animate-pulse">
+                   <div className="w-16 h-16 bg-gray-100 dark:bg-slate-700 rounded-2xl" />
+                   <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-gray-100 dark:bg-slate-700 w-1/3 rounded" />
+                      <div className="h-6 bg-gray-100 dark:bg-slate-700 w-1/2 rounded" />
+                   </div>
+                </div>
+              ))
             ) : trendingCrops.length > 0 ? (
-              <div className="flex-1 flex flex-col animate-fade-in relative z-10">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-[10px] font-black bg-[#16a34a] text-white px-3 py-1 rounded-full uppercase tracking-widest shadow-lg shadow-green-500/20">🏆 BEST FOR YOU</span>
-                  <span className="text-[10px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase tracking-widest border border-blue-100">PROFIT + LOW BUDGET</span>
-                  <span className="text-[9px] font-black bg-orange-100 text-orange-600 px-2 py-0.5 rounded uppercase tracking-widest animate-pulse border border-orange-200">📡 LIVE MARKET</span>
-                </div>
+              trendingCrops.map((crop, idx) => (
+                <div 
+                  key={crop.name}
+                  onClick={() => navigate('/market', { state: { selectedCommodity: crop.name }})}
+                  className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-6 shadow-sm border border-gray-100 dark:border-slate-700 hover-lift cursor-pointer active:scale-95 transition-all flex items-center justify-between group relative overflow-hidden"
+                >
+                  <div className="flex items-center gap-6 relative z-10">
+                    <div className="w-16 h-16 bg-gray-50 dark:bg-slate-900 rounded-3xl flex items-center justify-center text-4xl shadow-inner border border-gray-100 dark:border-slate-700 group-hover:scale-110 transition-transform">
+                      { { 'Rice': '🌾', 'Wheat': '🌾', 'Maize': '🌽', 'Tomato': '🍅', 'Potato': '🥔', 'Onion': '🧅', 'Cotton': '☁️', 'Soybean': '🫘', 'Coffee': '☕', 'Mango': '🥭', 'Watermelon': '🍉', 'Mustard': '🌼', 'Sugarcane': '🎋', 'Groundnut': '🥜' }[crop.name] || '🌱' }
+                    </div>
+                    <div>
+                      <h4 className="m-0 text-xl font-black text-gray-900 dark:text-white tracking-tight">{crop.name}</h4>
+                      <p className="m-0 text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">
+                        {crop.market}
+                      </p>
+                    </div>
+                  </div>
 
-                <div className="bg-green-50 dark:bg-green-900/10 p-8 rounded-[2.5rem] border-2 border-green-100 dark:border-green-900/30 mb-8 flex flex-col sm:flex-row items-center gap-8 shadow-xl shadow-green-500/5">
-                   <div className="w-40 h-40 bg-white dark:bg-slate-800 rounded-[2.5rem] flex items-center justify-center text-8xl shadow-2xl border border-gray-100 dark:border-slate-700">
-                     { { 'Rice': '🌾', 'Wheat': '🌾', 'Maize': '🌽', 'Tomato': '🍅', 'Potato': '🥔', 'Onion': '🧅', 'Cotton': '☁️', 'Soybean': '🫘' }[trendingCrops[0].name] || '🌱' }
-                   </div>
-                   <div className="text-center sm:text-left">
-                     <h4 className="m-0 text-5xl font-black text-gray-900 dark:text-white tracking-tighter leading-none mb-4">{trendingCrops[0].name}</h4>
-                     <p className="m-0 text-xs text-gray-400 font-black uppercase tracking-[0.2em] mb-4">Current Top Profit Priority</p>
-                     <div className="flex flex-col sm:flex-row gap-6">
-                        <div>
-                           <p className="m-0 text-[10px] font-black text-[#16a34a] uppercase tracking-widest mb-1">Selling For</p>
-                           <p className="m-0 text-3xl font-black text-gray-800 dark:text-gray-100 tracking-tighter">₹{trendingCrops[0].price}<span className="text-xs text-gray-400 font-bold ml-1">/q</span></p>
+                  <div className="text-right relative z-10">
+                    <div className="flex flex-col items-end">
+                      <p className="m-0 text-2xl font-black text-gray-900 dark:text-white tracking-tighter">
+                        ₹{crop.price}
+                        <span className="text-[10px] text-gray-400 ml-1">/q</span>
+                      </p>
+                      {crop.change !== 0 && (
+                        <div className={`flex items-center gap-1 mt-1 text-[10px] font-black uppercase tracking-widest ${crop.change > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                          <span>{crop.change > 0 ? '↗' : '↘'}</span>
+                          <span>{crop.change > 0 ? '+' : ''}{crop.change}%</span>
                         </div>
-                        <div className="h-12 w-[2px] bg-gray-200 dark:bg-slate-700 hidden sm:block" />
-                        <div>
-                           <p className="m-0 text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Growth Index</p>
-                           <p className="m-0 text-3xl font-black text-gray-800 dark:text-gray-100 tracking-tighter">98.4%<span className="text-xs text-gray-400 font-bold ml-1">Easy</span></p>
-                        </div>
-                     </div>
-                   </div>
-                </div>
+                      )}
+                    </div>
+                  </div>
 
-                <div className="bg-white dark:bg-slate-900/50 p-6 rounded-3xl border border-gray-100 dark:border-slate-700 mb-6">
-                   <h5 className="m-0 text-xs font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                     📝 Strategic Rationale
-                   </h5>
-                   <p className="m-0 text-sm text-gray-600 dark:text-slate-300 font-bold leading-relaxed italic">
-                     "In {marketRegion}, {trendingCrops[0].name} is currently yielding a {Math.floor(Math.random() * 20) + 15}% higher return compared to standard staples. Its low water requirement and moderate N-P-K needs make it accessible for low-budget farming while maximizing net earnings."
-                   </p>
+                  {/* Micro Decoration */}
+                  <div className="absolute -right-4 -bottom-4 text-6xl opacity-[0.03] group-hover:opacity-10 transition-opacity rotate-12 grayscale">
+                    { { 'Rice': '🌾', 'Wheat': '🌾', 'Maize': '🌽', 'Tomato': '🍅', 'Potato': '🥔', 'Onion': '🧅', 'Cotton': '☁️', 'Soybean': '🫘' }[crop.name] || '🌱' }
+                  </div>
                 </div>
-              </div>
+              ))
             ) : (
-                <div className="text-center py-20 relative z-10">
-                   <p className="text-gray-400 font-bold italic">No mandi data for this state. Try another region.</p>
-                </div>
+              <div className="bg-gray-50 dark:bg-slate-900 rounded-3xl p-12 text-center border-2 border-dashed border-gray-200 dark:border-slate-800">
+                <p className="text-gray-400 font-bold italic">No mandi data for {marketRegion}. Try changing your location.</p>
+              </div>
             )}
 
-            {/* Background Branding Accent */}
-            <div className="absolute -bottom-16 -right-16 text-[250px] opacity-[0.03] select-none pointer-events-none rotate-12">
-               {trendingCrops.length > 0 ? ({ 'Rice': '🌾', 'Wheat': '🌾', 'Maize': '🌽', 'Tomato': '🍅', 'Potato': '🥔', 'Onion': '🧅', 'Cotton': '☁️', 'Soybean': '🫘' }[trendingCrops[0].name] || '📈') : '📈'}
-            </div>
+            <button 
+              onClick={() => navigate('/chat', { state: { prefill: "Which crop will give me the most profit this month based on these mandi prices?" }})}
+              className="mt-2 w-full bg-slate-900 dark:bg-white text-white dark:text-black py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-800 dark:hover:bg-gray-100 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-xl shadow-slate-900/10"
+            >
+              📊 Analyze Profit Strategy with AI
+            </button>
           </div>
-            
-            <div className="mt-6 pt-4 border-t border-gray-100 dark:border-slate-700">
-              <button 
-                onClick={() => navigate('/chat', { state: { prefill: "Which crop will give me the most profit this month based on these mandi prices?" }})}
-                className="w-full bg-slate-900 dark:bg-white text-white dark:text-black py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center gap-2"
-              >
-                📊 Analyze Profit Strategy with AI
-              </button>
-            </div>
         </section>
 
         {/* 3-Day Strategy Column */}

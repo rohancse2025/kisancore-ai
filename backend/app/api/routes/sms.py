@@ -55,6 +55,30 @@ def send_sms_twilio(phone: str, message: str) -> tuple[bool, str]:
   except Exception as e:
     return False, str(e)
 
+def send_whatsapp_message(to: str, message: str) -> bool:
+  account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+  auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+  from_whatsapp = os.getenv("TWILIO_WHATSAPP_FROM", "whatsapp:+14155238886")
+  
+  if not account_sid or not auth_token:
+    return False
+  
+  # Normalize phone
+  clean = to.replace("+", "").replace(" ", "").replace("-", "").replace("whatsapp:", "")
+  if clean.startswith("91") and len(clean) == 12:
+    clean = clean
+  elif len(clean) == 10:
+    clean = "91" + clean
+  to_whatsapp = "whatsapp:+" + clean
+  
+  try:
+    client = Client(account_sid, auth_token)
+    client.messages.create(body=message, from_=from_whatsapp, to=to_whatsapp)
+    return True
+  except Exception as e:
+    logger.error(f"WhatsApp send failed: {e}")
+    return False
+
 def send_sms(to: str, message: str) -> bool:
   success, _ = send_sms_twilio(to, message)
   return success
@@ -140,15 +164,24 @@ def daily_summary(phone: str,
   return {"status": "sent" if success else "failed"}
 
 @router.post("/webhook")
-async def handle_incoming_whatsapp(From: str = Form(...), Body: str = Form(...)):
+async def handle_incoming_whatsapp(
+    From: str = Form(...),
+    Body: str = Form("")
+):
     import app.api.routes.iot as iot
+    from app.api.routes.iot import latest_reading
     import time
-    
-    sender = From.replace("whatsapp:", "").strip()
+
+    sender = From.strip()
     text = Body.strip().upper()
-    print(f"DEBUG: Incoming WhatsApp from {sender}: {text}")
+    print(f"DEBUG: Incoming WhatsApp from {sender} | Text: {text}")
+
+    # AUTO-REGISTER this number for smart alerts (store full whatsapp:+91... format)
+    latest_reading["farmer_sms_phone"] = sender
+    print(f"DEBUG: Registered alert phone: {sender}")
+
     response_msg = ""
-    
+
     if text.startswith("PUMP ON"):
         duration = 60
         parts = text.split()
@@ -156,52 +189,58 @@ async def handle_incoming_whatsapp(From: str = Form(...), Body: str = Form(...))
             duration = int(parts[2])
         iot.latest_reading["manual_override"] = "ON"
         iot.latest_reading["override_expiry_time"] = time.time() + (duration * 60)
-        response_msg = f"✅ KisanCore: Pump activated for {duration} mins via WhatsApp."
+        response_msg = f"KisanCore: Pump activated for {duration} mins."
 
     elif text == "PUMP OFF":
         iot.latest_reading["manual_override"] = "OFF"
         iot.latest_reading["override_expiry_time"] = time.time() + 86400
-        response_msg = "🛑 KisanCore: Pump turned OFF manually."
+        response_msg = "KisanCore: Pump turned OFF manually."
 
     elif text == "AUTO":
         iot.latest_reading["manual_override"] = None
         iot.latest_reading["override_expiry_time"] = 0
-        response_msg = "🤖 KisanCore: Pump restored to Autonomous AI Mode."
+        response_msg = "KisanCore: Pump restored to Autonomous AI Mode."
 
     elif text == "STATUS":
         temp = iot.latest_reading.get("temperature", "--")
-        hum = iot.latest_reading.get("humidity", "--")
+        hum  = iot.latest_reading.get("humidity", "--")
         soil = iot.latest_reading.get("soil_moisture", "--")
         mode = iot.latest_reading.get("manual_override") or "AUTO"
-        irr = "ON 💧" if iot.latest_reading.get("irrigation_needed") else "OFF"
-        response_msg = f"📡 Farm Status:\nTemp: {temp}°C | Humidity: {hum}%\nSoil: {soil}% | Pump: {irr}\nMode: {mode}\n-KisanCore AI"
-
-    elif text == "HELP":
+        irr  = "ON" if iot.latest_reading.get("irrigation_needed") else "OFF"
         response_msg = (
-            "🌾 KisanCore WhatsApp Commands:\n"
-            "💧 PUMP ON — Start pump\n"
-            "⏱ PUMP ON 30 — Pump for 30 mins\n"
-            "🛑 PUMP OFF — Stop pump\n"
-            "🤖 AUTO — AI auto-control\n"
-            "📡 STATUS — Live sensor data\n"
-            "📋 DAILY — Daily farm report\n"
-            "-KisanCore AI"
+            f"Farm Status:\n"
+            f"Temp: {temp}C | Humidity: {hum}%\n"
+            f"Soil: {soil}% | Pump: {irr}\n"
+            f"Mode: {mode}\n-KisanCore AI"
         )
 
     elif text == "DAILY":
         temp = iot.latest_reading.get("temperature", "--")
-        hum = iot.latest_reading.get("humidity", "--")
+        hum  = iot.latest_reading.get("humidity", "--")
         soil = iot.latest_reading.get("soil_moisture", "--")
-        irr = "ON 💧" if iot.latest_reading.get("irrigation_needed") else "OFF"
+        irr  = "ON" if iot.latest_reading.get("irrigation_needed") else "OFF"
         mode = iot.latest_reading.get("manual_override") or "AUTO"
         response_msg = (
-            f"📋 KisanCore Daily Report:\n"
-            f"Temp: {temp}°C | Humidity: {hum}%\n"
+            f"KisanCore Daily Report:\n"
+            f"Temp: {temp}C | Humidity: {hum}%\n"
             f"Soil: {soil}% | Pump: {irr}\n"
             f"Mode: {mode}\nSend HELP for commands.\n-KisanCore AI"
         )
+
+    elif text == "HELP":
+        response_msg = (
+            "KisanCore Commands:\n"
+            "PUMP ON - Start pump\n"
+            "PUMP ON 30 - Pump for 30 mins\n"
+            "PUMP OFF - Stop pump\n"
+            "AUTO - AI auto-control\n"
+            "STATUS - Live sensor data\n"
+            "DAILY - Daily farm report\n"
+            "-KisanCore AI"
+        )
+
     else:
-        response_msg = "❓ Unknown command. Send HELP for all commands. -KisanCore AI"
+        response_msg = "Unknown command. Send HELP for all commands. -KisanCore AI"
 
     xml_response = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>

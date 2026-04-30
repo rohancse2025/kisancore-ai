@@ -80,7 +80,10 @@ const DotIndicators = ({ value, min, max, activeColor }: { value: number | null,
 export default function IoTPage({ lang }: { lang: string }) {
   const navigate = useNavigate();
   const { t } = useTranslation(lang);
-  const { temperature, humidity, soil_moisture, timestamp, isOnline, lastUpdateDate, clearSensorData, refreshSensorData } = useSensor();
+  const { 
+    temperature, humidity, soil_moisture, timestamp, isOnline, lastUpdateDate, 
+    clearSensorData, refreshSensorData, queueCommand, pendingCommandsCount 
+  } = useSensor();
   
   // Create a compatible sensorData object for the existing code
   const sensorData = temperature !== null ? { temperature, humidity, soil_moisture, timestamp } : null;
@@ -99,6 +102,14 @@ export default function IoTPage({ lang }: { lang: string }) {
 
   const handleOverride = async (command: string) => {
     setIsSendingOverride(true);
+
+    if (!navigator.onLine) {
+      // Offline: Add to queue
+      queueCommand(command, command === 'AUTO' ? undefined : overrideDuration);
+      setTimeout(() => setIsSendingOverride(false), 500);
+      return;
+    }
+
     try {
       if (command === "AUTO") {
         await fetch(`${API_BASE_URL}/api/v1/iot/override`, { method: 'DELETE' });
@@ -112,6 +123,8 @@ export default function IoTPage({ lang }: { lang: string }) {
       setTimeout(() => handleRefresh(), 800); // refresh UI to pull new override state
     } catch (e) {
       console.error(e);
+      // Fallback to queue if fetch fails
+      queueCommand(command, command === 'AUTO' ? undefined : overrideDuration);
     }
     setIsSendingOverride(false);
   };
@@ -403,6 +416,23 @@ export default function IoTPage({ lang }: { lang: string }) {
         <span>🚿</span> {t('home_irrigation')}
       </h2>
       {renderIrrigationCard()}
+
+      {/* OFFLINE QUEUE STATUS */}
+      {pendingCommandsCount > 0 && (
+        <div className="mt-8 bg-amber-50 border-2 border-amber-200 rounded-3xl p-6 shadow-sm animate-pulse">
+          <div className="flex items-center gap-4">
+            <span className="text-3xl">📦</span>
+            <div>
+              <h3 className="m-0 text-amber-800 font-black">
+                {pendingCommandsCount} {pendingCommandsCount === 1 ? 'Command' : 'Commands'} Queued
+              </h3>
+              <p className="m-0 text-amber-700 text-sm font-medium">
+                You are currently offline. These actions will be sent to your farm automatically as soon as you reconnect to the internet.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MANUAL PUMP CONTROLS */}
       <div className="mt-8 bg-white border border-gray-200 rounded-3xl p-6 shadow-sm">

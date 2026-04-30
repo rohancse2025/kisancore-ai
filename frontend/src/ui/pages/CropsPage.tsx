@@ -98,6 +98,28 @@ export default function CropsPage({ lang }: { lang: string }) {
                   : 'bg-red-100 text-red-700 border-red-300';
 
     let suggestion = '';
+    
+    if (!navigator.onLine) {
+      // Descriptive offline fallback for soil analysis
+      if (ph < 6) {
+        suggestion = `Your soil is acidic (pH ${ph}). Apply lime or wood ash to raise pH. Nitrogen levels are ${nitrogen > 60 ? 'good' : 'low'}.`;
+      } else if (ph > 7.5) {
+        suggestion = `Your soil is alkaline (pH ${ph}). Apply gypsum or organic compost to lower pH and improve nutrient availability.`;
+      } else if (nitrogen < 30) {
+        suggestion = `Soil pH is optimal, but nitrogen is low (${nitrogen} mg/kg). Apply Urea or Neem-coated urea before the next watering.`;
+      } else if (moisture < 30) {
+        suggestion = `Soil is very dry (${moisture}%). Irrigate immediately to prevent crop wilting and allow nutrient absorption.`;
+      } else if (moisture > 75) {
+        suggestion = `Soil is waterlogged (${moisture}%). Stop irrigation and ensure proper drainage to prevent root rot.`;
+      } else {
+        suggestion = "Your soil health looks excellent! Maintain organic matter levels and follow your regular crop rotation.";
+      }
+      
+      setSoilResult({ score: total, status, badge, suggestion: suggestion + " (📡 Offline Analysis)" });
+      setSoilLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/chat/`, {
         method: 'POST',
@@ -110,10 +132,11 @@ export default function CropsPage({ lang }: { lang: string }) {
       const data = await res.json();
       suggestion = data.reply || '';
     } catch {
-      suggestion = ph < 6 ? 'Add lime to raise soil pH to optimal range.' :
-                   nitrogen < 30 ? 'Apply urea or compost to boost nitrogen levels.' :
-                   moisture < 40 ? 'Increase irrigation frequency for better crop growth.' :
-                   'Soil conditions look healthy. Maintain current practices.';
+      // Fallback logic for network error
+      if (ph < 6) suggestion = 'Add lime to raise soil pH to optimal range.';
+      else if (nitrogen < 30) suggestion = 'Apply urea or compost to boost nitrogen levels.';
+      else if (moisture < 40) suggestion = 'Increase irrigation frequency for better crop growth.';
+      else suggestion = 'Soil conditions look healthy. Maintain current practices.';
     } finally {
       setSoilResult({ score: total, status, badge, suggestion });
       setSoilLoading(false);
@@ -225,12 +248,25 @@ export default function CropsPage({ lang }: { lang: string }) {
     if (!navigator.onLine) {
       setTimeout(() => {
         let advice = "";
-        if (fertInputs.N < 30) advice += "Apply 50kg Urea per acre to boost nitrogen. ";
-        if (fertInputs.P < 25) advice += "Add 40kg DAP at sowing time. ";
-        if (fertInputs.K < 30) advice += "Apply 25kg MOP for better grain quality. ";
-        if (advice === "") advice = "Soil NPK levels look balanced for this crop. Maintain organic matter.";
+        const crop = fertInputs.crop.toLowerCase();
         
-        setFertResult(advice + " (Calculated Offline)");
+        // Base advice
+        if (fertInputs.N < 40) advice += `Apply 45kg Urea per acre for ${fertInputs.crop}. `;
+        if (fertInputs.P < 30) advice += `Add 50kg DAP at the time of sowing. `;
+        if (fertInputs.K < 40) advice += `Use 25kg MOP to improve grain/fruit weight. `;
+        
+        // Crop-specific additions
+        if (crop.includes('rice') || crop.includes('paddy')) {
+          advice += "Maintain 2-5cm water level during tillering stage. ";
+        } else if (crop.includes('wheat')) {
+          advice += "Apply second dose of Urea after first irrigation (21 days). ";
+        } else if (crop.includes('tomato') || crop.includes('potato')) {
+          advice += "High potassium is critical for these crops to avoid blight. ";
+        }
+
+        if (advice === "") advice = "Your current soil NPK levels are sufficient for this crop cycle. Add 2 tons of FYM/compost per acre to maintain long-term health.";
+        
+        setFertResult(advice + " (📡 Offline Calculation)");
         setFertLoading(false);
       }, 800);
       return;

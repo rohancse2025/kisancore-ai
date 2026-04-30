@@ -3,6 +3,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import SpeakButton from '../../components/SpeakButton';
 import CropSearchInput from '../../components/CropSearchInput';
 import { API_BASE_URL } from '../../config';
+import { estimatePrice, getAvailableCrops, type PriceEstimate } from '../../data/market-trends';
 
 interface MarketPrice {
   market: string;
@@ -34,6 +35,8 @@ export default function MarketPage({ lang }: { lang: string }) {
   const [prices, setPrices] = useState<MarketPrice[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [offlineEstimate, setOfflineEstimate] = useState<PriceEstimate | null>(null);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -43,15 +46,37 @@ export default function MarketPage({ lang }: { lang: string }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    const go = () => setIsOnline(navigator.onLine);
+    window.addEventListener('online', go);
+    window.addEventListener('offline', go);
+    return () => { window.removeEventListener('online', go); window.removeEventListener('offline', go); };
+  }, []);
+
   const fetchPrices = async (c = commodity, s = state) => {
     setIsLoading(true);
     setHasSearched(true);
+    setOfflineEstimate(null);
+
+    if (!navigator.onLine) {
+      // Offline: use local estimator
+      const estimate = estimatePrice(c);
+      setOfflineEstimate(estimate);
+      setPrices([]);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/market-prices?commodity=${c}&state=${s}`);
       const data = await res.json();
       setPrices(data);
     } catch (error) {
       console.error("Market Price Fetch Error:", error);
+      // Fallback to offline on network error
+      const estimate = estimatePrice(c);
+      setOfflineEstimate(estimate);
+      setPrices([]);
     } finally {
       setIsLoading(false);
     }
@@ -149,14 +174,92 @@ export default function MarketPage({ lang }: { lang: string }) {
         <div className="text-center py-16">
           <div className="w-12 h-12 border-5 border-gray-100 border-t-green-600 rounded-full animate-spin mx-auto" />
           <p className="mt-5 text-lg text-green-600 font-bold italic">
-            Fetching live mandi prices...
+            {isOnline ? 'Fetching live mandi prices...' : 'Calculating offline estimate...'}
           </p>
         </div>
       ) : !hasSearched ? (
         <div className="text-center py-16 px-8 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-300">
           <span className="text-6xl mb-5 block">📊</span>
-          <h2 className="mt-1 text-gray-600 font-bold">Select a commodity and state to see live mandi prices</h2>
-          <p className="text-gray-400 mt-2">Real-time data for over 1000+ markets in India</p>
+          <h2 className="mt-1 text-gray-600 font-bold">Select a commodity and state to see prices</h2>
+          <p className="text-gray-400 mt-2">
+            {isOnline ? 'Real-time data for 1000+ markets in India' : '📡 Offline mode — seasonal price estimates available'}
+          </p>
+        </div>
+      ) : offlineEstimate ? (
+        /* ── OFFLINE ESTIMATE CARD ─────────────────────── */
+        <div className="animate-fade-in space-y-5">
+          {/* Offline Banner */}
+          <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-5 py-3">
+            <span className="text-xl">📡</span>
+            <div>
+              <p className="m-0 text-amber-800 font-black text-sm">OFFLINE ESTIMATE</p>
+              <p className="m-0 text-amber-700 text-xs">Based on 3-year historical averages. Connect to internet for live mandi data.</p>
+            </div>
+          </div>
+
+          {/* Price Cards */}
+          <div className={`grid gap-5 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
+            <div className="bg-white p-5 rounded-xl text-center shadow-sm border-t-4 border-t-green-600 hover-lift">
+              <p className="m-0 mb-2 text-sm text-gray-400 font-bold">Estimated Low</p>
+              <h3 className="m-0 mb-1 text-2xl font-black text-green-600">
+                ₹{offlineEstimate.minEstimate.toLocaleString()}
+              </h3>
+              <p className="m-0 text-xs text-gray-400 italic">per quintal</p>
+            </div>
+            <div className="bg-white p-5 rounded-xl text-center shadow-sm border-t-4 border-t-blue-500 hover-lift">
+              <p className="m-0 mb-2 text-sm text-gray-400 font-bold">Expected Price</p>
+              <h3 className="m-0 mb-1 text-2xl font-black text-blue-600">
+                ₹{offlineEstimate.estimate.toLocaleString()}
+              </h3>
+              <p className="m-0 text-xs text-gray-400 italic">per quintal</p>
+            </div>
+            <div className="bg-white p-5 rounded-xl text-center shadow-sm border-t-4 border-t-purple-500 hover-lift">
+              <p className="m-0 mb-2 text-sm text-gray-400 font-bold">Estimated High</p>
+              <h3 className="m-0 mb-1 text-2xl font-black text-purple-500">
+                ₹{offlineEstimate.maxEstimate.toLocaleString()}
+              </h3>
+              <p className="m-0 text-xs text-gray-400 italic">per quintal</p>
+            </div>
+          </div>
+
+          {/* Trend & Details */}
+          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-4">
+            <div className="flex items-center gap-3">
+              <span className={`text-2xl ${offlineEstimate.trendDirection === 'up' ? 'text-green-500' : offlineEstimate.trendDirection === 'down' ? 'text-red-500' : 'text-amber-500'}`}>
+                {offlineEstimate.trendDirection === 'up' ? '↗' : offlineEstimate.trendDirection === 'down' ? '↘' : '→'}
+              </span>
+              <div>
+                <p className="m-0 text-xs text-gray-400 font-bold uppercase tracking-wider">Price Trend</p>
+                <p className="m-0 text-gray-800 font-bold">{offlineEstimate.trend}</p>
+              </div>
+            </div>
+            <div className="border-t pt-4 flex items-start gap-3">
+              <span className="text-xl">📈</span>
+              <div>
+                <p className="m-0 text-xs text-gray-400 font-bold uppercase tracking-wider">Volatility</p>
+                <p className="m-0 text-gray-700">{offlineEstimate.volatility}</p>
+              </div>
+            </div>
+            {offlineEstimate.peakMonths.length > 0 && (
+              <div className="border-t pt-4 flex items-start gap-3">
+                <span className="text-xl">🗓️</span>
+                <div>
+                  <p className="m-0 text-xs text-gray-400 font-bold uppercase tracking-wider">Best Selling Months</p>
+                  <p className="m-0 text-gray-700 font-bold">{offlineEstimate.peakMonths.join(' · ')}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Sell Advice */}
+          <div className="bg-green-50 rounded-2xl p-6 border border-green-100 flex items-start gap-4">
+            <span className="text-3xl">💡</span>
+            <div>
+              <h4 className="m-0 mb-1 text-gray-900 text-base font-bold">Selling Advice</h4>
+              <p className="m-0 text-gray-700">{offlineEstimate.advice}</p>
+              <p className="m-0 mt-2 text-xs text-gray-400 italic">{offlineEstimate.confidence}</p>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="animate-fade-in">

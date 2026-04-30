@@ -13,6 +13,7 @@
  */
 
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <DHT.h>
 #include <ArduinoJson.h>
@@ -20,8 +21,8 @@
 // ===== USER CONFIGURATION =====
 const char* WIFI_SSID = "YourWiFiName";
 const char* WIFI_PASSWORD = "YourWiFiPassword";
-const char* SERVER_IP = "192.168.1.10";  // Change to your laptop's IP
-const int SERVER_PORT = 8000;
+const char* SERVER_IP = "kisancore-ai-1.onrender.com"; 
+const int SERVER_PORT = 443;
 const int READ_INTERVAL = 30000;         // 30 seconds
 const int SOIL_DRY_THRESHOLD = 30;       // Below this = irrigation needed
 const int SOIL_WET_THRESHOLD = 60;       // Above this = safety shutoff
@@ -175,12 +176,16 @@ void readSensors() {
 String postToBackend() {
   if (WiFi.status() != WL_CONNECTED) return "KEEP";
 
+  WiFiClientSecure client;
+  client.setInsecure(); // This allows connecting to Render without managing SSL certificates
+
   HTTPClient http;
-  String url = "http://" + String(SERVER_IP) + ":" + String(SERVER_PORT) + "/api/v1/iot/data";
+  // Use HTTPS URL
+  String url = "https://" + String(SERVER_IP) + "/api/v1/iot/data";
   
-  http.begin(url);
-  http.addHeader("Content-Type", "application/json");
-  http.setTimeout(10000);
+  if (http.begin(client, url)) { // Pass the secure client to http.begin
+    http.addHeader("Content-Type", "application/json");
+    http.setTimeout(15000); // Increased timeout for Render wake-up
 
   // Create JSON body
   StaticJsonDocument<200> doc;
@@ -208,8 +213,8 @@ String postToBackend() {
   } else {
     Serial.printf("Backend Error: %s\n", http.errorToString(httpCode).c_str());
   }
-
-  http.end();
+    http.end();
+  }
   return result;
 }
 

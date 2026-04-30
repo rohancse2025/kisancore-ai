@@ -24,7 +24,8 @@ latest_reading = {
     "unix_timestamp": 0,
     "manual_override": None, # "ON", "OFF", or None
     "override_expiry_time": 0,
-    "farmer_sms_phone": "" 
+    "farmer_sms_phone": "",
+    "last_alert_time": 0
 }
 
 # --- ROUTES ---
@@ -49,9 +50,13 @@ async def post_iot_data(data: IOTData):
                 f"Pump is now in AUTO mode. "
                 f"Send STATUS to check soil moisture. -KisanCore AI"
             )
-            if latest_reading.get("farmer_sms_phone"):
-                from app.api.routes.sms import send_sms
-                send_sms(latest_reading["farmer_sms_phone"], timer_msg)
+            phone_to_alert = latest_reading.get("farmer_sms_phone")
+            if not phone_to_alert:
+                import os
+                phone_to_alert = os.getenv("FARMER_PHONE")
+            if phone_to_alert:
+                from app.api.routes.sms import send_whatsapp_message
+                send_whatsapp_message(phone_to_alert, timer_msg)
             
     # 2. Safety Autoshutoff (if moisture >= 60% and we are manually pumping)
     if data.soil_moisture >= 60 and latest_reading["manual_override"] == "ON":
@@ -64,9 +69,13 @@ async def post_iot_data(data: IOTData):
             f"Soil moisture reached {data.soil_moisture}% — waterlogging prevented. "
             f"Send STATUS to check farm. -KisanCore AI"
         )
-        if latest_reading.get("farmer_sms_phone"):
-            from app.api.routes.sms import send_sms
-            send_sms(latest_reading["farmer_sms_phone"], safety_msg)
+        phone_to_alert = latest_reading.get("farmer_sms_phone")
+        if not phone_to_alert:
+            import os
+            phone_to_alert = os.getenv("FARMER_PHONE")
+        if phone_to_alert:
+            from app.api.routes.sms import send_whatsapp_message
+            send_whatsapp_message(phone_to_alert, safety_msg)
     
     # 3. Apply Override OR Fallback to Auto
     if latest_reading["manual_override"] == "ON":
@@ -98,6 +107,47 @@ async def post_iot_data(data: IOTData):
         "unix_timestamp": int(time.time() * 1000)
     })
     
+    # --- FEATURE 1: SMART ALERTS ---
+    alert_cooldown_ok = (time.time() - latest_reading["last_alert_time"]) > 60  # 1 min cooldown
+
+    if alert_cooldown_ok and data.soil_moisture < 30:
+        latest_reading["last_alert_time"] = time.time()
+        alert_msg = (
+            f"KisanCore SMART ALERT:\n"
+            f"Soil moisture is TOO DRY ({data.soil_moisture}%).\n"
+            f"Your crops may need water. Should I turn on the pump?\n"
+            f"Reply 'PUMP ON 30' to water for 30 mins."
+        )
+        phone_to_alert = latest_reading.get("farmer_sms_phone")
+        if not phone_to_alert:
+            import os
+            phone_to_alert = os.getenv("FARMER_PHONE")
+        if phone_to_alert:
+            from app.api.routes.sms import send_whatsapp_message
+            send_whatsapp_message(phone_to_alert, alert_msg)
+            print(f"SMART ALERT [DRY] SENT to {phone_to_alert} | Moisture: {data.soil_moisture}%")
+        else:
+            print("SMART ALERT [DRY] TRIGGERED but no phone registered.")
+
+    elif alert_cooldown_ok and data.soil_moisture > 70:
+        latest_reading["last_alert_time"] = time.time()
+        alert_msg = (
+            f"KisanCore SMART ALERT:\n"
+            f"Soil moisture is TOO WET ({data.soil_moisture}%).\n"
+            f"Stop irrigation and check drainage to prevent waterlogging.\n"
+            f"Reply 'PUMP OFF' to stop the pump."
+        )
+        phone_to_alert = latest_reading.get("farmer_sms_phone")
+        if not phone_to_alert:
+            import os
+            phone_to_alert = os.getenv("FARMER_PHONE")
+        if phone_to_alert:
+            from app.api.routes.sms import send_whatsapp_message
+            send_whatsapp_message(phone_to_alert, alert_msg)
+            print(f"SMART ALERT [WET] SENT to {phone_to_alert} | Moisture: {data.soil_moisture}%")
+        else:
+            print("SMART ALERT [WET] TRIGGERED but no phone registered.")
+
     return {
         "status": "ok", 
         "relay_command": "ON" if irrigation_needed else "OFF",
@@ -145,6 +195,7 @@ async def clear_iot_data():
         "irrigation_needed": False,
         "suggestion": "No data",
         "timestamp": "Never",
-        "unix_timestamp": 0
+        "unix_timestamp": 0,
+        "last_alert_time": 0
     })
     return {"status": "cleared"}

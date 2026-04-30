@@ -10,12 +10,14 @@ interface SensorData {
   lastUpdateDate: number | null;
   clearSensorData: () => Promise<void>;
   refreshSensorData: () => Promise<void>;
+  queueCommand: (command: string, duration?: number) => void;
+  pendingCommandsCount: number;
 }
 
 const SensorContext = createContext<SensorData | undefined>(undefined);
 
 export const SensorProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [sensorData, setSensorData] = useState<Omit<SensorData, 'clearSensorData' | 'refreshSensorData'>>({
+  const [sensorData, setSensorData] = useState<Omit<SensorData, 'clearSensorData' | 'refreshSensorData' | 'queueCommand' | 'pendingCommandsCount'>>({
     temperature: null,
     humidity: null,
     soil_moisture: null,
@@ -23,6 +25,68 @@ export const SensorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     isOnline: false,
     lastUpdateDate: null,
   });
+
+  const [pendingCommandsCount, setPendingCommandsCount] = useState(0);
+
+  // Sync effect: Try to drain command queue when online
+  useEffect(() => {
+    const drainQueue = async () => {
+      if (!navigator.onLine) return;
+      
+      const queueJson = localStorage.getItem('iot_command_queue');
+      if (!queueJson) {
+        setPendingCommandsCount(0);
+        return;
+      }
+
+      let queue: { command: string, duration?: number, id: string }[] = JSON.parse(queueJson);
+      if (queue.length === 0) {
+        setPendingCommandsCount(0);
+        return;
+      }
+
+      console.log(`📡 Online! Draining ${queue.length} queued IoT commands...`);
+      const remaining = [...queue];
+      
+      for (const item of queue) {
+        try {
+          if (item.command === "AUTO") {
+            await fetch(`${API_BASE_URL}/api/v1/iot/override`, { method: 'DELETE' });
+          } else {
+            await fetch(`${API_BASE_URL}/api/v1/iot/override`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ command: item.command, duration_minutes: item.duration || 60 })
+            });
+          }
+          // Success -> remove from remaining
+          const idx = remaining.findIndex(r => r.id === item.id);
+          if (idx > -1) remaining.splice(idx, 1);
+        } catch (err) {
+          console.error("Sync failed for command, will retry later:", err);
+          break; // Stop draining if network fails again
+        }
+      }
+
+      localStorage.setItem('iot_command_queue', JSON.stringify(remaining));
+      setPendingCommandsCount(remaining.length);
+    };
+
+    const interval = setInterval(drainQueue, 10000); // Check every 10s
+    drainQueue(); // Also run on mount
+    return () => clearInterval(interval);
+  }, []);
+
+  const queueCommand = (command: string, duration?: number) => {
+    const queueJson = localStorage.getItem('iot_command_queue');
+    const queue = queueJson ? JSON.parse(queueJson) : [];
+    
+    queue.push({ command, duration, id: Date.now().toString() });
+    localStorage.setItem('iot_command_queue', JSON.stringify(queue));
+    setPendingCommandsCount(queue.length);
+    
+    console.log(`📦 Command '${command}' queued for later sync.`);
+  };
 
   const clearSensorData = async () => {
     try {
@@ -85,7 +149,7 @@ export const SensorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   return (
-    <SensorContext.Provider value={{ ...sensorData, clearSensorData, refreshSensorData }}>
+    <SensorContext.Provider value={{ ...sensorData, clearSensorData, refreshSensorData, queueCommand, pendingCommandsCount }}>
       {children}
     </SensorContext.Provider>
   );

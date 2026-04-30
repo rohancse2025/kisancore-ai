@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../config';
+import { predictWeatherOffline, getDefaultWeatherParams } from '../../lib/offline-weather';
 
 type WeatherData = {
   temperature: number;
@@ -38,8 +39,25 @@ export default function WeatherPage() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [offlineForecast, setOfflineForecast] = useState<ReturnType<typeof predictWeatherOffline> | null>(null);
 
   useEffect(() => {
+    const go = () => setIsOnline(navigator.onLine);
+    window.addEventListener('online', go);
+    window.addEventListener('offline', go);
+    return () => { window.removeEventListener('online', go); window.removeEventListener('offline', go); };
+  }, []);
+
+  useEffect(() => {
+    if (!navigator.onLine) {
+      // Offline: use rule-based forecast with default sensor values
+      const params = getDefaultWeatherParams();
+      setOfflineForecast(predictWeatherOffline(params));
+      setLoading(false);
+      return;
+    }
+
     if (!navigator.geolocation) {
       setError("Your browser does not support location access. Please allow location to see weather.");
       setLoading(false);
@@ -55,12 +73,14 @@ export default function WeatherPage() {
           const data: WeatherData = await res.json();
           setWeather(data);
         } catch (e) {
-          setError("Could not fetch weather data. Please check that the backend is running and OPENWEATHER_API_KEY is set.");
+          // Fallback to offline on network error
+          const params = getDefaultWeatherParams();
+          setOfflineForecast(predictWeatherOffline(params));
         } finally {
           setLoading(false);
         }
       },
-      (err) => {
+      (_err) => {
         setError("Location access denied. Please allow location in your browser to see weather.");
         setLoading(false);
       }
@@ -86,6 +106,82 @@ export default function WeatherPage() {
         <div className="text-5xl mb-4">⚠️</div>
         <h2 className="text-gray-900 mb-3 text-2xl font-bold">Weather Unavailable</h2>
         <p className="text-gray-500 leading-relaxed">{error}</p>
+      </div>
+    </div>
+  );
+
+  // ── OFFLINE FORECAST UI ──────────────────────────────────
+  if (offlineForecast && !weather) return (
+    <div className="max-w-[900px] mx-auto flex flex-col gap-6 font-sans">
+      <div>
+        <h1 className="m-0 mb-1 text-2xl text-gray-900 font-bold">🌦️ Weather & Farm Advisor</h1>
+        <p className="m-0 text-gray-500 text-sm">
+          📡 Offline mode — rule-based forecast from sensor/seasonal patterns
+        </p>
+      </div>
+
+      {/* Offline banner */}
+      <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-5 py-3">
+        <span className="text-xl">📡</span>
+        <div>
+          <p className="m-0 text-amber-800 font-black text-sm">OFFLINE WEATHER ESTIMATE</p>
+          <p className="m-0 text-amber-700 text-xs">Based on barometric pressure rules & Indian seasonal patterns. Connect internet for live forecast.</p>
+        </div>
+      </div>
+
+      {/* Condition card */}
+      <div className="bg-gradient-to-br from-green-600 via-green-700 to-green-800 rounded-2xl p-8 text-white">
+        <div className="flex items-center gap-5">
+          <span className="text-7xl leading-none">{offlineForecast.conditionEmoji}</span>
+          <div>
+            <p className="m-0 text-base opacity-85 font-semibold mb-1">Predicted Condition</p>
+            <h2 className="m-0 text-3xl font-black">{offlineForecast.condition}</h2>
+          </div>
+        </div>
+      </div>
+
+      {/* Alerts */}
+      {offlineForecast.alerts.length > 0 && (
+        <div className="space-y-3">
+          {offlineForecast.alerts.map((alert, i) => (
+            <div key={i} className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-5 py-3">
+              <p className="m-0 text-red-800 font-bold text-sm">{alert}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Forecast points */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+        <h3 className="m-0 mb-4 text-xs text-green-600 font-black uppercase tracking-widest">24-Hour Outlook</h3>
+        <div className="space-y-3">
+          {offlineForecast.forecast.map((f, i) => (
+            <div key={i} className="flex items-start gap-3">
+              <span className="text-green-500 font-black text-lg leading-none mt-0.5">•</span>
+              <p className="m-0 text-gray-700 font-medium">{f}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Advice cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm border-l-4 border-l-green-500">
+          <p className="m-0 mb-2 text-xs text-green-600 font-black uppercase tracking-wider">🌱 Farming Advice</p>
+          <p className="m-0 text-gray-700 font-medium">{offlineForecast.farmingAdvice}</p>
+        </div>
+        <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm border-l-4 border-l-blue-500">
+          <p className="m-0 mb-2 text-xs text-blue-600 font-black uppercase tracking-wider">💧 Irrigation</p>
+          <p className="m-0 text-gray-700 font-medium">{offlineForecast.irrigationAdvice}</p>
+        </div>
+        <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm border-l-4 border-l-purple-500">
+          <p className="m-0 mb-2 text-xs text-purple-600 font-black uppercase tracking-wider">🧪 Spray Safety</p>
+          <p className="m-0 text-gray-700 font-medium">{offlineForecast.sprayAdvice}</p>
+        </div>
+        <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm border-l-4 border-l-amber-500">
+          <p className="m-0 mb-2 text-xs text-amber-600 font-black uppercase tracking-wider">📡 Source</p>
+          <p className="m-0 text-gray-600 text-sm">Pressure rules + Indian seasonal patterns. For live weather, allow location & connect internet.</p>
+        </div>
       </div>
     </div>
   );
