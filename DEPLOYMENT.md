@@ -26,7 +26,7 @@ git push -u origin main
 7. Output Directory: dist (auto-detected)
 8. Environment Variables:
    - Key: VITE_API_URL
-   - Value: https://kisancore-api.onrender.com (add after backend deployed)
+   - Value: https://kisancore-ai-1.onrender.com (add after backend deployed)
 9. Click "Deploy"
 
 ## Step 3 — Wait for Deployment

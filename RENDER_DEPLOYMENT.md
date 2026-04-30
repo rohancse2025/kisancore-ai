@@ -51,18 +51,18 @@ In the **Environment** section, add these:
 - Render builds your app (takes 3-5 minutes first time)
 - Watch the logs in real-time
 - When you see: `Uvicorn running on http://0.0.0.0:10000` → **SUCCESS**
-- Your API URL: `https://kisancore-api.onrender.com`
+- Your API URL: `https://kisancore-ai-1.onrender.com`
 
 ## Step 6 — Test API
-Open browser: `https://kisancore-api.onrender.com/api/v1/health`
+Open browser: `https://kisancore-ai-1.onrender.com/api/v1/health`
 You should see: `{"status": "ok", "app": "ai-smart-agriculture", "environment": "dev"}`
 
-Test docs: `https://kisancore-api.onrender.com/docs`
+Test docs: `https://kisancore-ai-1.onrender.com/docs`
 You should see FastAPI Swagger UI with all endpoints.
 
 ## Step 7 — Update Frontend
 Update `frontend/.env.production`:
-`VITE_API_URL=https://kisancore-api.onrender.com`
+`VITE_API_URL=https://kisancore-ai-1.onrender.com`
 
 Redeploy frontend on Vercel:
 - Vercel auto-redeploys when you push to GitHub
@@ -79,7 +79,7 @@ Use a library like `WiFiClientSecure` or `HTTPSRedirect` for HTTPS on ESP32.
 
 ## Step 9 — Update WhatsApp Webhook
 Twilio Console → Your WhatsApp Sandbox → Webhook URL:
-`https://kisancore-api.onrender.com/api/v1/sms/webhook`
+`https://kisancore-ai-1.onrender.com/api/v1/sms/webhook`
 
 Send test message: `STATUS`
 You should get live farm readings reply.
