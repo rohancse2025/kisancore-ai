@@ -88,34 +88,40 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
   };
 
   return (
-    <div className="min-h-[80vh] flex flex-col justify-center py-12 px-6 animate-fade-in">
-      {/* Reverted Header: Simple Green Banner */}
-      <div className="bg-green-600 max-w-md w-full mx-auto p-10 rounded-t-[2.5rem] text-white text-center shadow-lg">
-        <div className="w-20 h-20 bg-white/20 rounded-[1.25rem] flex items-center justify-center mx-auto mb-6 border border-white/30 backdrop-blur-sm overflow-hidden shadow-xl">
-          <img src="/kisancore_final_v12_zoom.png" alt="Logo" className="w-14 h-14 object-contain" />
+    <div className="min-h-screen flex flex-col justify-center items-center py-4 md:py-12 px-4 md:px-6 animate-fade-in bg-gray-50 dark:bg-slate-950">
+      <div className="max-w-md w-full flex flex-col shadow-2xl rounded-[2.5rem] overflow-hidden border border-gray-100 dark:border-slate-800">
+        {/* Reverted Header: Simple Green Banner */}
+        <div className="bg-green-600 w-full p-8 md:p-10 text-white text-center shadow-lg relative overflow-hidden">
+          {/* Decorative background shape */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+          
+          <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-white/30 backdrop-blur-sm overflow-hidden shadow-xl relative z-10">
+            <img src="/kisancore_final_v12_zoom.png" alt="Logo" className="w-14 h-14 object-contain" />
+          </div>
+          <h1 className="text-3xl font-black m-0 mb-2 relative z-10 tracking-tight">KisanCore AI</h1>
+          <p className="opacity-90 font-bold m-0 uppercase tracking-widest text-[10px] relative z-10">Smart Farming for Indian Farmers</p>
         </div>
-        <h1 className="text-3xl font-black m-0 mb-2">KisanCore AI</h1>
-        <p className="opacity-90 font-bold m-0 uppercase tracking-widest text-[10px]">Smart Farming for Indian Farmers</p>
-      </div>
-      
-      {/* Reversion: Simple White Card */}
-      <div className="bg-white dark:bg-slate-800 rounded-b-[2.5rem] shadow-2xl overflow-hidden max-w-md w-full mx-auto border-x border-b border-gray-100 dark:border-slate-700">
-        <div className="flex border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-900/50">
-          <button 
-            className={`flex-1 py-5 font-black text-xs tracking-widest transition-all ${!isRegister ? 'text-green-600 bg-white dark:bg-slate-800 border-b-4 border-green-600' : 'text-gray-400'}`} 
-            onClick={() => setIsRegister(false)}
-          >
-            {t('auth_login').toUpperCase()}
-          </button>
-          <button 
-            className={`flex-1 py-5 font-black text-xs tracking-widest transition-all ${isRegister ? 'text-green-600 bg-white dark:bg-slate-800 border-b-4 border-green-600' : 'text-gray-400'}`} 
-            onClick={() => setIsRegister(true)}
-          >
-            {t('auth_register').toUpperCase()}
-          </button>
-        </div>
+        
+        {/* Reversion: Simple White Card */}
+        <div className="bg-white dark:bg-slate-800 w-full flex flex-col">
+          <div className="flex border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-900/50">
+            <button 
+              type="button"
+              className={`flex-1 py-5 font-black text-xs tracking-widest transition-all ${!isRegister ? 'text-green-600 bg-white dark:bg-slate-800 border-b-4 border-green-600' : 'text-gray-400'}`} 
+              onClick={() => setIsRegister(false)}
+            >
+              {t('auth_login').toUpperCase()}
+            </button>
+            <button 
+              type="button"
+              className={`flex-1 py-5 font-black text-xs tracking-widest transition-all ${isRegister ? 'text-green-600 bg-white dark:bg-slate-800 border-b-4 border-green-600' : 'text-gray-400'}`} 
+              onClick={() => setIsRegister(true)}
+            >
+              {t('auth_register').toUpperCase()}
+            </button>
+          </div>
 
-        <form onSubmit={handleSubmit} className="p-8 md:p-10">
+          <form onSubmit={handleSubmit} className="p-6 md:p-10">
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-2xl text-xs font-bold mb-6 text-center border border-red-100 dark:border-red-900/30">
               ⚠️ {error}
