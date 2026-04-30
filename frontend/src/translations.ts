@@ -251,7 +251,6 @@ export const translations: Record<string, Record<string, string>> = {
     "crops_ask_expert": "एआई विशेषज्ञ से पूछें",
     "crops_empty_state": "अपने खेत का विवरण दर्ज करें और स्मार्ट फसल सिफारिशों के लिए ऊपर दिए गए बटन पर क्लिक करें।",
     "crops_steps_title": "यह कैसे काम करता है",
-    "crops_steps_title": "यह कैसे काम करता है",
     "crops_step1_title": "डेटा दर्ज करें",
     "crops_step1_desc": "अपने खेत के स्थान के लिए मिट्टी के NPK, pH और मौसम का डेटा प्रदान करें।",
     "crops_step2_title": "एआई विश्लेषण",
