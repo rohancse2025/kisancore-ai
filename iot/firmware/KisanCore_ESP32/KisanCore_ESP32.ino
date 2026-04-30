@@ -1,221 +1,267 @@
-#include <ArduinoJson.h>
-#include <DHT.h>
-#include <HTTPClient.h>
+/**
+ * KisanCore IoT — ESP32 Firmware
+ * 
+ * Hardware:
+ * - ESP32 DevKit V1
+ * - DHT22 (Temperature & Humidity)
+ * - Soil Moisture Sensor (Analog)
+ * - 12V Fan (via Relay)
+ * 
+ * Required Libraries:
+ * - DHT sensor library by Adafruit
+ * - ArduinoJson by Benoit Blanchon (v6.x)
+ */
+
 #include <WiFi.h>
+#include <HTTPClient.h>
+#include <DHT.h>
+#include <ArduinoJson.h>
 
-// ── CONFIG ──────────────────────────────
-#define SERVER_IP "192.168.1.5" // Replace with your backend server IP
-const char *WIFI_SSID = "YourWiFiName";
-const char *WIFI_PASSWORD = "YourWiFiPass";
-const char *PHONE_NUMBER = "+919876543210"; // For SMS Alerts
+// ===== USER CONFIGURATION =====
+const char* WIFI_SSID = "YourWiFiName";
+const char* WIFI_PASSWORD = "YourWiFiPassword";
+const char* SERVER_IP = "192.168.1.10";  // Change to your laptop's IP
+const int SERVER_PORT = 8000;
+const int READ_INTERVAL = 30000;         // 30 seconds
+const int SOIL_DRY_THRESHOLD = 30;       // Below this = irrigation needed
+const int SOIL_WET_THRESHOLD = 60;       // Above this = safety shutoff
+// ==============================
 
-#define DHTPIN 4
-#define DHTTYPE DHT22
+// HARDWARE PINS
+#define DHT_PIN 4
 #define SOIL_PIN 34
 #define RELAY_PIN 26
-#define LED_PIN 2 // onboard LED
+#define LED_PIN 2
+#define DHTTYPE DHT22
 
-DHT dht(DHTPIN, DHTTYPE);
+// GLOBAL OBJECTS & VARIABLES
+DHT dht(DHT_PIN, DHTTYPE);
+unsigned long lastReadTime = 0;
+unsigned long readingCount = 0;
+bool relayState = LOW;
+float lastTemp = 0;
+float lastHum = 0;
+float lastSoil = 0;
 
-unsigned long lastSend = 0;
-const long INTERVAL = 10000; // 10 seconds
+// LED Timing
+unsigned long lastLEDBlink = 0;
+bool ledState = LOW;
 
-// Alert Flags & State
-bool alertSentDry = false;
-bool alertSentWet = false;
-bool relayState = false;
-unsigned long lastBlink = 0;
-bool ledState = false;
-
-// ── SETUP ────────────────────────────────
 void setup() {
   Serial.begin(115200);
-  delay(1000);
-
   pinMode(RELAY_PIN, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, LOW);
-
+  digitalWrite(RELAY_PIN, LOW); // Start with fan OFF
+  
   dht.begin();
-
-  Serial.println("\n=== KisanCore IoT Node ===");
+  
+  Serial.println("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  Serial.println("   KisanCore IoT System Starting   ");
+  Serial.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  
   connectWiFi();
 }
 
-// ── LOOP ─────────────────────────────────
 void loop() {
-  updateStatusLED();
-
+  // 1. Maintain WiFi Connection
   if (WiFi.status() != WL_CONNECTED) {
-    // WiFi reconnection is handled inside status check or by connectWiFi
-    // For now, let's just ensure we don't block the LED blink
+    connectWiFi();
   }
 
-  unsigned long now = millis();
-  if (now - lastSend >= INTERVAL) {
-    lastSend = now;
-    readAndSend();
+  // 2. Non-blocking LED Status logic
+  handleStatusLED();
+
+  // 3. Sensor Reading & API Update Loop
+  if (millis() - lastReadTime >= READ_INTERVAL || lastReadTime == 0) {
+    lastReadTime = millis();
+    readingCount++;
+    
+    performCycle();
   }
 }
 
-// ── LED STATUS CONTROL ───────────────────
-void updateStatusLED() {
-  unsigned long now = millis();
-  int blinkInterval = 1000; // Normal Mode (Slow Blink)
+/**
+ * Main execution cycle: Read -> Post -> Control -> Safety
+ */
+void performCycle() {
+  Serial.println("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  Serial.printf("KisanCore IoT — Sensor Reading #%lu\n", readingCount);
+  Serial.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-  if (WiFi.status() != WL_CONNECTED) {
-    blinkInterval = 200; // WiFi Disconnected (Fast Blink)
-  } else if (relayState) {
-    digitalWrite(LED_PIN, HIGH); // Relay Active (Solid ON)
-    return;
+  // A. Read Sensors
+  readSensors();
+  
+  // B. Post to Backend
+  String relayCommand = postToBackend();
+  
+  // C. Control Relay
+  controlRelay(relayCommand);
+  
+  // D. Local Safety Check
+  safetyCheck();
+
+  Serial.printf("WiFi: Connected (RSSI: %d dBm)\n", WiFi.RSSI());
+  Serial.printf("Temperature: %.1f°C\n", lastTemp);
+  Serial.printf("Humidity: %.1f%%\n", lastHum);
+  Serial.printf("Soil Moisture: %.1f%%\n", lastSoil);
+  Serial.printf("Relay State: %s\n", (relayState == HIGH) ? "ON" : "OFF");
+  Serial.println("Safety: OK");
+  Serial.println("Next reading in 30 seconds...");
+  Serial.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+}
+
+/**
+ * Connects to WiFi with 30s timeout and fast blink status
+ */
+void connectWiFi() {
+  Serial.printf("Connecting to %s...", WIFI_SSID);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  
+  unsigned long startAttempt = millis();
+  
+  while (WiFi.status() != WL_CONNECTED && (millis() - startAttempt < 30000)) {
+    digitalWrite(LED_PIN, HIGH);
+    delay(100);
+    digitalWrite(LED_PIN, LOW);
+    delay(100);
+    Serial.print(".");
   }
-
-  if (now - lastBlink >= blinkInterval) {
-    lastBlink = now;
-    ledState = !ledState;
-    digitalWrite(LED_PIN, ledState);
+  
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\nWiFi Connected!");
+    digitalWrite(LED_PIN, HIGH); // Solid ON when connected
+  } else {
+    Serial.println("\nWiFi Connection Failed. Retrying in 10s...");
+    delay(10000);
   }
 }
 
-// ── READ SENSORS + SEND ──────────────────
-void readAndSend() {
-  float temp = dht.readTemperature();
-  float hum = dht.readHumidity();
-
-  if (isnan(temp) || isnan(hum)) {
-    Serial.println("DHT22 read failed!");
-    return;
+/**
+ * Reads sensors with retry logic for DHT22
+ */
+void readSensors() {
+  // Read DHT22 with 3 retries
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+  int retry = 0;
+  
+  while ((isnan(h) || isnan(t)) && retry < 3) {
+    Serial.println("DHT22 Read Failure! Retrying in 2s...");
+    delay(2000);
+    h = dht.readHumidity();
+    t = dht.readTemperature();
+    retry++;
   }
 
-  // Read soil moisture (analog 0-4095)
+  if (!isnan(h) && !isnan(t)) {
+    lastTemp = t;
+    lastHum = h;
+  }
+
+  // Read Soil Moisture
   int rawSoil = analogRead(SOIL_PIN);
-  float soilMoisture = map(rawSoil, 4095, 0, 0, 100);
-  soilMoisture = constrain(soilMoisture, 0, 100);
-
-  Serial.printf("Temp: %.1f C | Soil: %.1f%%\n", temp, soilMoisture);
-
-  // SMS Alert Logic
-  // 1. Dry Alert (Drop below 25)
-  if (soilMoisture < 25 && !alertSentDry) {
-    sendSMSAlert("irrigation", soilMoisture, temp);
-    alertSentDry = true;
+  if (rawSoil == 4095) {
+    Serial.println("WARNING: Soil sensor disconnected or very dry (4095)");
   }
-  // Reset Dry Alert when moisture goes above 40
-  if (soilMoisture > 40) {
-    alertSentDry = false;
-  }
-
-  // 2. Wet Alert (Above 75)
-  if (soilMoisture > 75 && !alertSentWet) {
-    sendSMSAlert("irrigation", soilMoisture,
-                 temp); // Type 'irrigation' triggers wet/dry message in backend
-    alertSentWet = true;
-  }
-  // Reset Wet Alert when moisture levels stabilize
-  if (soilMoisture < 65) {
-    alertSentWet = false;
-  }
-
-  sendToServer(temp, hum, soilMoisture);
+  
+  // dry (4095) -> 0%, wet (0) -> 100%
+  lastSoil = map(rawSoil, 4095, 0, 0, 100);
+  lastSoil = constrain(lastSoil, 0, 100); // Ensure range 0-100
 }
 
-// ── SEND SENSOR DATA (POST) ────────────────
-void sendToServer(float temp, float hum, float soil) {
+/**
+ * Sends JSON data to backend and receives command
+ */
+String postToBackend() {
+  if (WiFi.status() != WL_CONNECTED) return "KEEP";
+
   HTTPClient http;
-  String url = "http://" + String(SERVER_IP) + ":8000/api/v1/iot/data";
+  String url = "http://" + String(SERVER_IP) + ":" + String(SERVER_PORT) + "/api/v1/iot/data";
+  
   http.begin(url);
   http.addHeader("Content-Type", "application/json");
+  http.setTimeout(10000);
 
-  StaticJsonDocument<256> doc;
-  doc["temperature"] = temp;
-  doc["humidity"] = hum;
-  doc["soil_moisture"] = soil;
+  // Create JSON body
+  StaticJsonDocument<200> doc;
+  doc["temperature"] = lastTemp;
+  doc["humidity"] = lastHum;
+  doc["soil_moisture"] = lastSoil;
+  
+  String requestBody;
+  serializeJson(doc, requestBody);
 
-  String payload;
-  serializeJson(doc, payload);
+  int httpCode = http.POST(requestBody);
+  String result = "KEEP";
 
-  int code = http.POST(payload);
-
-  if (code > 0) {
-    String response = http.getString();
-    Serial.printf("Server Response Code: %d\n", code);
-
-    // Parse Relay Command from JSON
-    StaticJsonDocument<512> responseDoc;
-    DeserializationError error = deserializeJson(responseDoc, response);
-
-    if (!error) {
-      const char *command = responseDoc["relay_command"];
-      if (command) {
-        if (String(command) == "ON") {
-          digitalWrite(RELAY_PIN, HIGH);
-          relayState = true;
-          Serial.println("Action: RELAY ON per server command");
-        } else if (String(command) == "OFF") {
-          digitalWrite(RELAY_PIN, LOW);
-          relayState = false;
-          Serial.println("Action: RELAY OFF per server command");
-        }
+  if (httpCode > 0) {
+    if (httpCode == HTTP_CODE_OK || httpCode == 201) {
+      String response = http.getString();
+      StaticJsonDocument<200> resDoc;
+      DeserializationError error = deserializeJson(resDoc, response);
+      
+      if (!error && resDoc.containsKey("relay_command")) {
+        result = resDoc["relay_command"].as<String>();
+        Serial.printf("Backend: relay_command = %s\n", result.c_str());
       }
     }
   } else {
-    Serial.printf("HTTP Error: %d\n", code);
+    Serial.printf("Backend Error: %s\n", http.errorToString(httpCode).c_str());
   }
 
   http.end();
+  return result;
 }
 
-// ── SEND SMS ALERT (GET with JSON body) ──────
-void sendSMSAlert(String type, float soilMoisture, float temp) {
-  HTTPClient http;
-  String url = "http://" + String(SERVER_IP) + ":8000/api/v1/sms/send";
-
-  Serial.println("Sending SMS Alert via GET...");
-  http.begin(url);
-  http.addHeader("Content-Type", "application/json");
-
-  // Format payload according to backend SMSRequest model
-  StaticJsonDocument<256> doc;
-  doc["to_phone"] = PHONE_NUMBER;
-  doc["message_type"] = type; // e.g., "irrigation"
-
-  JsonObject data = doc.createNestedObject("data");
-  data["soil_moisture"] = soilMoisture;
-  data["temperature"] = temp;
-
-  String payload;
-  serializeJson(doc, payload);
-
-  // Calls GET with JSON body as specifically requested
-  int code = http.sendRequest("GET", payload); 
+/**
+ * Controls relay based on backend command
+ */
+void controlRelay(String command) {
+  if (command == "ON") {
+    relayState = HIGH;
+    Serial.println("Relay: ON");
+  } else if (command == "OFF") {
+    relayState = LOW;
+    Serial.println("Relay: OFF");
+  }
   
-  if (code > 0) {
-    Serial.printf("SMS API Response: %d\n", code);
-  } else {
-    Serial.printf("SMS API Error: %d\n", code);
-  }
-  http.end();
+  digitalWrite(RELAY_PIN, relayState);
 }
 
-// ── WIFI CONNECT ──────────────────────────
-void connectWiFi() {
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  Serial.print("Connecting to WiFi");
-
-  int tries = 0;
-  while (WiFi.status() != WL_CONNECTED && tries < 20) {
-    delay(500);
-    Serial.print(".");
-    tries++;
-    // Blink LED fast while connecting
-    digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+/**
+ * Independent local safety check
+ */
+void safetyCheck() {
+  if (lastSoil >= SOIL_WET_THRESHOLD && relayState == HIGH) {
+    relayState = LOW;
+    digitalWrite(RELAY_PIN, LOW);
+    Serial.println("SAFETY: Auto-shutoff at 60% moisture");
+    
+    // 5 Rapid blinks for safety event
+    for (int i = 0; i < 5; i++) {
+      digitalWrite(LED_PIN, HIGH);
+      delay(50);
+      digitalWrite(LED_PIN, LOW);
+      delay(50);
+    }
   }
+}
 
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\nWiFi Connected!");
-    Serial.print("IP: ");
-    Serial.println(WiFi.localIP());
+/**
+ * Manages the status LED patterns without blocking
+ */
+void handleStatusLED() {
+  if (WiFi.status() != WL_CONNECTED) return; // Handled in connectWiFi()
+
+  // Slow blink (1s) if relay is active
+  if (relayState == HIGH) {
+    if (millis() - lastLEDBlink >= 1000) {
+      ledState = !ledState;
+      digitalWrite(LED_PIN, ledState);
+      lastLEDBlink = millis();
+    }
   } else {
-    Serial.println("\nWiFi Failed!");
+    // Solid ON if everything is normal and relay is OFF
+    digitalWrite(LED_PIN, HIGH);
   }
 }
