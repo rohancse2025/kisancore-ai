@@ -26,7 +26,7 @@ services:
           name: kisancore-db
           property: connectionString
       - key: CORS_ORIGINS
-        value: https://kisancore-ai.vercel.app,http://localhost:5173
+        value: https://kisancore-ai.vercel.app,http://localhost:5173,*
 
 databases:
   - name: kisancore-db
