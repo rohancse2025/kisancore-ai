@@ -633,7 +633,7 @@ export default function HomePage({ lang }: { lang: string }) {
 
 
       {/* 1. HERO SECTION */}
-      <section className="relative min-h-[500px] -mx-8 md:-mx-12 mb-12 flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[450px] mb-12 flex items-center justify-center overflow-hidden rounded-[2rem] shadow-2xl mx-1">
         <div className="absolute inset-0">
           <img 
             src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=800&q=80" 
