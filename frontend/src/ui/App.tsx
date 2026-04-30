@@ -384,7 +384,7 @@ export default function App() {
       <main className="transition-all duration-300">
         <div 
           key={location.pathname}
-          className={`${location.pathname === '/login' ? '' : 'max-w-[1200px] mx-auto px-3 py-4 md:px-12 md:py-8'} transition-all animate-fade-in`}
+          className={`${location.pathname === '/login' ? '' : 'max-w-[1200px] mx-auto px-0 md:px-12 py-4 md:py-8'} transition-all animate-fade-in`}
         >
           <Routes>
             <Route path="/login" element={<LoginPage lang={lang} onLogin={(user: any) => setFarmer(user)} />} />

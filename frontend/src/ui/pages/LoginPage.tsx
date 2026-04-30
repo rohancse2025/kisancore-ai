@@ -88,8 +88,8 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center py-4 md:py-12 px-4 md:px-6 animate-fade-in bg-gray-50 dark:bg-slate-950">
-      <div className="max-w-md w-full flex flex-col shadow-2xl rounded-[2.5rem] overflow-hidden border border-gray-100 dark:border-slate-800">
+    <div className="min-h-screen flex flex-col items-center md:justify-center py-0 md:py-12 px-0 md:px-6 animate-fade-in bg-white dark:bg-slate-950">
+      <div className="max-w-md w-full flex flex-col shadow-none md:shadow-2xl rounded-none md:rounded-[2.5rem] overflow-hidden border-b border-gray-100 dark:border-slate-800">
         {/* Reverted Header: Simple Green Banner */}
         <div className="bg-green-600 w-full p-8 md:p-10 text-white text-center shadow-lg relative overflow-hidden">
           {/* Decorative background shape */}
@@ -103,7 +103,7 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
         </div>
         
         {/* Reversion: Simple White Card */}
-        <div className="bg-white dark:bg-slate-800 w-full flex flex-col">
+        <div className="bg-white dark:bg-slate-800 w-full flex flex-col flex-1">
           <div className="flex border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-900/50">
             <button 
               type="button"
@@ -121,7 +121,7 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 md:p-10">
+          <form onSubmit={handleSubmit} className="p-6 md:p-10 pb-20">
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-2xl text-xs font-bold mb-6 text-center border border-red-100 dark:border-red-900/30">
               ⚠️ {error}
