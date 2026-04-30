@@ -242,3 +242,5 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
   </div>
   );
 }
+// v1.2.1 - Deployment Fix
+

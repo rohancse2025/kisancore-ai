@@ -724,7 +724,7 @@ export default function HomePage({ lang }: { lang: string }) {
 
 
       {/* 2. WEATHER CARD */}
-      <section className="bg-blue-50 dark:bg-blue-900/10 rounded-2xl p-8 mb-10 shadow-sm border border-blue-200 dark:border-blue-800 animate-fade-in-up hover-lift">
+      <section className="bg-blue-50 dark:bg-blue-900/10 rounded-2xl p-5 md:p-8 mb-10 shadow-sm border border-blue-200 dark:border-blue-800 animate-fade-in-up hover-lift">
         <h2 className="text-xl text-gray-900 dark:text-white m-0 mb-6 font-bold flex items-center gap-2 uppercase tracking-widest text-xs opacity-50">🌤️ {t('home_weather')}</h2>
         
         <div className="flex gap-8 items-center flex-wrap mb-6">
@@ -819,7 +819,7 @@ export default function HomePage({ lang }: { lang: string }) {
         </div>
         <div className={`grid gap-6 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
           {/* TEMPERATURE */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#ef4444] flex flex-col justify-between hover-lift">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 md:p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#ef4444] flex flex-col justify-between hover-lift">
             <div className="w-14 h-14 bg-red-50 dark:bg-red-900/20 rounded-full flex justify-center items-center font-bold text-xl">
               🌡️
             </div>
@@ -841,7 +841,7 @@ export default function HomePage({ lang }: { lang: string }) {
           </div>
 
           {/* HUMIDITY */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#3b82f6] flex flex-col justify-between hover-lift">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 md:p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#3b82f6] flex flex-col justify-between hover-lift">
             <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/20 rounded-full flex justify-center items-center font-bold text-xl">
               💧
             </div>
@@ -861,7 +861,7 @@ export default function HomePage({ lang }: { lang: string }) {
           </div>
 
           {/* SOIL MOISTURE */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#16a34a] flex flex-col justify-between hover-lift">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 md:p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#16a34a] flex flex-col justify-between hover-lift">
             <div className="w-14 h-14 bg-green-50 dark:bg-green-900/20 rounded-full flex justify-center items-center font-bold text-xl">
               🌱
             </div>
@@ -881,7 +881,7 @@ export default function HomePage({ lang }: { lang: string }) {
           </div>
 
           {/* IRRIGATION */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#f97316] flex flex-col justify-between hover-lift">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 md:p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#f97316] flex flex-col justify-between hover-lift">
             <div className="w-14 h-14 bg-orange-50 dark:bg-orange-900/20 rounded-full flex justify-center items-center font-bold text-xl">
               🚰
             </div>
@@ -915,7 +915,7 @@ export default function HomePage({ lang }: { lang: string }) {
                 setCropModalTab('list');
               } else navigate('/login');
             }}
-            className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-700 hover-lift cursor-pointer transition-all active:scale-95 flex flex-col justify-between min-h-[160px]"
+            className="bg-white dark:bg-slate-800 rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100 dark:border-slate-700 hover-lift cursor-pointer transition-all active:scale-95 flex flex-col justify-between min-h-[160px]"
           >
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -949,7 +949,7 @@ export default function HomePage({ lang }: { lang: string }) {
           {/* CARD 2: MY FARM */}
           <div 
             onClick={() => isLoggedIn ? navigate('/profile') : navigate('/login')}
-            className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-700 hover-lift cursor-pointer transition-all active:scale-95 flex flex-col justify-between min-h-[160px]"
+            className="bg-white dark:bg-slate-800 rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100 dark:border-slate-700 hover-lift cursor-pointer transition-all active:scale-95 flex flex-col justify-between min-h-[160px]"
           >
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -981,7 +981,7 @@ export default function HomePage({ lang }: { lang: string }) {
           {/* CARD 3: FIELD HEALTH MODEL */}
           <div 
             onClick={() => !isLoggedIn && navigate('/login')}
-            className={`bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-700 transition-all flex flex-col justify-between min-h-[160px] relative overflow-hidden ${!isLoggedIn ? 'opacity-50 grayscale contrast-125' : 'hover-lift cursor-pointer active:scale-95'}`}
+            className={`bg-white dark:bg-slate-800 rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100 dark:border-slate-700 transition-all flex flex-col justify-between min-h-[160px] relative overflow-hidden ${!isLoggedIn ? 'opacity-50 grayscale contrast-125' : 'hover-lift cursor-pointer active:scale-95'}`}
           >
              {!isLoggedIn && (
                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/5 backdrop-blur-[2px]">
