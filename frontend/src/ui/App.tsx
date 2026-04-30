@@ -191,6 +191,7 @@ export default function App() {
           <span className="text-[#16a34a] dark:text-green-500 font-black text-2xl tracking-tight">
             KisanCore AI
           </span>
+          <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-black ml-1">V2.1</span>
         </Link>
 
         {/* RIGHT: LINKS + UTILITIES */}
