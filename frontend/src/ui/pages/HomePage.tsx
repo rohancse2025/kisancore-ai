@@ -1037,10 +1037,10 @@ export default function HomePage({ lang }: { lang: string }) {
              </div>
           </div>
 
-          {/* CARD 4: TOP PROFITROI WINNER */}
+          {/* CARD 4: TOTAL FARM PROFIT / ROI WINNER */}
           <div 
             onClick={() => !isLoggedIn && navigate('/login')}
-            className={`bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-700 transition-all flex flex-col justify-between min-h-[160px] relative overflow-hidden ${!isLoggedIn ? 'opacity-50 grayscale contrast-125' : 'hover-lift cursor-pointer active:scale-95'}`}
+            className={`bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-700 transition-all flex flex-col justify-between min-h-[180px] relative overflow-hidden ${!isLoggedIn ? 'opacity-50 grayscale contrast-125' : 'hover-lift cursor-pointer active:scale-95'}`}
           >
              {!isLoggedIn && (
                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/5 backdrop-blur-[2px]">
@@ -1049,39 +1049,81 @@ export default function HomePage({ lang }: { lang: string }) {
              )}
              <div className="flex justify-between items-start relative z-10">
                 <div className="w-10 h-10 bg-amber-50 dark:bg-amber-900/20 rounded-xl flex items-center justify-center text-xl shadow-sm border border-amber-100/50">💎</div>
-                <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Top Profit Field</span>
+                <div className="text-right">
+                  <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest block">Total Farm Profit</span>
+                  <span className="text-[9px] font-bold text-gray-400 block mt-0.5">Projected Net Income</span>
+                </div>
              </div>
              
              {(() => {
-                // Find HIGHEST profit earner across all crops
-                const earners = activeCropsList.map(c => {
-                  const basePrice = (({
-                    'Rice': 2200, 'Wheat': 2300, 'Groundnut': 6500, 'Cotton': 7200, 'Tomato': 1800
-                  }) as any)[c.crop_name] || 2500;
-                  const estimatedRevenue = (c.area || farmer?.farm_size || 1) * basePrice * 0.9;
-                  return { ...c, revenue: Math.round(estimatedRevenue / 500) * 500 };
-                }).sort((a, b) => b.revenue - a.revenue);
+                const CROP_FACTORS: Record<string, { yield: number, cost: number, price: number }> = {
+                  'Rice': { yield: 22, cost: 28000, price: 2183 },
+                  'Wheat': { yield: 20, cost: 22000, price: 2275 },
+                  'Potato': { yield: 90, cost: 45000, price: 1500 },
+                  'Tomato': { yield: 100, cost: 55000, price: 1800 },
+                  'Onion': { yield: 80, cost: 40000, price: 1600 },
+                  'Cotton': { yield: 10, cost: 35000, price: 7000 },
+                  'Maize': { yield: 25, cost: 20000, price: 2000 },
+                  'Groundnut': { yield: 12, cost: 30000, price: 6000 },
+                  'Soybean': { yield: 10, cost: 22000, price: 4500 },
+                  'Mustard': { yield: 8, cost: 18000, price: 5400 }
+                };
 
-                const winner = earners[0] || { crop_name: 'None', revenue: 0 };
+                // Calculate profit for ALL crops
+                const earners = activeCropsList.map(c => {
+                  const factor = CROP_FACTORS[c.crop_name] || { yield: 15, cost: 20000, price: 2500 };
+                  const area = c.area || farmer?.farm_size || 1;
+                  const marketPriceData = trendingCrops.find(t => t.name === c.crop_name);
+                  const priceToUse = marketPriceData?.price || factor.price;
+
+                  const totalRevenue = area * factor.yield * priceToUse;
+                  const totalCost = area * factor.cost;
+                  const netProfit = totalRevenue - totalCost;
+                  const roi = (netProfit / totalCost) * 100;
+
+                  return { ...c, profit: netProfit, roi: Math.round(roi), area };
+                });
+
+                const totalFarmProfit = earners.reduce((acc, curr) => acc + curr.profit, 0);
+                const avgRoi = earners.length > 0 ? earners.reduce((acc, curr) => acc + curr.roi, 0) / earners.length : 0;
+                
+                // Sort to find the winner for the sub-text
+                const sorted = [...earners].sort((a, b) => b.profit - a.profit);
+                const winner = sorted[0] || { crop_name: '---', profit: 0, roi: 0, area: 0 };
 
                 return (
                   <div className="mt-4 relative z-10">
-                    <div className="flex items-center gap-1">
-                      <h3 className="m-0 text-3xl font-black text-gray-900 dark:text-white tracking-tighter leading-none">
-                        ₹{winner.revenue.toLocaleString('en-IN')}
+                    <div className="flex items-end gap-2">
+                      <h3 className="m-0 text-[32px] font-black text-gray-900 dark:text-white tracking-tighter leading-none">
+                        ₹{totalFarmProfit > 0 ? totalFarmProfit.toLocaleString('en-IN') : '---'}
                       </h3>
-                      <span className="text-emerald-500 text-lg">↑</span>
+                      <div className="flex flex-col">
+                        <span className="text-emerald-500 text-xs font-black flex items-center">
+                          ↑ {Math.round(avgRoi)}%
+                        </span>
+                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Avg. ROI</span>
+                      </div>
                     </div>
-                    <p className="m-0 text-[10px] text-gray-400 font-black uppercase tracking-widest mt-2">{winner.crop_name} Harvest Goal</p>
+                    <div className="flex items-center gap-2 mt-2">
+                       <span className="text-lg">{winner.crop_name !== '---' ? winner.emoji : '🌱'}</span>
+                       <p className="m-0 text-[11px] text-gray-700 dark:text-gray-300 font-black uppercase tracking-widest">
+                         Best: {winner.crop_name} <span className="text-gray-400 font-bold lowercase">({earners.length} crops)</span>
+                       </p>
+                    </div>
                   </div>
                 );
              })()}
 
-             <div className="mt-4 pt-3 border-t border-gray-50 dark:border-slate-800 relative z-10 flex justify-between items-center">
-                <span className="text-[9px] font-black text-amber-700 dark:text-amber-500 uppercase tracking-widest">Market Upswing +12%</span>
-                <span className="text-sm bg-amber-100 text-amber-600 px-2 py-0.5 rounded font-black">ROI</span>
+             <div className="mt-4 pt-3 border-t border-gray-100 dark:border-slate-700 relative z-10 flex justify-between items-center">
+                <div className="flex flex-col">
+                   <span className="text-[9px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-[0.15em]">Market Analysis</span>
+                   <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Across all fields</span>
+                </div>
+                <div className="bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 px-2 py-1 rounded-lg font-black text-[10px] shadow-sm flex items-center gap-1">
+                   ✨ PROFITABLE
+                </div>
              </div>
-             <div className="absolute -bottom-6 -right-6 text-6xl opacity-5 rotate-12 grayscale">💎</div>
+             <div className="absolute -bottom-6 -right-6 text-7xl opacity-5 rotate-12 grayscale">💎</div>
           </div>
         </div>
       </section>
@@ -1241,10 +1283,30 @@ export default function HomePage({ lang }: { lang: string }) {
               );
             })}
             
-            {/* 6. DYNAMIC FIELD MONITOR: NEXT HARVEST COUNTDOWN */}
-            {activeCropsList && activeCropsList.length > 0 ? (() => {
-              // Get nearest harvest crop
-              const sortedCrops = [...activeCropsList].map(c => {
+            {/* 6. DYNAMIC FIELD MONITOR: MULTI-FIELD HARVEST TIMELINE */}
+            {(() => {
+              const [isTimelineOpen, setIsTimelineOpen] = useState(false);
+              
+              if (!activeCropsList || activeCropsList.length === 0) return (
+                <div className="mt-2 bg-slate-50 dark:bg-slate-900/50 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl p-8 flex flex-col items-center gap-4 text-center">
+                   <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex items-center justify-center text-3xl">{!isLoggedIn ? '🔐' : '🏜️'}</div>
+                   <div>
+                      <p className="m-0 text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">{!isLoggedIn ? 'Monitoring Locked' : 'No Active Fields Found'}</p>
+                      <p className="m-0 text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
+                        {!isLoggedIn ? 'Login to begin monitoring your farm health' : 'Add your crops to start monitoring'}
+                      </p>
+                   </div>
+                   <button 
+                     onClick={() => isLoggedIn ? setIsAddModalOpen(true) : navigate('/login')}
+                     className="bg-[#16a34a] text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-green-700 transition-all active:scale-95 shadow-lg shadow-green-500/20"
+                   >
+                     {!isLoggedIn ? '🔑 Login to Monitor' : '🚀 Start First Planting'}
+                   </button>
+                </div>
+              );
+
+              // Calculate harvest stats for all crops
+              const allFields = [...activeCropsList].map(c => {
                 const planted = new Date(c.planted_date);
                 const durationMap: Record<string, number> = {
                   'Rice': 120, 'Wheat': 130, 'Maize': 90, 'Tomato': 75, 'Potato': 90,
@@ -1254,110 +1316,144 @@ export default function HomePage({ lang }: { lang: string }) {
                 };
                 let duration = durationMap[c.crop_name] || 120;
                 
-                // AI Adjustment: Temperature acceleration
+                // AI Adjustment
                 const currentTemp = weatherData?.temperature || 25;
-                if (currentTemp > 32) duration *= 0.95; // 5% faster growth in heat
+                if (currentTemp > 32) duration *= 0.95; 
 
                 const harvest = new Date(planted.getTime() + duration * 24 * 60 * 60 * 1000);
                 const diff = Math.ceil((harvest.getTime() - new Date().getTime()) / (24 * 60 * 60 * 1000));
-                
-                // Better progress feedback for day 1
                 const elapsed = duration - diff;
                 const progress = Math.min(99, Math.max(1, Math.round((elapsed / duration) * 100)));
                 
                 return { ...c, harvestDate: harvest, daysLeft: diff, progress, duration };
-              }).sort((a, b) => a.daysLeft - b.daysLeft).filter(c => c.daysLeft > -10);
+              }).sort((a, b) => a.daysLeft - b.daysLeft).filter(c => c.daysLeft > -15);
 
-              if (sortedCrops.length === 0) return null;
-              const nearest = sortedCrops[0];
+              if (allFields.length === 0) return null;
+              const nearest = allFields[0];
 
               return (
-                <div className="mt-2 bg-green-50 dark:bg-green-900/10 border-2 border-dashed border-green-200 dark:border-green-800 rounded-3xl p-6 flex flex-col gap-4 hover:bg-green-100/50 transition-all cursor-pointer group relative overflow-hidden">
-                  <div className="flex justify-between items-start relative z-10">
+                <div className="mt-2 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-2 border-green-100 dark:border-green-900/30 rounded-[2.5rem] p-8 shadow-sm relative overflow-hidden group">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 relative z-10">
                     <div>
-                      <p className="m-0 text-[10px] font-black text-green-600 uppercase tracking-widest mb-1">Field Monitor: {nearest.crop_name}</p>
-                      <p className="m-0 text-xl font-black text-gray-900 dark:text-white">Next Big Harvest</p>
-                      <p className="m-0 text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
-                        🗓️ Expected: {nearest.harvestDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })}
-                      </p>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="bg-green-600 text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest shadow-lg shadow-green-500/20">Active Field Monitor</span>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{allFields.length} Fields Tracked</span>
+                      </div>
+                      <h2 className="m-0 text-3xl font-black text-gray-900 dark:text-white tracking-tighter leading-none">
+                        Next Harvest: <span className="text-green-600">{nearest.crop_name}</span>
+                      </h2>
                     </div>
-                    <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex items-center justify-center text-2xl">
-                      🚜
+                    <div className="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-xl flex items-center gap-4 border border-gray-100 dark:border-slate-700">
+                      <div className="text-right">
+                        <p className="m-0 text-[10px] font-black text-gray-400 uppercase tracking-widest">Expected Date</p>
+                        <p className="m-0 text-sm font-black text-gray-900 dark:text-white">
+                          {nearest.harvestDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-50 dark:bg-green-900/40 rounded-xl flex items-center justify-center text-2xl shadow-inner">🚜</div>
                     </div>
                   </div>
 
-                  <div className="relative z-10">
-                    <div className="flex justify-between items-end mb-2">
+                  {/* Main Highlight Field */}
+                  <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md rounded-3xl p-6 border border-white dark:border-white/5 shadow-xl relative z-10 mb-2 group/main transition-all hover:bg-white dark:hover:bg-slate-900">
+                    <div className="flex justify-between items-end mb-4">
                        <div className="flex flex-col">
-                          <span className="text-3xl font-black text-gray-800 dark:text-gray-100 tracking-tighter">
-                            {nearest.daysLeft <= 0 ? 'READY' : `${nearest.daysLeft} Days`}
+                          <span className="text-5xl font-black text-gray-900 dark:text-white tracking-tighter leading-none mb-1">
+                            {nearest.daysLeft <= 0 ? 'READY' : `${nearest.daysLeft}`}
+                            {nearest.daysLeft > 0 && <span className="text-lg ml-1 opacity-40">Days</span>}
                           </span>
-                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                            {nearest.daysLeft <= 0 ? 'Harvest window open' : 'Until Optimal Cutting'}
+                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                            {nearest.daysLeft <= 0 ? 'Harvest window open now' : 'Time until optimal cutting'}
                           </span>
                        </div>
                        <div className="text-right">
-                          <span className="text-sm font-black text-[#16a34a]">{nearest.progress}% {nearest.progress < 15 ? 'Germinating' : 'Mature'}</span>
+                          <div className="flex items-center gap-2 justify-end mb-1">
+                            <span className="text-xl">{nearest.emoji}</span>
+                            <span className="text-lg font-black text-green-600">{nearest.progress}%</span>
+                          </div>
+                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Growth Maturity</span>
                        </div>
                     </div>
                     
-                    <div className="w-full h-3 bg-gray-200 dark:bg-slate-900 rounded-full overflow-hidden">
+                    <div className="relative h-4 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner p-1">
                        <div 
-                         className="h-full bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)] transition-all duration-1000" 
+                         className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full shadow-[0_0_12px_rgba(34,197,94,0.6)] transition-all duration-1500 ease-out relative" 
                          style={{ width: `${nearest.progress}%` }}
-                       ></div>
+                       >
+                         <div className="absolute top-0 right-0 w-4 h-full bg-white/20 animate-pulse" />
+                       </div>
                     </div>
                   </div>
 
-                  {/* Other Upcoming Fields (If multiple) */}
-                  {sortedCrops.length > 1 && (
-                    <div className="pt-4 border-t border-green-200/50 relative z-10 flex flex-col gap-2">
-                       <p className="m-0 text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center justify-between">
-                         <span>Other Upcoming Fields</span>
-                         <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{sortedCrops.length - 1} More</span>
-                       </p>
-                       <div className="flex gap-2 overflow-x-auto pb-1 invisible-scrollbar">
-                         {sortedCrops.slice(1, 4).map((crop, idx) => (
-                           <div key={idx} className="bg-white dark:bg-slate-800/80 px-4 py-2 rounded-2xl min-w-[140px] border border-gray-100 dark:border-slate-700 shadow-sm flex items-center gap-3">
-                              <span className="text-lg">{ { 'Rice': '🌾', 'Wheat': '🌾', 'Maize': '🌽', 'Tomato': '🍅' }[crop.name] || '🌱' }</span>
-                              <div className="flex flex-col">
-                                 <span className="text-[10px] font-black text-gray-900 dark:text-white truncate max-w-[80px]">{crop.name}</span>
-                                 <span className="text-[9px] font-bold text-gray-400">{crop.daysLeft} Days</span>
-                              </div>
-                           </div>
-                         ))}
-                         <button 
-                            onClick={() => setIsAddModalOpen(true)}
-                            className="bg-gray-50 dark:bg-slate-900 border-2 border-dashed border-gray-200 dark:border-slate-800 px-4 py-2 rounded-2xl min-w-[60px] flex items-center justify-center text-gray-400 hover:text-green-600 transition-colors"
-                         >
-                            +
-                         </button>
-                       </div>
+                  {/* TOGGLE VIEW ALL FIELDS */}
+                  {allFields.length > 1 && (
+                    <div className="flex justify-center mt-4 relative z-10">
+                      <button 
+                        onClick={() => setIsTimelineOpen(!isTimelineOpen)}
+                        className="bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white dark:border-white/10 transition-all flex items-center gap-3 shadow-sm group/btn"
+                      >
+                        {isTimelineOpen ? '⬆️ Hide Other Fields' : `⬇️ View ${allFields.length - 1} More Upcoming Fields`}
+                        {!isTimelineOpen && (
+                          <div className="flex -space-x-2">
+                            {allFields.slice(1, 4).map((f, i) => (
+                              <div key={i} className="w-5 h-5 rounded-full bg-white dark:bg-slate-700 border-2 border-green-50 flex items-center justify-center text-[10px] shadow-sm">{f.emoji}</div>
+                            ))}
+                          </div>
+                        )}
+                      </button>
                     </div>
                   )}
 
-                  <div className="absolute -bottom-4 -right-4 text-7xl opacity-[0.05] grayscale rotate-12 group-hover:scale-110 transition-transform">
-                    { { 'Rice': '🌾', 'Wheat': '🌾', 'Maize': '🌽', 'Tomato': '🍅' }[nearest.crop_name] || '🌱' }
+                  {/* OTHER FIELDS TIMELINE (COLLAPSIBLE) */}
+                  {allFields.length > 1 && (
+                    <div className={`relative z-10 transition-all duration-500 ease-in-out overflow-hidden ${isTimelineOpen ? 'max-h-[500px] mt-8 opacity-100' : 'max-h-0 opacity-0'}`}>
+                      <div className="flex items-center justify-between mb-4 px-2">
+                        <h4 className="m-0 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Full Crop Timeline</h4>
+                        <span className="bg-white/50 dark:bg-black/20 text-[9px] font-black px-2 py-0.5 rounded-full border border-white/50 dark:border-white/5">
+                          {allFields.length - 1} Upcoming
+                        </span>
+                      </div>
+                      
+                      <div className="flex gap-4 overflow-x-auto pb-4 invisible-scrollbar snap-x">
+                        {allFields.slice(1).map((crop, idx) => (
+                          <div 
+                            key={idx} 
+                            className="snap-start bg-white dark:bg-slate-800 px-6 py-4 rounded-[2rem] min-w-[200px] border border-gray-100 dark:border-slate-700 shadow-sm flex items-center gap-4 hover:shadow-xl transition-all cursor-pointer group/item"
+                          >
+                            <div className="w-12 h-12 bg-gray-50 dark:bg-slate-700 rounded-2xl flex items-center justify-center text-2xl shadow-sm group-hover/item:scale-110 transition-transform">
+                              {crop.emoji}
+                            </div>
+                            <div className="flex flex-col flex-1">
+                               <div className="flex justify-between items-start">
+                                 <span className="text-xs font-black text-gray-900 dark:text-white uppercase truncate max-w-[80px]">{crop.crop_name}</span>
+                                 <span className="text-[10px] font-black text-green-600">{crop.progress}%</span>
+                               </div>
+                               <div className="flex justify-between items-center mt-1">
+                                 <span className="text-[10px] font-bold text-gray-400">{crop.daysLeft} Days left</span>
+                                 <div className="w-12 h-1 bg-gray-200 dark:bg-slate-900 rounded-full overflow-hidden">
+                                    <div className="h-full bg-green-500 rounded-full" style={{ width: `${crop.progress}%` }}></div>
+                                 </div>
+                               </div>
+                            </div>
+                          </div>
+                        ))}
+                        <button 
+                          onClick={() => setIsAddModalOpen(true)}
+                          className="snap-start bg-white/20 dark:bg-black/10 border-2 border-dashed border-gray-300 dark:border-slate-700 w-16 min-w-[64px] rounded-[2rem] flex items-center justify-center text-gray-400 hover:text-green-600 hover:border-green-600 transition-all active:scale-90"
+                        >
+                          <span className="text-2xl">+</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Decorative Background Icon */}
+                  <div className="absolute -bottom-10 -right-10 text-[180px] opacity-[0.03] grayscale -rotate-12 pointer-events-none group-hover:scale-110 group-hover:rotate-0 transition-all duration-1000">
+                    {nearest.emoji}
                   </div>
                 </div>
               );
-            })() : (
-              <div className="mt-2 bg-slate-50 dark:bg-slate-900/50 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl p-8 flex flex-col items-center gap-4 text-center">
-                 <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex items-center justify-center text-3xl">{!isLoggedIn ? '🔐' : '🏜️'}</div>
-                 <div>
-                    <p className="m-0 text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">{!isLoggedIn ? 'Monitoring Locked' : 'No Active Fields Found'}</p>
-                    <p className="m-0 text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
-                      {!isLoggedIn ? 'Login to begin monitoring your farm health' : 'Add your crops to start monitoring'}
-                    </p>
-                 </div>
-                 <button 
-                   onClick={() => isLoggedIn ? setIsAddModalOpen(true) : navigate('/login')}
-                   className="bg-[#16a34a] text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-green-700 transition-all active:scale-95 shadow-lg shadow-green-500/20"
-                 >
-                   {!isLoggedIn ? '🔑 Login to Monitor' : '🚀 Start First Planting'}
-                 </button>
-              </div>
-            )}
+            })()}
           </div>
         </section>
       </div>
