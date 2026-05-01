@@ -85,10 +85,10 @@ export default function App() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -384,7 +384,7 @@ export default function App() {
       <main className="transition-all duration-300">
         <div 
           key={location.pathname}
-          className={`${location.pathname === '/login' ? '' : 'max-w-[1200px] mx-auto px-4 md:px-12 py-4 md:py-8'} transition-all animate-fade-in`}
+          className={`${(location.pathname === '/login' || location.pathname === '/chat') ? '' : 'max-w-[1200px] mx-auto px-4 md:px-12 py-4 md:py-8'} transition-all animate-fade-in`}
         >
           <Routes>
             <Route path="/login" element={<LoginPage lang={lang} onLogin={(user: any) => setFarmer(user)} />} />

@@ -132,7 +132,15 @@ export default function HomePage({ lang }: { lang: string }) {
   const [recommendedCrop, setRecommendedCrop] = useState<any>(null);
   const [isRecLoading, setIsRecLoading] = useState(false);
   // Modal State for Quick Add Crop
-  const [tipOffset, setTipOffset] = useState(0); const isMobile = window.innerWidth < 768; const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [tipOffset, setTipOffset] = useState(0); 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   const [addingCropName, setAddingCropName] = useState('Rice');
   const [addingDate, setAddingDate] = useState(new Date().toISOString().split('T')[0]);
 
@@ -634,7 +642,7 @@ export default function HomePage({ lang }: { lang: string }) {
 
 
       {/* 1. HERO SECTION */}
-      <section className="relative min-h-[450px] mb-12 flex items-center justify-center overflow-hidden rounded-[2rem] shadow-2xl mx-1">
+      <section className="relative min-h-[300px] sm:min-h-[450px] mb-8 sm:mb-12 flex items-center justify-center overflow-hidden rounded-2xl sm:rounded-[2rem] shadow-2xl mx-1">
         <div className="absolute inset-0">
           <img 
             src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=800&q=80" 
@@ -644,7 +652,7 @@ export default function HomePage({ lang }: { lang: string }) {
           <div className="absolute inset-0 bg-green-900/40" />
         </div>
 
-        <div className="relative z-10 px-6 py-12 flex flex-col items-center text-center max-w-4xl">
+        <div className="relative z-10 px-4 py-8 sm:px-6 sm:py-12 flex flex-col items-center text-center max-w-4xl">
           {!isLoggedIn ? (
             <>
               <div className="inline-block bg-[#16a34a] text-white text-sm font-bold px-4 py-1 rounded-full mb-6 whitespace-nowrap shadow-lg animate-fade-in-up [animation-delay:100ms]">
@@ -738,13 +746,13 @@ export default function HomePage({ lang }: { lang: string }) {
                 </>
               ) : (
                 <>
-                  <div className="flex items-center gap-4">
-                    <span className="text-5xl sm:text-6xl font-black text-blue-900 dark:text-blue-300 leading-none tabular-nums">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <span className="text-4xl sm:text-6xl font-black text-blue-900 dark:text-blue-300 leading-none tabular-nums">
                       {weatherData?.temperature !== undefined ? `${Math.round(weatherData.temperature * 10) / 10}°C` : "N/A"}
                     </span>
-                    <span className="text-5xl">{getWeatherEmoji(weatherData?.condition || "", weatherData?.temperature || 25)}</span>
+                    <span className="text-4xl sm:text-5xl">{getWeatherEmoji(weatherData?.condition || "", weatherData?.temperature || 25)}</span>
                   </div>
-                  <p className="m-0 mt-1 text-blue-500 dark:text-blue-400 font-bold text-lg sm:text-xl break-words leading-tight">
+                  <p className="m-0 mt-1 text-blue-500 dark:text-blue-400 font-bold text-base sm:text-xl break-words leading-tight">
                     {weatherData?.condition || ""}
                   </p>
                   {marketDistrict && (

@@ -288,15 +288,15 @@ export default function MarketPage({ lang }: { lang: string }) {
                 <span className="mr-1">↑</span>
                 ₹{highestPrice.toLocaleString()}
               </h3>
-              <p className="m-0 text-xs text-gray-400 italic">per quintal</p>
+              <p className="m-0 mb-2 text-sm text-gray-400 italic">per quintal</p>
             </div>
           </div>
 
-          {/* Price Table */}
-          <div className="bg-white rounded-2xl overflow-x-auto shadow-sm border border-gray-200 mb-2.5">
+          {/* Price Table - Desktop View */}
+          <div className="hidden md:block bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm border border-gray-200 dark:border-slate-700 mb-2.5">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-gray-50 border-b-2 border-gray-100">
+                <tr className="bg-gray-50 dark:bg-slate-900 border-b-2 border-gray-100 dark:border-slate-800">
                   <th className="text-left py-4 px-5 text-gray-500 text-sm font-bold uppercase tracking-wider">Market</th>
                   <th className="text-left py-4 px-5 text-gray-500 text-sm font-bold uppercase tracking-wider">Variety</th>
                   <th className="text-left py-4 px-5 text-gray-500 text-sm font-bold uppercase tracking-wider">Min</th>
@@ -307,11 +307,11 @@ export default function MarketPage({ lang }: { lang: string }) {
               </thead>
               <tbody>
                 {prices.map((p, i) => (
-                  <tr key={i} className={`border-b transition-colors hover:bg-gray-50 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
-                    <td className="py-4 px-5 text-[15px] text-gray-700">{p.market}</td>
-                    <td className="py-4 px-5 text-[15px] text-gray-700">{p.variety}</td>
-                    <td className="py-4 px-5 text-[15px] text-gray-700 font-medium">₹{p.min_price}</td>
-                    <td className="py-4 px-5 text-[15px] text-gray-700 font-medium">₹{p.max_price}</td>
+                  <tr key={i} className={`border-b dark:border-slate-800 transition-colors hover:bg-gray-50 dark:hover:bg-slate-700/50 ${i % 2 === 0 ? 'bg-white dark:bg-slate-800' : 'bg-gray-50/30 dark:bg-slate-900/30'}`}>
+                    <td className="py-4 px-5 text-[15px] text-gray-700 dark:text-slate-200">{p.market}</td>
+                    <td className="py-4 px-5 text-[15px] text-gray-700 dark:text-slate-200">{p.variety}</td>
+                    <td className="py-4 px-5 text-[15px] text-gray-700 dark:text-slate-200 font-medium">₹{p.min_price}</td>
+                    <td className="py-4 px-5 text-[15px] text-gray-700 dark:text-slate-200 font-medium">₹{p.max_price}</td>
                     <td className="py-4 px-5 text-[15px] font-black text-green-600 flex items-center gap-2">
                       <span className={`mr-2 ${getTrendIcon(p.modal_price).color}`}>
                         {getTrendIcon(p.modal_price).icon}
@@ -323,6 +323,36 @@ export default function MarketPage({ lang }: { lang: string }) {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Price List - Mobile View (Cards) */}
+          <div className="md:hidden flex flex-col gap-4 mb-6">
+            {prices.map((p, i) => (
+              <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col gap-3">
+                <div className="flex justify-between items-start">
+                  <h4 className="m-0 text-gray-900 dark:text-white font-black text-lg leading-tight">{p.market}</h4>
+                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black ${getTrendIcon(p.modal_price).color} bg-gray-50 dark:bg-slate-900 border border-current opacity-80`}>
+                    {getTrendIcon(p.modal_price).icon} MODAL
+                  </div>
+                </div>
+                <p className="m-0 text-sm text-gray-400 font-bold uppercase tracking-wider">{p.variety}</p>
+                <div className="flex justify-between items-center mt-2 border-t dark:border-slate-700 pt-3">
+                  <div className="text-center">
+                    <p className="m-0 text-[10px] text-gray-400 font-black uppercase">Min</p>
+                    <p className="m-0 font-bold text-gray-700 dark:text-slate-200">₹{p.min_price}</p>
+                  </div>
+                  <div className="text-center px-4 border-x dark:border-slate-700">
+                    <p className="m-0 text-[10px] text-gray-400 font-black uppercase">Modal</p>
+                    <p className="m-0 font-black text-green-600 text-xl">₹{p.modal_price}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="m-0 text-[10px] text-gray-400 font-black uppercase">Max</p>
+                    <p className="m-0 font-bold text-gray-700 dark:text-slate-200">₹{p.max_price}</p>
+                  </div>
+                </div>
+                <p className="m-0 mt-1 text-[10px] text-gray-400 italic text-right">Data from {p.date}</p>
+              </div>
+            ))}
           </div>
 
           <p className="m-0 mb-8 ml-5 text-xs text-gray-400 italic font-medium">
