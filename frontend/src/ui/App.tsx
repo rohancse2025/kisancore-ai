@@ -381,7 +381,7 @@ export default function App() {
       )}
 
       {/* 2. MAIN CONTENT AREA */}
-      <main className="flex-1 transition-all duration-300 relative flex flex-col">
+      <main className={`flex-1 transition-all duration-300 relative flex flex-col ${(location.pathname === '/login' || location.pathname === '/chat') ? 'overflow-hidden' : 'overflow-y-auto'}`}>
         <div 
           key={location.pathname}
           className={`${(location.pathname === '/login' || location.pathname === '/chat') ? 'flex-1 flex flex-col' : 'max-w-[1200px] mx-auto px-4 md:px-12 py-4 md:py-8'} transition-all animate-fade-in`}

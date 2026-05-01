@@ -246,7 +246,7 @@ export default function ChatPage({ lang }: { lang: string }) {
   };
 
   return (
-    <div className="flex h-[calc(100vh-80px)] bg-white dark:bg-slate-900 overflow-hidden w-full border-t border-gray-100 dark:border-slate-800">
+    <div className="flex flex-1 min-h-0 bg-white dark:bg-slate-900 overflow-hidden w-full border-t border-gray-100 dark:border-slate-800">
       
       {/* SIDEBAR - Desktop: Side-by-side, Mobile: Overlay */}
       {(!isMobile || showSidebar) && (
@@ -314,15 +314,21 @@ export default function ChatPage({ lang }: { lang: string }) {
       <div className="flex-1 flex flex-col bg-white dark:bg-slate-950 relative h-full">
         
         {/* Header */}
-        <div className="py-2.5 px-4 sm:py-5 sm:px-8 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center z-10">
+        <div className="py-2.5 px-4 sm:py-5 sm:px-8 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center z-10 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 sm:w-12 sm:h-12 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center text-xl sm:text-3xl">🤖</div>
+            <div className="w-9 h-9 sm:w-12 sm:h-12 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center text-xl sm:text-3xl relative">
+              🤖
+              <span className="absolute -top-1 -right-1 bg-green-500 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 animate-pulse" />
+            </div>
             <div>
-              <h2 className="m-0 text-[#16a34a] text-base sm:text-lg font-black tracking-tight">
-                {t('chat_title')}
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="m-0 text-[#16a34a] text-base sm:text-lg font-black tracking-tight">
+                  {t('chat_title')}
+                </h2>
+                <span className="bg-gray-100 dark:bg-slate-800 text-[9px] font-black px-1.5 py-0.5 rounded text-gray-500 border border-gray-200 dark:border-slate-700">V2.2</span>
+              </div>
               <p className="m-0 text-[10px] sm:text-xs text-gray-400 dark:text-slate-500 font-bold">
-                Powered by AI — Ask anything
+                AI Assistant • Online
               </p>
             </div>
           </div>
@@ -390,7 +396,7 @@ export default function ChatPage({ lang }: { lang: string }) {
         </div>
 
         {/* Language Selector - Horizontal Scroll for Mobile */}
-        <div className="px-4 py-2.5 sm:px-6 sm:py-3 bg-gray-50/50 dark:bg-slate-900/50 border-t border-gray-100 dark:border-slate-800 flex gap-2 overflow-x-auto scrollbar-hide items-center">
+        <div className="px-4 py-2 bg-gray-50/50 dark:bg-slate-900/50 border-t border-gray-100 dark:border-slate-800 flex gap-2 overflow-x-auto scrollbar-hide items-center flex-shrink-0">
           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mr-2 flex-shrink-0">Language:</span>
           {LANG_OPTIONS.map(opt => (
             <button
@@ -407,7 +413,7 @@ export default function ChatPage({ lang }: { lang: string }) {
         </div>
 
         {/* Input Area */}
-        <div className="p-3 sm:p-6 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 flex gap-2.5 sm:gap-4 items-center">
+        <div className="p-3 sm:p-6 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 flex gap-2.5 sm:gap-4 items-center flex-shrink-0">
           <button
             onClick={toggleListening}
             className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full border-none flex items-center justify-center cursor-pointer transition-all flex-shrink-0 shadow-sm ripple
