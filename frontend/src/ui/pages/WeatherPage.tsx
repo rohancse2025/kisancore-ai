@@ -201,14 +201,14 @@ export default function WeatherPage() {
       </div>
 
       {/* Main Weather Card */}
-      <div className="bg-gradient-to-br from-green-600 via-green-700 to-green-800 rounded-2xl p-9 md:p-10 text-white flex flex-col md:flex-row justify-between items-center shadow-lg shadow-green-600/30">
-        <div className="text-center md:text-left mb-8 md:mb-0">
-          <p className="m-0 mb-1.5 text-base opacity-85 font-semibold">📍 {weather.city}</p>
-          <div className="flex items-baseline justify-center md:justify-start gap-3">
-            <span className="text-[72px] font-bold leading-none">{Math.round(weather.temperature)}°</span>
-            <span className="text-2xl mb-2.5 opacity-90">C</span>
+      <div className="bg-gradient-to-br from-green-600 via-green-700 to-green-800 rounded-2xl p-6 sm:p-9 md:p-10 text-white flex flex-col md:flex-row justify-between items-center shadow-lg shadow-green-600/30">
+        <div className="text-center md:text-left mb-6 md:mb-0">
+          <p className="m-0 mb-1.5 text-sm sm:text-base opacity-85 font-semibold">📍 {weather.city}</p>
+          <div className="flex items-baseline justify-center md:justify-start gap-2 sm:gap-3">
+            <span className="text-6xl sm:text-[72px] font-bold leading-none">{Math.round(weather.temperature)}°</span>
+            <span className="text-xl sm:text-2xl mb-2 sm:mb-2.5 opacity-90">C</span>
           </div>
-          <p className="m-0 mt-2 text-xl opacity-95 font-semibold capitalize">
+          <p className="m-0 mt-2 text-lg sm:text-xl opacity-95 font-semibold capitalize">
             {emoji} {weather.condition}
           </p>
         </div>
@@ -225,14 +225,14 @@ export default function WeatherPage() {
       </div>
 
       {/* Farming Tip Card */}
-      <div className="bg-white rounded-2xl p-7 px-8 border border-gray-200 shadow-sm border-l-[6px] border-l-green-600 md:animate-fade-in">
+      <div className="bg-white rounded-2xl p-6 sm:p-7 sm:px-8 border border-gray-200 shadow-sm border-l-[6px] border-l-green-600 md:animate-fade-in">
         <div className="flex items-start gap-4">
-          <span className="text-4xl leading-none flex-shrink-0">{tipEmoji}</span>
+          <span className="text-3xl sm:text-4xl leading-none flex-shrink-0">{tipEmoji}</span>
           <div>
-            <h3 className="m-0 mb-2 text-xs text-green-600 font-black uppercase tracking-widest">
+            <h3 className="m-0 mb-2 text-[10px] sm:text-xs text-green-600 font-black uppercase tracking-widest">
               Today's Farming Tip
             </h3>
-            <p className="m-0 text-lg text-gray-800 leading-relaxed font-medium">{weather.farming_tip}</p>
+            <p className="m-0 text-base sm:text-lg text-gray-800 leading-relaxed font-medium">{weather.farming_tip}</p>
           </div>
         </div>
       </div>

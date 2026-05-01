@@ -248,7 +248,7 @@ export default function IoTPage({ lang }: { lang: string }) {
           </button>
         </div>
 
-        <div className="mt-6 p-5 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 text-[17px] font-bold text-gray-800 leading-relaxed italic shadow-sm flex items-center justify-between">
+        <div className="mt-6 p-4 sm:p-5 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 text-base sm:text-[17px] font-bold text-gray-800 leading-relaxed italic shadow-sm flex items-center justify-between">
           <span>"{message}"</span>
           <SpeakButton text={message} lang={lang} className="flex-shrink-0 ml-2" />
         </div>
@@ -274,10 +274,10 @@ export default function IoTPage({ lang }: { lang: string }) {
       `}</style>
 
       {/* HEADER */}
-      <section className="bg-[#15803d] rounded-2xl p-8 md:p-10 text-white mb-8 shadow-xl relative overflow-hidden">
+      <section className="bg-[#15803d] rounded-2xl p-6 sm:p-8 md:p-10 text-white mb-8 shadow-xl relative overflow-hidden">
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl md:text-4xl font-extrabold m-0">📡 {t('iot_title')}</h1>
+          <div className="flex flex-wrap items-center gap-3 mb-2">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold m-0">📡 {t('iot_title')}</h1>
             {isOnline ? (
               <div className="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm">
                 <div className="w-2.5 h-2.5 bg-green-400 rounded-full pulse-dot" />
@@ -295,9 +295,9 @@ export default function IoTPage({ lang }: { lang: string }) {
               </div>
             )}
           </div>
-          <div className="flex justify-between items-center text-white/80 text-lg m-0 mt-2">
-            <p className="m-0">{isOnline ? "ESP32 Connected — Live" : isStale ? "ESP32 Disconnected — Showing last data" : "Waiting for ESP32..."}</p>
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-white/80 text-base sm:text-lg m-0 mt-3 sm:mt-2 gap-4">
+            <p className="m-0 leading-tight">{isOnline ? "ESP32 Connected — Live" : isStale ? "ESP32 Disconnected — Showing last data" : "Waiting for ESP32..."}</p>
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
               <button 
                 onClick={handleRefresh}
                 className={`bg-white/20 hover:bg-white/30 text-white text-xs px-4 py-2 rounded-xl font-bold transition-all shadow-sm active:scale-95 flex items-center gap-2 ${isRefreshing ? 'opacity-70 cursor-wait' : ''}`}
@@ -439,39 +439,43 @@ export default function IoTPage({ lang }: { lang: string }) {
         <h3 className="font-bold mb-4 flex items-center gap-2">🕹️ {t('iot_manual_controls')}</h3>
         <p className="text-sm text-gray-500 mb-6">Remotely override autonomous AI decisions. Safety sensors will automatically turn off the pump if moisture reaches 60%.</p>
         
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-xl border border-gray-200">
-            <span className="text-sm font-bold text-gray-600 px-2">{t('iot_timer')}:</span>
-            <input 
-              type="number" 
-              value={overrideDuration} 
-              onChange={(e) => setOverrideDuration(Number(e.target.value))}
-              className="w-20 px-3 py-1.5 rounded-lg border border-gray-300 text-center font-bold"
-              min="1" max="180"
-            />
-            <span className="text-sm font-bold text-gray-600 px-2">{t('iot_minutes')}</span>
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
+          <div className="flex items-center justify-between bg-gray-50 p-2 px-3 rounded-xl border border-gray-200">
+            <span className="text-xs sm:text-sm font-black text-gray-600 uppercase tracking-wider">{t('iot_timer')}:</span>
+            <div className="flex items-center gap-2">
+              <input 
+                type="number" 
+                value={overrideDuration} 
+                onChange={(e) => setOverrideDuration(Number(e.target.value))}
+                className="w-16 px-2 py-1.5 rounded-lg border border-gray-300 text-center font-bold text-sm"
+                min="1" max="180"
+              />
+              <span className="text-xs sm:text-sm font-bold text-gray-600 uppercase">{t('iot_minutes')}</span>
+            </div>
           </div>
 
-          <button 
-            onClick={() => handleOverride('ON')}
-            disabled={isSendingOverride}
-            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50"
-          >
-            {t('iot_pump_on')}
-          </button>
-          
-          <button 
-            onClick={() => handleOverride('OFF')}
-            disabled={isSendingOverride}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50"
-          >
-            {t('iot_pump_off')}
-          </button>
+          <div className="grid grid-cols-2 sm:flex gap-3 flex-1">
+            <button 
+              onClick={() => handleOverride('ON')}
+              disabled={isSendingOverride}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 text-sm"
+            >
+              {t('iot_pump_on')}
+            </button>
+            
+            <button 
+              onClick={() => handleOverride('OFF')}
+              disabled={isSendingOverride}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 text-sm"
+            >
+              {t('iot_pump_off')}
+            </button>
+          </div>
           
           <button 
             onClick={() => handleOverride('AUTO')}
             disabled={isSendingOverride}
-            className="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50"
+            className="bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 text-sm w-full sm:w-auto"
           >
             {t('iot_auto_mode')}
           </button>

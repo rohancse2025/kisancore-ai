@@ -311,24 +311,24 @@ export default function CropsPage({ lang }: { lang: string }) {
     <div className="font-sans pb-4">
       
       {/* TABS HEADER */}
-      <div className="flex border-b-2 border-gray-200 mb-8 gap-2 overflow-x-auto scrollbar-hide">
+      <div className="flex border-b-2 border-gray-200 mb-6 sm:mb-8 gap-1 sm:gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
         <button 
           onClick={() => setActiveTab('crop')}
-          className={`px-6 py-4 text-base md:text-lg font-black transition-all border-t border-x rounded-t-xl relative -bottom-[2px] cursor-pointer whitespace-nowrap
+          className={`px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base md:text-lg font-black transition-all border-t border-x rounded-t-xl relative -bottom-[2px] cursor-pointer whitespace-nowrap
             ${activeTab === 'crop' ? 'bg-green-50 border-green-600 text-green-600' : 'bg-transparent border-transparent text-gray-400 hover:text-green-600'}`}
         >
           🌱 {t('crops_ml_tab')}
         </button>
         <button 
           onClick={() => setActiveTab('fertilizer')}
-          className={`px-6 py-4 text-base md:text-lg font-black transition-all border-t border-x rounded-t-xl relative -bottom-[2px] cursor-pointer whitespace-nowrap
+          className={`px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base md:text-lg font-black transition-all border-t border-x rounded-t-xl relative -bottom-[2px] cursor-pointer whitespace-nowrap
             ${activeTab === 'fertilizer' ? 'bg-green-50 border-green-600 text-green-600' : 'bg-transparent border-transparent text-gray-400 hover:text-green-600'}`}
         >
           🧪 Fertilizer
         </button>
         <button 
           onClick={() => setActiveTab('soil')}
-          className={`px-6 py-4 text-base md:text-lg font-black transition-all border-t border-x rounded-t-xl relative -bottom-[2px] cursor-pointer whitespace-nowrap
+          className={`px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base md:text-lg font-black transition-all border-t border-x rounded-t-xl relative -bottom-[2px] cursor-pointer whitespace-nowrap
             ${activeTab === 'soil' ? 'bg-green-50 border-green-600 text-green-600' : 'bg-transparent border-transparent text-gray-400 hover:text-green-600'}`}
         >
           🔬 Soil Analysis
@@ -338,15 +338,15 @@ export default function CropsPage({ lang }: { lang: string }) {
       {activeTab === 'crop' && (
         <div className="animate-fade-in">
           {/* HERO HEADER */}
-          <section className={`bg-gradient-to-br from-green-800 to-green-600 rounded-2xl p-8 md:p-10 text-white mb-8 shadow-lg shadow-green-700/20 ${isMobile ? 'text-center' : 'text-left'}`}>
-            <h1 className="m-0 mb-2.5 text-2xl md:text-3xl font-extrabold tracking-tight">🌾 {t('crops_title')}</h1>
-            <p className="m-0 text-base md:text-lg opacity-90 font-medium">{t('crops_subtitle')}</p>
+          <section className={`bg-gradient-to-br from-green-800 to-green-600 rounded-2xl p-6 sm:p-8 md:p-10 text-white mb-8 shadow-lg shadow-green-700/20 ${isMobile ? 'text-center' : 'text-left'}`}>
+            <h1 className="m-0 mb-2.5 text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight">🌾 {t('crops_title')}</h1>
+            <p className="m-0 text-sm sm:text-base md:text-lg opacity-90 font-medium">{t('crops_subtitle')}</p>
           </section>
 
           <div className="flex flex-col gap-8 mb-10">
             {/* Input Form Card */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 border-t-4 border-t-green-600">
-              <h2 className="m-0 mb-6 text-xl text-gray-900 font-black flex items-center gap-2">
+            <div className="bg-white rounded-2xl p-5 sm:p-8 shadow-sm border border-gray-100 border-t-4 border-t-green-600">
+              <h2 className="m-0 mb-6 text-lg sm:text-xl text-gray-900 font-black flex items-center gap-2">
                 📂 {t('crops_farm_params')}
               </h2>
               
@@ -442,12 +442,12 @@ export default function CropsPage({ lang }: { lang: string }) {
                       }[crop.profit_potential as 'Low'|'Medium'|'High'] || "bg-gray-50 text-gray-700";
 
                       return (
-                        <div key={idx} className={`bg-white rounded-2xl p-8 border border-gray-100 border-t-6 ${c.b} flex flex-col gap-4 text-center transition-all hover:-translate-y-1 hover:shadow-xl ${c.s}`}>
+                        <div key={idx} className={`bg-white rounded-2xl p-6 sm:p-8 border border-gray-100 border-t-6 ${c.b} flex flex-col gap-3 sm:gap-4 text-center transition-all hover:-translate-y-1 hover:shadow-xl ${c.s}`}>
                           <div className="flex justify-between items-start">
-                            <div className="text-5xl mt-2">{crop.emoji}</div>
+                            <div className="text-4xl sm:text-5xl mt-2">{crop.emoji}</div>
                             <SpeakButton text={`${crop.name}. ${crop.reason}`} lang={lang} />
                           </div>
-                          <h3 className={`text-2xl font-black ${c.t} tracking-tight m-0`}>{crop.name}</h3>
+                          <h3 className={`text-xl sm:text-2xl font-black ${c.t} tracking-tight m-0`}>{crop.name}</h3>
                           {crop.offline && (
                             <div className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-black uppercase self-center border border-amber-200">
                               📡 Offline Mode

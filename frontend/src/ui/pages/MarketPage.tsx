@@ -111,33 +111,33 @@ export default function MarketPage({ lang }: { lang: string }) {
   return (
     <div className="pb-[60px] font-sans">
       
-      <section className={`bg-gradient-to-br from-green-800 to-green-600 rounded-2xl p-8 md:p-10 text-white mb-8 shadow-lg shadow-green-700/20 ${isMobile ? 'text-center' : 'text-left'}`}>
+      <section className={`bg-gradient-to-br from-green-800 to-green-600 rounded-2xl p-6 sm:p-8 md:p-10 text-white mb-8 shadow-lg shadow-green-700/20 ${isMobile ? 'text-center' : 'text-left'}`}>
         <h1 className={`m-0 mb-2.5 ${isMobile ? 'text-2xl' : 'text-3xl'} font-extrabold tracking-tight`}>📊 {t('market_title')}</h1>
-        <p className={`m-0 mb-4 ${isMobile ? 'text-base' : 'text-lg'} opacity-90`}>
+        <p className={`m-0 mb-4 ${isMobile ? 'text-base' : 'text-lg'} opacity-90 leading-tight`}>
           {t('market_subtitle')}
         </p>
-        <span className="bg-white/20 py-1.5 px-3.5 rounded-full text-xs font-bold backdrop-blur-md">
+        <span className="bg-white/20 py-1.5 px-3.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest backdrop-blur-md">
           {t('market_powered_by')}
         </span>
       </section>
 
       {/* 2. SEARCH SECTION */}
-      <section className="bg-white rounded-2xl p-8 mb-10 shadow-sm border border-gray-200">
-        <div className="flex gap-5 flex-wrap items-end">
-          <div className="flex-1 min-w-[200px]">
-            <label className="block mb-2 font-bold text-gray-500 text-sm">{t('market_commodity')}</label>
+      <section className="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 mb-10 shadow-sm border border-gray-200 dark:border-slate-700">
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 items-stretch sm:items-end">
+          <div className="flex-1">
+            <label className="block mb-2 font-black text-gray-400 uppercase tracking-widest text-[10px]">{t('market_commodity')}</label>
             <CropSearchInput 
               value={commodity}
               onChange={(val) => { setCommodity(val); }}
-              placeholder="Search commodity (tomato, wheat, rice...)"
+              placeholder="Search commodity..."
             />
           </div>
-          <div className="flex-1 min-w-[200px]">
-            <label className="block mb-2 font-bold text-gray-500 text-sm">{t('market_state')}</label>
+          <div className="flex-1">
+            <label className="block mb-2 font-black text-gray-400 uppercase tracking-widest text-[10px]">{t('market_state')}</label>
             <select 
               value={state} 
               onChange={(e) => setState(e.target.value)}
-              className="w-full p-3 px-4 rounded-lg border border-gray-300 text-base text-gray-700 bg-white focus-ring-green outline-none"
+              className="w-full p-3 px-4 rounded-lg border border-gray-300 dark:border-slate-600 text-base text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-900 focus-ring-green outline-none font-bold"
             >
               {STATES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -145,10 +145,10 @@ export default function MarketPage({ lang }: { lang: string }) {
           <button 
             onClick={() => fetchPrices()}
             disabled={isLoading}
-            className={`py-3 px-7 rounded-lg text-white text-base font-bold transition-transform active:scale-95 whitespace-nowrap shadow-lg ripple
+            className={`py-4 px-7 rounded-xl text-white text-base font-black uppercase tracking-widest transition-all active:scale-95 whitespace-nowrap shadow-lg ripple
               ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 cursor-pointer hover:bg-green-700'}`}
           >
-            {isLoading ? "Fetching..." : "Check Prices"}
+            {isLoading ? "..." : "Check Prices"}
           </button>
         </div>
 
@@ -330,11 +330,11 @@ export default function MarketPage({ lang }: { lang: string }) {
           </p>
 
           {/* Price Insight Card */}
-          <div className={`bg-green-50 rounded-2xl p-6 md:px-8 border border-green-100 flex items-center gap-5 ${isMobile ? 'flex-col text-center' : 'flex-row text-left'}`}>
-            <span className="text-4xl">💡</span>
+          <div className={`bg-green-50 dark:bg-green-900/10 rounded-2xl p-6 sm:px-8 border border-green-100 dark:border-green-800 flex items-center gap-5 ${isMobile ? 'flex-col text-center' : 'flex-row text-left'}`}>
+            <span className="text-3xl sm:text-4xl">💡</span>
             <div>
-              <h4 className="m-0 mb-1 text-gray-900 text-xl font-bold">Price Insight</h4>
-              <p className="m-0 text-gray-700 text-base font-semibold">{getPriceInsight()}</p>
+              <h4 className="m-0 mb-1 text-gray-900 dark:text-white text-lg sm:text-xl font-black uppercase tracking-tight">Price Insight</h4>
+              <p className="m-0 text-gray-700 dark:text-slate-300 text-sm sm:text-base font-bold italic">{getPriceInsight()}</p>
             </div>
           </div>
 

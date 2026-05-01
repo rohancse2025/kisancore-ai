@@ -246,7 +246,7 @@ export default function ChatPage({ lang }: { lang: string }) {
   };
 
   return (
-    <div className="flex h-[calc(100vh-140px)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden w-full border border-gray-100 dark:border-slate-800">
+    <div className="flex h-[calc(100vh-160px)] sm:h-[calc(100vh-140px)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden w-full border border-gray-100 dark:border-slate-800">
       
       {/* LEFT SIDEBAR (Fixed 350px) */}
       {!isMobile && (
@@ -293,9 +293,9 @@ export default function ChatPage({ lang }: { lang: string }) {
       <div className="flex-1 flex flex-col bg-white dark:bg-slate-950 relative h-full">
         
         {/* Header */}
-        <div className="py-5 px-8 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center z-10">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center text-3xl">🤖</div>
+        <div className="py-3 px-4 sm:py-5 sm:px-8 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center z-10">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center text-2xl sm:text-3xl">🤖</div>
             <div>
               <h2 className="m-0 text-[#16a34a] text-lg font-black tracking-tight">
                 {t('chat_title')}
@@ -331,12 +331,12 @@ export default function ChatPage({ lang }: { lang: string }) {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-6 scroll-smooth">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col gap-6 scroll-smooth">
           {messages.map(msg => {
             const isUser = msg.sender === 'user';
             return (
-            <div key={msg.id} className={`flex flex-col max-w-[80%] animate-fade-in-up ${isUser ? 'self-end items-end' : 'self-start items-start'}`}>
-                <div className={`px-6 py-4 rounded-3xl text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap font-medium hover-lift transition-transform
+            <div key={msg.id} className={`flex flex-col max-w-[90%] sm:max-w-[80%] animate-fade-in-up ${isUser ? 'self-end items-end' : 'self-start items-start'}`}>
+                <div className={`px-4 py-3 sm:px-6 sm:py-4 rounded-2xl sm:rounded-3xl text-sm sm:text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap font-medium hover-lift transition-transform
                   ${isUser 
                     ? 'bg-[#16a34a] text-white rounded-br-none' 
                     : 'bg-green-50 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-bl-none border border-gray-100 dark:border-slate-700'}`}>
@@ -386,10 +386,10 @@ export default function ChatPage({ lang }: { lang: string }) {
         </div>
 
         {/* Input Area */}
-        <div className="p-6 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 flex gap-4 items-center">
+        <div className="p-4 sm:p-6 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 flex gap-3 sm:gap-4 items-center">
           <button
             onClick={toggleListening}
-            className={`w-12 h-12 rounded-full border-none flex items-center justify-center cursor-pointer transition-all flex-shrink-0 shadow-sm ripple
+            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full border-none flex items-center justify-center cursor-pointer transition-all flex-shrink-0 shadow-sm ripple
               ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-700'}`}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill={isListening ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5">

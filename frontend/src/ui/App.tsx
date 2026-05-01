@@ -142,8 +142,8 @@ export default function App() {
     if (farmer || bypass) return <>{children}</>;
     
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-10 shadow-xl border border-gray-100 dark:border-slate-700 max-w-md w-full text-center">
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-slate-800 rounded-[2rem] p-6 sm:p-10 shadow-xl border border-gray-100 dark:border-slate-700 max-w-md w-full text-center">
           <div className="text-6xl mb-6">🔒</div>
           <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-3">{feature} requires login</h2>
           <p className="text-gray-500 dark:text-slate-400 mb-8 font-medium">
@@ -384,7 +384,7 @@ export default function App() {
       <main className="transition-all duration-300">
         <div 
           key={location.pathname}
-          className={`${location.pathname === '/login' ? '' : 'max-w-[1200px] mx-auto px-0 md:px-12 py-4 md:py-8'} transition-all animate-fade-in`}
+          className={`${location.pathname === '/login' ? '' : 'max-w-[1200px] mx-auto px-4 md:px-12 py-4 md:py-8'} transition-all animate-fade-in`}
         >
           <Routes>
             <Route path="/login" element={<LoginPage lang={lang} onLogin={(user: any) => setFarmer(user)} />} />
