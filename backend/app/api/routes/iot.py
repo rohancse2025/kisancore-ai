@@ -31,6 +31,7 @@ latest_reading = {
 # --- ROUTES ---
 
 @router.post("/data")
+@router.post("/")  # Alternative to handle /api/v1/iot/
 async def post_iot_data(data: IOTData):
     print(f"IOT DEBUG: Received data -> Temp: {data.temperature}, Hum: {data.humidity}, Soil: {data.soil_moisture}")
     global latest_reading
