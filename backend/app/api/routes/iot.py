@@ -30,6 +30,10 @@ latest_reading = {
 
 # --- ROUTES ---
 
+@router.get("/test")
+def test_iot():
+    return {"status": "iot_router_active"}
+
 @router.post("/data")
 @router.post("/")  # Alternative to handle /api/v1/iot/
 async def post_iot_data(data: IOTData):
