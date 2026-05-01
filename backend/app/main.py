@@ -45,14 +45,35 @@ async def iot_fallback(data: dict):
     now = datetime.now()
     formatted_time = now.strftime("%I:%M %p")
     
+    # Update state
+    temp = data.get("temperature", 0)
+    hum = data.get("humidity", 0)
+    soil = data.get("soil_moisture", 0)
+    
     latest_reading.update({
-        "temperature": data.get("temperature", 0),
-        "humidity": data.get("humidity", 0),
-        "soil_moisture": data.get("soil_moisture", 0),
+        "temperature": temp,
+        "humidity": hum,
+        "soil_moisture": soil,
         "timestamp": formatted_time,
         "unix_timestamp": int(time.time() * 1000)
     })
-    return {"status": "ok", "source": "fallback"}
+    
+    # Calculate command
+    override = latest_reading.get("manual_override")
+    irrigation_needed = False
+    
+    if override == "ON":
+        irrigation_needed = True
+    elif override == "OFF":
+        irrigation_needed = False
+    else:
+        irrigation_needed = soil < 30 # Simple auto logic for fallback
+        
+    return {
+        "status": "ok", 
+        "source": "fallback",
+        "relay_command": "ON" if irrigation_needed else "OFF"
+    }
 
 @app.get("/health")
 def health() -> dict:
