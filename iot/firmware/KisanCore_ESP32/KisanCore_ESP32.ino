@@ -21,8 +21,8 @@
 // ===== USER CONFIGURATION =====
 const char* WIFI_SSID = "YourWiFiName";
 const char* WIFI_PASSWORD = "YourWiFiPassword";
-const char* SERVER_IP = "kisancore-ai-1.onrender.com"; 
-const int SERVER_PORT = 443;
+const char* SERVER_IP = "10.17.82.36"; 
+const int SERVER_PORT = 8000;
 const int READ_INTERVAL = 30000;         // 30 seconds
 const int SOIL_DRY_THRESHOLD = 30;       // Below this = irrigation needed
 const int SOIL_WET_THRESHOLD = 60;       // Above this = safety shutoff
@@ -181,7 +181,7 @@ String postToBackend() {
 
   HTTPClient http;
   // Use HTTPS URL
-  String url = "https://" + String(SERVER_IP) + "/api/v1/iot/data";
+  String url = "http://" + String(SERVER_IP) + ":" + String(SERVER_PORT) + "/api/v1/iot/data";
   
   if (http.begin(client, url)) { // Pass the secure client to http.begin
     http.addHeader("Content-Type", "application/json");

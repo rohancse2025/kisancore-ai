@@ -164,89 +164,107 @@ def daily_summary(phone: str,
   return {"status": "sent" if success else "failed"}
 
 @router.post("/webhook")
+@router.post("/webhook")
 async def handle_incoming_whatsapp(
     From: str = Form(...),
     Body: str = Form("")
 ):
-    import app.api.routes.iot as iot
-    from app.api.routes.iot import latest_reading
-    import time
+    try:
+        import app.api.routes.iot as iot
+        from app.api.routes.iot import latest_reading
+        import time
 
-    sender = From.strip()
-    text = Body.strip().upper()
-    print(f"DEBUG: Incoming WhatsApp from {sender} | Text: {text}")
+        sender = From.strip()
+        text = Body.strip().upper()
+        # V2 Tag helps confirm the new code is actually running
+        logger.info(f"[V2] RECEIVED WHATSAPP: From={sender}, Body='{text}'")
 
-    # AUTO-REGISTER this number for smart alerts (store full whatsapp:+91... format)
-    latest_reading["farmer_sms_phone"] = sender
-    print(f"DEBUG: Registered alert phone: {sender}")
+        # AUTO-REGISTER this number for smart alerts
+        latest_reading["farmer_sms_phone"] = sender
+        
+        response_msg = ""
 
-    response_msg = ""
+        # Using 'IN' instead of '==' to handle hidden spaces or "Menu" text
+        if "PUMP ON" in text:
+            duration = 60
+            parts = text.split()
+            # Try to find a number in the parts for duration
+            for p in parts:
+                if p.isdigit():
+                    duration = int(p)
+                    break
+            iot.latest_reading["manual_override"] = "ON"
+            iot.latest_reading["override_expiry_time"] = time.time() + (duration * 60)
+            response_msg = f"KisanCore: Pump activated for {duration} mins. 💧"
 
-    if text.startswith("PUMP ON"):
-        duration = 60
-        parts = text.split()
-        if len(parts) > 2 and parts[2].isdigit():
-            duration = int(parts[2])
-        iot.latest_reading["manual_override"] = "ON"
-        iot.latest_reading["override_expiry_time"] = time.time() + (duration * 60)
-        response_msg = f"KisanCore: Pump activated for {duration} mins."
+        elif "PUMP OFF" in text:
+            iot.latest_reading["manual_override"] = "OFF"
+            iot.latest_reading["override_expiry_time"] = time.time() + 86400
+            response_msg = "KisanCore: Pump turned OFF manually. 🛑"
 
-    elif text == "PUMP OFF":
-        iot.latest_reading["manual_override"] = "OFF"
-        iot.latest_reading["override_expiry_time"] = time.time() + 86400
-        response_msg = "KisanCore: Pump turned OFF manually."
+        elif "AUTO" in text:
+            iot.latest_reading["manual_override"] = None
+            iot.latest_reading["override_expiry_time"] = 0
+            response_msg = "KisanCore: Pump restored to Autonomous AI Mode. 🤖"
 
-    elif text == "AUTO":
-        iot.latest_reading["manual_override"] = None
-        iot.latest_reading["override_expiry_time"] = 0
-        response_msg = "KisanCore: Pump restored to Autonomous AI Mode."
+        elif "STATUS" in text:
+            temp = iot.latest_reading.get("temperature", "--")
+            hum  = iot.latest_reading.get("humidity", "--")
+            soil = iot.latest_reading.get("soil_moisture", "--")
+            mode = iot.latest_reading.get("manual_override") or "AUTO"
+            irr  = "ON" if iot.latest_reading.get("irrigation_needed") else "OFF"
+            
+            response_msg = (
+                f"🌿 Farm Status:\n"
+                f"🌡️ Temp: {temp}°C\n"
+                f"💧 Humidity: {hum}%\n"
+                f"🪴 Soil: {soil}%\n"
+                f"⚡ Pump: {irr}\n"
+                f"⚙️ Mode: {mode}\n"
+                f"- KisanCore AI"
+            )
 
-    elif text == "STATUS":
-        temp = iot.latest_reading.get("temperature", "--")
-        hum  = iot.latest_reading.get("humidity", "--")
-        soil = iot.latest_reading.get("soil_moisture", "--")
-        mode = iot.latest_reading.get("manual_override") or "AUTO"
-        irr  = "ON" if iot.latest_reading.get("irrigation_needed") else "OFF"
-        response_msg = (
-            f"Farm Status:\n"
-            f"Temp: {temp}C | Humidity: {hum}%\n"
-            f"Soil: {soil}% | Pump: {irr}\n"
-            f"Mode: {mode}\n-KisanCore AI"
-        )
+        elif "DAILY" in text:
+            temp = iot.latest_reading.get("temperature", "--")
+            hum  = iot.latest_reading.get("humidity", "--")
+            soil = iot.latest_reading.get("soil_moisture", "--")
+            irr  = "ON" if iot.latest_reading.get("irrigation_needed") else "OFF"
+            mode = iot.latest_reading.get("manual_override") or "AUTO"
+            response_msg = (
+                f"📊 KisanCore Daily Report:\n"
+                f"Temp: {temp}°C | Humidity: {hum}%\n"
+                f"Soil: {soil}% | Pump: {irr}\n"
+                f"Mode: {mode}\n"
+                f"Send HELP for commands.\n"
+                f"- KisanCore AI"
+            )
 
-    elif text == "DAILY":
-        temp = iot.latest_reading.get("temperature", "--")
-        hum  = iot.latest_reading.get("humidity", "--")
-        soil = iot.latest_reading.get("soil_moisture", "--")
-        irr  = "ON" if iot.latest_reading.get("irrigation_needed") else "OFF"
-        mode = iot.latest_reading.get("manual_override") or "AUTO"
-        response_msg = (
-            f"KisanCore Daily Report:\n"
-            f"Temp: {temp}C | Humidity: {hum}%\n"
-            f"Soil: {soil}% | Pump: {irr}\n"
-            f"Mode: {mode}\nSend HELP for commands.\n-KisanCore AI"
-        )
+        elif "HELP" in text:
+            response_msg = (
+                "📖 KisanCore Commands:\n"
+                "• STATUS - Live data\n"
+                "• PUMP ON - Start pump\n"
+                "• PUMP ON 30 - Run for 30m\n"
+                "• PUMP OFF - Stop pump\n"
+                "• AUTO - AI control\n"
+                "• DAILY - Summary"
+            )
 
-    elif text == "HELP":
-        response_msg = (
-            "KisanCore Commands:\n"
-            "PUMP ON - Start pump\n"
-            "PUMP ON 30 - Pump for 30 mins\n"
-            "PUMP OFF - Stop pump\n"
-            "AUTO - AI auto-control\n"
-            "STATUS - Live sensor data\n"
-            "DAILY - Daily farm report\n"
-            "-KisanCore AI"
-        )
+        else:
+            response_msg = "❓ Unknown command. Send HELP for list. - KisanCore AI"
 
-    else:
-        response_msg = "Unknown command. Send HELP for all commands. -KisanCore AI"
-
-    xml_response = f"""<?xml version="1.0" encoding="UTF-8"?>
+        # Construct TwiML
+        xml_response = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Message>{response_msg}</Message>
 </Response>"""
-    return Response(content=xml_response, media_type="application/xml")
+        
+        return Response(content=xml_response, media_type="text/xml")
+
+    except Exception as e:
+        logger.error(f"WEBHOOK ERROR: {str(e)}")
+        error_xml = '<?xml version="1.0" encoding="UTF-8"?><Response><Message>KisanCore Error: Internal server error.</Message></Response>'
+        return Response(content=error_xml, media_type="text/xml")
 
 @router.get("/status")
 def sms_status():
