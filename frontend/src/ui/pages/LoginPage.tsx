@@ -134,7 +134,7 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
                  <input 
                   placeholder={t('auth_full_name')} 
                   required 
-                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-slate-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500" 
+                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 caret-green-600" 
                   onChange={(e) => setFormData({...formData, name: e.target.value})} 
                 />
               </div>
@@ -146,7 +146,7 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
                  type="tel"
                  required 
                  maxLength={10}
-                 className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-slate-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500" 
+                 className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 caret-green-600" 
                  onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/\D/g, '')})} 
                  value={formData.phone}
                />
@@ -157,7 +157,7 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
                  placeholder={t('auth_password')} 
                  type={showPassword ? "text" : "password"} 
                  required 
-                 className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-slate-900 dark:text-white pr-12 placeholder:text-gray-400 dark:placeholder:text-slate-500" 
+                 className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-gray-900 dark:text-white pr-12 placeholder:text-gray-400 dark:placeholder:text-slate-500 caret-green-600" 
                  onChange={(e) => setFormData({...formData, password: e.target.value})} 
                />
               <button
@@ -182,7 +182,7 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
               <div className="space-y-4">
                 <div className="flex gap-4">
                      <select 
-                      className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-slate-900 dark:text-white"
+                      className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-gray-900 dark:text-white"
                       onChange={(e) => setFormData({...formData, location: `${e.target.value}, ${formData.location.split(', ')[1] || ''}`})}
                       value={formData.location.split(', ')[0] || ''}
                     >
@@ -191,7 +191,7 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
                   </select>
                                     <input 
                     placeholder="Enter District" 
-                    className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-slate-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500" 
+                    className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 caret-green-600" 
                     value={formData.location.split(', ')[1] || ''}
                     onChange={(e) => setFormData({...formData, location: `${formData.location.split(', ')[0] || ''}, ${e.target.value}`})} 
                   />
@@ -207,7 +207,7 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
                                 <input 
                   placeholder={t('auth_farm_size') + " (Acres)"} 
                   type="number" step="0.1" 
-                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-slate-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500" 
+                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 caret-green-600" 
                   onChange={(e) => setFormData({...formData, farm_size: e.target.value})} 
                 />
               </div>
