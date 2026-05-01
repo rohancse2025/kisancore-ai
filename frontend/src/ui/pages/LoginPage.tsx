@@ -18,6 +18,24 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
     'Karnataka', 'Punjab', 'Maharashtra', 'Tamil Nadu', 'Gujarat', 'Uttar Pradesh', 'Rajasthan', 'Haryana', 'Andhra Pradesh', 'Telangana'
   ];
 
+  const [isMobile, setIsMobile] = useState(() => {
+    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+    const isSmallScreen = window.innerWidth < 1024;
+    const isMobileDevice = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+    return isSmallScreen || isMobileDevice;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const isSmallScreen = window.innerWidth < 1024;
+      const isMobileDevice = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+      setIsMobile(isSmallScreen || isMobileDevice);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const detectLocation = () => {
     setIsDetecting(true);
     if (navigator.geolocation) {
@@ -88,7 +106,7 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center md:justify-center py-0 md:py-12 px-0 md:px-6 animate-fade-in bg-white dark:bg-slate-950">
+    <div className="min-h-full flex flex-col items-center md:justify-center py-0 md:py-12 px-0 md:px-6 animate-fade-in bg-white dark:bg-slate-950">
       <div className="max-w-md w-full flex flex-col shadow-none md:shadow-2xl rounded-none md:rounded-[2.5rem] overflow-hidden border-b border-gray-100 dark:border-slate-800">
         {/* Reverted Header: Simple Green Banner */}
         <div className="bg-green-600 w-full p-8 md:p-10 text-white text-center shadow-lg relative overflow-hidden">

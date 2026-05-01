@@ -36,11 +36,17 @@ export default function ChatPage({ lang }: { lang: string }) {
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [chatLang, setChatLang] = useState('EN');
   
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [isMobile, setIsMobile] = useState(() => {
+    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+    return window.innerWidth < 1024 || /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+  });
   const [showSidebar, setShowSidebar] = useState(false);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    const handleResize = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      setIsMobile(window.innerWidth < 1024 || /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase()));
+    };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -246,44 +252,65 @@ export default function ChatPage({ lang }: { lang: string }) {
   };
 
   return (
-    <div className="flex h-[calc(100dvh-80px)] sm:h-[calc(100vh-140px)] bg-white dark:bg-slate-900 overflow-hidden w-full border-t border-gray-100 dark:border-slate-800">
+    <div className="flex h-full bg-white dark:bg-slate-900 overflow-hidden w-full border-t border-gray-100 dark:border-slate-800">
       
-      {/* LEFT SIDEBAR (Fixed 350px) */}
-      {!isMobile && (
-        <div className="w-[350px] border-r border-gray-100 dark:border-slate-800 flex flex-col bg-white dark:bg-slate-900 overflow-y-auto flex-shrink-0">
-          <div className="p-8">
-            <h2 className="m-0 mb-8 text-xl text-gray-900 dark:text-white font-black flex items-center gap-3">
-              💡 Quick Questions
-            </h2>
-            
-            <div className="flex flex-col gap-3.5 mb-12">
-              {questions.map((q, idx) => (
-                <div 
-                  key={idx}
-                  onClick={() => setInput(q)}
-                  className="group py-4 px-5 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 border-l-4 border-l-[#16a34a] rounded-xl cursor-pointer text-[14px] text-gray-700 dark:text-slate-300 shadow-sm transition-all hover:bg-green-50/50 dark:hover:bg-green-900/10 hover-lift ripple font-bold"
-                >
-                  {q}
-                </div>
-              ))}
+      {/* SIDEBAR - Desktop: Side-by-side, Mobile: Overlay */}
+      {(!isMobile || showSidebar) && (
+        <div 
+          className={`
+            ${isMobile 
+              ? 'fixed inset-0 z-[200] bg-slate-950/50 backdrop-blur-sm' 
+              : 'w-[350px] border-r border-gray-100 dark:border-slate-800 flex-shrink-0 bg-white dark:bg-slate-900'} 
+            flex flex-col transition-all duration-300
+          `}
+          onClick={() => isMobile && setShowSidebar(false)}
+        >
+          <div 
+            className={`
+              ${isMobile ? 'w-[85%] h-full bg-white dark:bg-slate-900 shadow-2xl animate-slide-in-right' : 'h-full'} 
+              flex flex-col p-8
+            `}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="m-0 text-xl text-gray-900 dark:text-white font-black flex items-center gap-3">
+                💡 Quick Questions
+              </h2>
+              {isMobile && (
+                <button onClick={() => setShowSidebar(false)} className="text-gray-400 text-2xl bg-transparent border-none">✕</button>
+              )}
             </div>
-
-            <div className="border-t border-gray-100 dark:border-slate-800 pt-8 mt-4.5">
-              <h3 className="text-[12px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-6">
-                TIPS FOR BETTER ANSWERS
-              </h3>
-              <ul className="list-none p-0 m-0 flex flex-col gap-4">
-                {[
-                  "Mention your crop name",
-                  "Include your location",
-                  "Describe the problem clearly"
-                ].map((tip, idx) => (
-                  <li key={idx} className="flex items-start gap-3 text-[14px] text-gray-600 dark:text-slate-400 font-bold">
-                    <span className="text-[#16a34a] text-lg">✓</span>
-                    {tip}
-                  </li>
+            
+            <div className="flex-1 overflow-y-auto">
+              <div className="flex flex-col gap-3.5 mb-12">
+                {questions.map((q, idx) => (
+                  <div 
+                    key={idx}
+                    onClick={() => { setInput(q); if (isMobile) setShowSidebar(false); }}
+                    className="group py-4 px-5 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 border-l-4 border-l-[#16a34a] rounded-xl cursor-pointer text-[14px] text-gray-700 dark:text-slate-300 shadow-sm transition-all hover:bg-green-50/50 dark:hover:bg-green-900/10 hover-lift ripple font-bold"
+                  >
+                    {q}
+                  </div>
                 ))}
-              </ul>
+              </div>
+
+              <div className="border-t border-gray-100 dark:border-slate-800 pt-8 mt-4.5">
+                <h3 className="text-[12px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-6">
+                  TIPS FOR BETTER ANSWERS
+                </h3>
+                <ul className="list-none p-0 m-0 flex flex-col gap-4">
+                  {[
+                    "Mention your crop name",
+                    "Include your location",
+                    "Describe the problem clearly"
+                  ].map((tip, idx) => (
+                    <li key={idx} className="flex items-start gap-3 text-[14px] text-gray-600 dark:text-slate-400 font-bold">
+                      <span className="text-[#16a34a] text-lg">✓</span>
+                      {tip}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         </div>
