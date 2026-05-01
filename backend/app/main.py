@@ -31,6 +31,10 @@ def create_tables():
 
 
 
+@app.get("/")
+def root():
+    return {"message": "KisanCore API is Live!", "docs": "/docs"}
+
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok", "app": settings.app_name, "environment": settings.environment}
