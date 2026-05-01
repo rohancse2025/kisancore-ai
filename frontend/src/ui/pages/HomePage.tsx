@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config';
+import { Text } from '../components/Text';
 
 const Skeleton = ({ className }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 dark:bg-slate-700 rounded ${className}`} />
@@ -651,12 +652,12 @@ export default function HomePage({ lang }: { lang: string }) {
                 AI Powered Farming
               </div>
               
-              <h1 className="text-white text-[32px] md:text-[54px] font-bold leading-tight mb-6 tracking-tight drop-shadow-md animate-fade-in-up [animation-delay:300ms]">
+              <h1 className="text-white text-3xl sm:text-4xl md:text-6xl font-black leading-tight mb-6 tracking-tight drop-shadow-md animate-fade-in-up [animation-delay:300ms] break-words">
                 Empowering Farmers with <br />
                 <span className="text-[#4ade80]">Next-Gen AI & IoT</span>
               </h1>
               
-              <p className="text-white/90 text-lg md:text-xl font-medium mb-10 leading-relaxed max-w-2xl drop-shadow-sm animate-fade-in-up [animation-delay:500ms]">
+              <p className="text-white/90 text-base sm:text-lg md:text-xl font-medium mb-10 leading-relaxed max-w-2xl drop-shadow-sm animate-fade-in-up [animation-delay:500ms] break-words">
                 {t('hero_tagline')}
               </p>
 
@@ -695,11 +696,11 @@ export default function HomePage({ lang }: { lang: string }) {
                 KisanCore AI V2.0
               </div>
               
-              <h1 className="text-white text-[32px] md:text-[54px] font-bold leading-tight mb-6 tracking-tight drop-shadow-md animate-fade-in-up [animation-delay:300ms]">
+              <h1 className="text-white text-3xl sm:text-4xl md:text-6xl font-black leading-tight mb-6 tracking-tight drop-shadow-md animate-fade-in-up [animation-delay:300ms] break-words">
                 Welcome back, <span className="text-[#4ade80]">{farmer.name}!</span> 👨‍🌾
               </h1>
               
-              <p className="text-white/90 text-lg md:text-xl font-medium mb-10 leading-relaxed max-w-2xl drop-shadow-sm animate-fade-in-up [animation-delay:500ms]">
+              <p className="text-white/90 text-base sm:text-lg md:text-xl font-medium mb-10 leading-relaxed max-w-2xl drop-shadow-sm animate-fade-in-up [animation-delay:500ms] break-words">
                 Your smart farming dashboard is updated with the latest sensor data and crop insights.
               </p>
 
@@ -724,8 +725,8 @@ export default function HomePage({ lang }: { lang: string }) {
 
 
       {/* 2. WEATHER CARD */}
-      <section className="bg-blue-50 dark:bg-blue-900/10 rounded-2xl p-5 md:p-8 mb-10 shadow-sm border border-blue-200 dark:border-blue-800 animate-fade-in-up hover-lift">
-        <h2 className="text-xl text-gray-900 dark:text-white m-0 mb-6 font-bold flex items-center gap-2 uppercase tracking-widest text-xs opacity-50">🌤️ {t('home_weather')}</h2>
+      <section className="bg-blue-50 dark:bg-blue-900/10 rounded-2xl p-5 md:p-8 mb-10 shadow-sm border border-blue-200 dark:border-blue-800 animate-fade-in-up hover-lift overflow-hidden">
+        <h2 className="text-base sm:text-xl text-gray-900 dark:text-white m-0 mb-6 font-black flex items-center gap-2 uppercase tracking-widest opacity-50 break-words">🌤️ {t('home_weather')}</h2>
         
         <div className="flex gap-8 items-center flex-wrap mb-6">
           <div className="min-w-[200px]">
@@ -738,16 +739,16 @@ export default function HomePage({ lang }: { lang: string }) {
               ) : (
                 <>
                   <div className="flex items-center gap-4">
-                    <span className="text-6xl font-black text-blue-900 dark:text-blue-300 leading-none">
+                    <span className="text-5xl sm:text-6xl font-black text-blue-900 dark:text-blue-300 leading-none tabular-nums">
                       {weatherData?.temperature !== undefined ? `${Math.round(weatherData.temperature * 10) / 10}°C` : "N/A"}
                     </span>
                     <span className="text-5xl">{getWeatherEmoji(weatherData?.condition || "", weatherData?.temperature || 25)}</span>
                   </div>
-                  <p className="m-0 mt-1 text-blue-500 dark:text-blue-400 font-bold text-xl">
+                  <p className="m-0 mt-1 text-blue-500 dark:text-blue-400 font-bold text-lg sm:text-xl break-words leading-tight">
                     {weatherData?.condition || ""}
                   </p>
                   {marketDistrict && (
-                    <p className="m-0 text-sm text-blue-400 font-semibold italic flex items-center gap-2">
+                    <p className="m-0 text-xs sm:text-sm text-blue-400 font-semibold italic flex items-center gap-2 break-words">
                       📍 {marketDistrict}, {marketRegion}
                       {locationSource === 'GPS' && (
                         <button 
@@ -771,14 +772,14 @@ export default function HomePage({ lang }: { lang: string }) {
           
           <div className="flex gap-5 flex-1 flex-wrap">
             <div className="bg-white dark:bg-slate-800 p-4 rounded-xl flex-[1_1_150px] text-center shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
-              <p className="m-0 mb-1 text-gray-400 text-xs font-black uppercase tracking-widest">{t('iot_hum')}</p>
-              <p className="m-0 font-bold text-gray-800 dark:text-white text-2xl">
+              <p className="m-0 mb-1 text-gray-400 text-[10px] sm:text-xs font-black uppercase tracking-widest break-words">{t('iot_hum')}</p>
+              <p className="m-0 font-black text-gray-800 dark:text-white text-xl sm:text-2xl tabular-nums">
                 {weatherLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : weatherData?.humidity !== undefined ? `${weatherData.humidity}%` : "N/A"}
               </p>
             </div>
             <div className="bg-white dark:bg-slate-800 p-4 rounded-xl flex-[1_1_150px] text-center shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
-              <p className="m-0 mb-1 text-gray-400 text-xs font-black uppercase tracking-widest">{t('weather_wind')}</p>
-              <p className="m-0 font-bold text-gray-800 dark:text-white text-2xl">
+              <p className="m-0 mb-1 text-gray-400 text-[10px] sm:text-xs font-black uppercase tracking-widest break-words">{t('weather_wind')}</p>
+              <p className="m-0 font-black text-gray-800 dark:text-white text-xl sm:text-2xl tabular-nums">
                 {weatherLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : weatherData?.wind_speed !== undefined ? `${weatherData.wind_speed} m/s` : "N/A"}
               </p>
             </div>
@@ -786,8 +787,8 @@ export default function HomePage({ lang }: { lang: string }) {
         </div>
 
         <div className="border-t-2 border-blue-200 dark:border-blue-800 pt-5 flex items-center justify-between gap-4 flex-wrap">
-          <p className="m-0 text-green-700 dark:text-green-400 italic font-bold text-lg min-h-[28px]">
-            {weatherLoading ? <Skeleton className="h-6 w-64" /> : weatherData?.farming_tip ? `💡 ${weatherData.farming_tip}` : "💡 Good farming conditions today"}
+          <p className="m-0 text-green-700 dark:text-green-400 italic font-bold text-base sm:text-lg min-h-[28px] break-words leading-relaxed">
+            {weatherLoading ? <Skeleton className="h-6 w-64" /> : weatherData?.farming_tip ? `💡 ${weatherData.farming_tip}` : "💡 Good farming today"}
           </p>
           
           {!weatherLoading && weatherData && (
@@ -808,87 +809,87 @@ export default function HomePage({ lang }: { lang: string }) {
       {/* 3. FARMER STATS + LIVE FARM DATA */}
       <section className="mb-14">
         <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-xl text-gray-900 dark:text-white font-black uppercase tracking-widest text-xs opacity-50 m-0">{t('home_sensor_data')}</h2>
+          <h2 className="text-base sm:text-xl text-gray-900 dark:text-white font-black uppercase tracking-widest opacity-50 m-0 break-words">{t('home_sensor_data')}</h2>
           {lastUpdated && (Date.now() - lastUpdated < 60000) ? (
-            <span className="bg-green-100 text-green-700 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-green-200 animate-pulse tracking-widest">{t('common_online')}</span>
+            <span className="bg-green-100 text-green-700 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-green-200 animate-pulse tracking-widest uppercase">ONLINE</span>
           ) : lastUpdated ? (
-            <span className="bg-orange-100 text-orange-700 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-orange-200 tracking-widest">{t('common_offline')} - LAST DATA</span>
+            <span className="bg-orange-100 text-orange-700 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-orange-200 tracking-widest uppercase">OFFLINE</span>
           ) : (
-            <span className="bg-gray-100 text-gray-500 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-gray-200 tracking-widest">NOT CONNECTED</span>
+            <span className="bg-gray-100 text-gray-500 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-gray-200 tracking-widest uppercase">NO DATA</span>
           )}
         </div>
         <div className={`grid gap-6 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
           {/* TEMPERATURE */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 md:p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#ef4444] flex flex-col justify-between hover-lift">
-            <div className="w-14 h-14 bg-red-50 dark:bg-red-900/20 rounded-full flex justify-center items-center font-bold text-xl">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#ef4444] flex flex-col justify-between hover-lift overflow-hidden">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-50 dark:bg-red-900/20 rounded-full flex justify-center items-center font-bold text-xl">
               🌡️
             </div>
             <div className="mt-6">
               <div className="min-h-[44px] flex items-center gap-3">
                 {isLoading ? <Skeleton className="h-9 w-24" /> : (
                   <>
-                    <h3 className="m-0 mb-1 text-[36px] font-black tracking-tighter text-gray-900 dark:text-white leading-none">
+                    <Text variant="number" className="m-0 mb-1 text-3xl sm:text-4xl font-black tracking-tighter text-gray-900 dark:text-white leading-none block tabular-nums">
                       {currentSensorData?.temperature || 0}°C
-                    </h3>
-                    <span className={`text-xl font-bold ${getTrend(currentSensorData?.temperature || 25, 'temp') === '↑' ? 'text-red-500' : 'text-blue-500'}`}>
+                    </Text>
+                    <span className={`text-xl font-black tabular-nums ${getTrend(currentSensorData?.temperature || 25, 'temp') === '↑' ? 'text-red-500' : 'text-blue-500'}`}>
                       {getTrend(currentSensorData?.temperature || 25, 'temp')}
                     </span>
                   </>
                 )}
               </div>
-              <p className="m-0 text-[12px] text-gray-400 font-black uppercase tracking-[0.2em] mt-1 pr-1">{t('iot_temp')}</p>
+              <p className="m-0 text-[10px] sm:text-xs text-gray-400 font-black uppercase tracking-widest mt-1 break-words">{t('iot_temp')}</p>
             </div>
           </div>
 
           {/* HUMIDITY */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 md:p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#3b82f6] flex flex-col justify-between hover-lift">
-            <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/20 rounded-full flex justify-center items-center font-bold text-xl">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#3b82f6] flex flex-col justify-between hover-lift overflow-hidden">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-blue-50 dark:bg-blue-900/20 rounded-full flex justify-center items-center font-bold text-xl">
               💧
             </div>
             <div className="mt-6">
               <div className="min-h-[44px] flex items-center gap-3">
                 {isLoading ? <Skeleton className="h-9 w-24" /> : (
                   <>
-                    <h3 className="m-0 mb-1 text-[36px] font-black tracking-tighter text-gray-900 dark:text-white leading-none">
+                    <h3 className="m-0 mb-1 text-3xl sm:text-4xl font-black tracking-tighter text-gray-900 dark:text-white leading-none tabular-nums">
                       {currentSensorData?.humidity || 0}%
                     </h3>
-                    <span className="text-xl font-bold text-blue-500">{getTrend(currentSensorData?.humidity || 50, 'hum')}</span>
+                    <span className="text-xl font-black text-blue-500 tabular-nums">{getTrend(currentSensorData?.humidity || 50, 'hum')}</span>
                   </>
                 )}
               </div>
-              <p className="m-0 text-[12px] text-gray-400 font-black uppercase tracking-[0.2em] mt-1 pr-1">{t('iot_hum')}</p>
+              <p className="m-0 text-[10px] sm:text-xs text-gray-400 font-black uppercase tracking-widest mt-1 break-words">{t('iot_hum')}</p>
             </div>
           </div>
 
           {/* SOIL MOISTURE */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 md:p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#16a34a] flex flex-col justify-between hover-lift">
-            <div className="w-14 h-14 bg-green-50 dark:bg-green-900/20 rounded-full flex justify-center items-center font-bold text-xl">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#16a34a] flex flex-col justify-between hover-lift overflow-hidden">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-green-50 dark:bg-green-900/20 rounded-full flex justify-center items-center font-bold text-xl">
               🌱
             </div>
             <div className="mt-6">
               <div className="min-h-[44px] flex items-center gap-3">
                 {isLoading ? <Skeleton className="h-9 w-24" /> : (
                   <>
-                    <h3 className="m-0 mb-1 text-[36px] font-black tracking-tighter text-gray-900 dark:text-white leading-none">
+                    <h3 className="m-0 mb-1 text-3xl sm:text-4xl font-black tracking-tighter text-gray-900 dark:text-white leading-none tabular-nums">
                       {currentSensorData?.soil_moisture || 0}%
                     </h3>
-                    <span className="text-xl font-bold text-green-500">{getTrend(currentSensorData?.soil_moisture || 50, 'moist')}</span>
+                    <span className="text-xl font-black text-green-500 tabular-nums">{getTrend(currentSensorData?.soil_moisture || 50, 'moist')}</span>
                   </>
                 )}
               </div>
-              <p className="m-0 text-[12px] text-gray-400 font-black uppercase tracking-[0.2em] mt-1 pr-1">{t('iot_moisture')}</p>
+              <p className="m-0 text-[10px] sm:text-xs text-gray-400 font-black uppercase tracking-widest mt-1 break-words">{t('iot_moisture')}</p>
             </div>
           </div>
 
           {/* IRRIGATION */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 md:p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#f97316] flex flex-col justify-between hover-lift">
-            <div className="w-14 h-14 bg-orange-50 dark:bg-orange-900/20 rounded-full flex justify-center items-center font-bold text-xl">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#f97316] flex flex-col justify-between hover-lift overflow-hidden">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-orange-50 dark:bg-orange-900/20 rounded-full flex justify-center items-center font-bold text-xl">
               🚰
             </div>
             <div className="mt-6">
               <div className="min-h-[44px]">
                 {isLoading ? <Skeleton className="h-9 w-24" /> : (
-                  <h3 className={`m-0 mb-1 text-[36px] font-black tracking-tighter leading-none ${
+                  <h3 className={`m-0 mb-1 text-3xl sm:text-4xl font-black tracking-tighter leading-none ${
                     !isPageOnline ? 'text-gray-400' :
                     irrigation?.needed ? "text-red-500" :
                     "text-green-600"
@@ -897,8 +898,8 @@ export default function HomePage({ lang }: { lang: string }) {
                   </h3>
                 )}
               </div>
-              <p className="m-0 text-[12px] text-gray-400 font-black uppercase tracking-[0.2em] mt-1 pr-1">
-                {!isPageOnline ? `${t('home_irrigation')} (${t('common_offline')})` : t('home_irrigation')}
+              <p className="m-0 text-[10px] sm:text-xs text-gray-400 font-black uppercase tracking-widest mt-1 break-words">
+                {!isPageOnline ? `${t('home_irrigation')} (OFFLINE)` : t('home_irrigation')}
               </p>
             </div>
           </div>
@@ -915,32 +916,32 @@ export default function HomePage({ lang }: { lang: string }) {
                 setCropModalTab('list');
               } else navigate('/login');
             }}
-            className="bg-white dark:bg-slate-800 rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100 dark:border-slate-700 hover-lift cursor-pointer transition-all active:scale-95 flex flex-col justify-between min-h-[160px]"
+            className="bg-white dark:bg-slate-800 rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100 dark:border-slate-700 hover-lift cursor-pointer transition-all active:scale-95 flex flex-col justify-between min-h-[160px] overflow-hidden"
           >
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="w-8 h-8 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-sm">🌾</span>
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">My Crops</span>
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest break-words">My Crops</span>
               </div>
               {isLoggedIn ? (
                 <>
-                  <h4 className="m-0 text-[42px] font-black text-gray-900 dark:text-white leading-none mb-2">
+                  <h4 className="m-0 text-3xl sm:text-4xl font-black text-gray-900 dark:text-white leading-none mb-2 tabular-nums">
                     {activeCropsList.length}
                   </h4>
-                  <p className="m-0 text-sm font-bold text-gray-400 uppercase tracking-widest">Active Crops</p>
-                  <p className="m-0 text-[10px] text-green-600 font-black mt-2 uppercase tracking-wide">
+                  <p className="m-0 text-xs font-black text-gray-400 uppercase tracking-widest break-words leading-tight">Active Crops</p>
+                  <p className="m-0 text-[10px] text-green-600 font-black mt-2 uppercase tracking-wide break-words">
                     {activeCropsList.length > 0 ? `Next Harvest: ${getHarvestDate(activeCropsList[0].planted_date, activeCropsList[0].crop_name)?.toLocaleDateString()}` : "No plantings tracked"}
                   </p>
                 </>
               ) : (
                 <>
-                  <h4 className="m-0 text-xl font-black text-gray-900 dark:text-white mb-1">Track Your Crops</h4>
-                  <p className="m-0 text-xs text-gray-500 font-medium italic">Login to add crops & get harvest alerts</p>
+                  <h4 className="m-0 text-lg sm:text-xl font-black text-gray-900 dark:text-white mb-1 break-words leading-tight">Track Your Crops</h4>
+                  <p className="m-0 text-xs text-gray-500 font-medium italic break-words leading-relaxed">Login to add crops & get harvest alerts</p>
                 </>
               )}
             </div>
             <button 
-              className="m-0 text-xs font-black text-green-600 uppercase tracking-widest mt-4 text-left hover:underline"
+              className="m-0 text-xs font-black text-green-600 uppercase tracking-widest mt-4 text-left hover:underline break-words"
             >
               {isLoggedIn ? "Manage Crops →" : "Login →"}
             </button>
@@ -949,31 +950,31 @@ export default function HomePage({ lang }: { lang: string }) {
           {/* CARD 2: MY FARM */}
           <div 
             onClick={() => isLoggedIn ? navigate('/profile') : navigate('/login')}
-            className="bg-white dark:bg-slate-800 rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100 dark:border-slate-700 hover-lift cursor-pointer transition-all active:scale-95 flex flex-col justify-between min-h-[160px]"
+            className="bg-white dark:bg-slate-800 rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100 dark:border-slate-700 hover-lift cursor-pointer transition-all active:scale-95 flex flex-col justify-between min-h-[160px] overflow-hidden"
           >
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-sm">🗺️</span>
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">My Farm</span>
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest break-words">My Farm</span>
               </div>
               {isLoggedIn ? (
                 <>
-                  <h4 className="m-0 text-xl font-black text-gray-900 dark:text-white mb-1">
+                  <h4 className="m-0 text-lg sm:text-xl font-black text-gray-900 dark:text-white mb-1 break-words tabular-nums">
                     {farmer.farm_size || 0} {farmer.farm_size_unit || 'acres'}
                   </h4>
-                  <p className="m-0 text-xs text-gray-500 font-medium italic mb-1">
-                    {recommendedCrop ? `Expected Yield: ~${(farmer.farm_size * 25).toFixed(0)} quintals ${recommendedCrop.name}` : `📍 ${farmer.location || 'Location not set'}`}
+                  <p className="m-0 text-xs text-gray-500 font-medium italic mb-1 break-words">
+                    {recommendedCrop ? `Expected Yield: ~${(farmer.farm_size * 25).toFixed(0)} q` : `📍 ${farmer.location || 'Location not set'}`}
                   </p>
-                  <p className="m-0 text-[10px] text-gray-400 font-bold uppercase tracking-tight">pH: {farmer.soil_ph || '—'} · {farmer.soil_type || 'Soil type not set'}</p>
+                  <p className="m-0 text-[10px] text-gray-400 font-bold uppercase tracking-tight break-words">pH: {farmer.soil_ph || '—'} · {farmer.soil_type || 'Soil type'}</p>
                 </>
               ) : (
                 <>
-                  <h4 className="m-0 text-xl font-black text-gray-900 dark:text-white mb-1">Your Farm Profile</h4>
-                  <p className="m-0 text-xs text-gray-500 font-medium italic">Store farm size, location, soil type</p>
+                  <h4 className="m-0 text-lg sm:text-xl font-black text-gray-900 dark:text-white mb-1 break-words leading-tight">Your Farm Profile</h4>
+                  <p className="m-0 text-xs text-gray-500 font-medium italic break-words leading-relaxed">Store farm size, location, soil type</p>
                 </>
               )}
             </div>
-            <p className="m-0 text-xs font-black text-blue-600 uppercase tracking-widest mt-4">
+            <p className="m-0 text-xs font-black text-blue-600 uppercase tracking-widest mt-4 break-words">
               {isLoggedIn ? "Edit Profile →" : "Setup Farm →"}
             </p>
           </div>
@@ -1135,9 +1136,9 @@ export default function HomePage({ lang }: { lang: string }) {
         <section className="animate-fade-in-up">
           <div className="flex justify-between items-end mb-6">
             <div>
-              <h2 className="text-xl text-gray-900 dark:text-white font-black uppercase tracking-widest text-xs opacity-50 flex items-center gap-2 m-0 mb-1">
+              <Text variant="heading" className="text-base sm:text-xl text-gray-900 dark:text-white font-black uppercase tracking-widest opacity-50 flex items-center gap-2 m-0 mb-1 break-words">
                 📈 Market Hub: {marketDistrict}, {marketRegion}
-              </h2>
+              </Text>
               <div className="flex items-center gap-2">
                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
                  <p className="m-0 text-[10px] text-gray-400 font-black uppercase tracking-widest">
@@ -1179,13 +1180,13 @@ export default function HomePage({ lang }: { lang: string }) {
                   onClick={() => navigate('/market', { state: { selectedCommodity: crop.name }})}
                   className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-6 shadow-sm border border-gray-100 dark:border-slate-700 hover-lift cursor-pointer active:scale-95 transition-all flex items-center justify-between group relative overflow-hidden"
                 >
-                  <div className="flex items-center gap-6 relative z-10">
-                    <div className="w-16 h-16 bg-gray-50 dark:bg-slate-900 rounded-3xl flex items-center justify-center text-4xl shadow-inner border border-gray-100 dark:border-slate-700 group-hover:scale-110 transition-transform">
+                  <div className="flex items-center gap-4 sm:gap-6 relative z-10">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-50 dark:bg-slate-900 rounded-2xl sm:rounded-3xl flex items-center justify-center text-3xl sm:text-4xl shadow-inner border border-gray-100 dark:border-slate-700 group-hover:scale-110 transition-transform flex-shrink-0">
                       { { 'Rice': '🌾', 'Wheat': '🌾', 'Maize': '🌽', 'Tomato': '🍅', 'Potato': '🥔', 'Onion': '🧅', 'Cotton': '☁️', 'Soybean': '🫘', 'Coffee': '☕', 'Mango': '🥭', 'Watermelon': '🍉', 'Mustard': '🌼', 'Sugarcane': '🎋', 'Groundnut': '🥜' }[crop.name] || '🌱' }
                     </div>
                     <div>
-                      <h4 className="m-0 text-xl font-black text-gray-900 dark:text-white tracking-tight">{crop.name}</h4>
-                      <p className="m-0 text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">
+                      <h4 className="m-0 text-base sm:text-xl font-black text-gray-900 dark:text-white tracking-tight break-words leading-tight">{crop.name}</h4>
+                      <p className="m-0 text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1 break-words">
                         {crop.market}
                       </p>
                     </div>
@@ -1193,12 +1194,12 @@ export default function HomePage({ lang }: { lang: string }) {
 
                   <div className="text-right relative z-10">
                     <div className="flex flex-col items-end">
-                      <p className="m-0 text-2xl font-black text-gray-900 dark:text-white tracking-tighter">
+                      <p className="m-0 text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tighter tabular-nums">
                         ₹{crop.price}
                         <span className="text-[10px] text-gray-400 ml-1">/q</span>
                       </p>
                       {crop.change !== 0 && (
-                        <div className={`flex items-center gap-1 mt-1 text-[10px] font-black uppercase tracking-widest ${crop.change > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                        <div className={`flex items-center gap-1 mt-1 text-[10px] font-black uppercase tracking-widest ${crop.change > 0 ? 'text-emerald-500' : 'text-red-500'} tabular-nums`}>
                           <span>{crop.change > 0 ? '↗' : '↘'}</span>
                           <span>{crop.change > 0 ? '+' : ''}{crop.change}%</span>
                         </div>
@@ -1230,7 +1231,7 @@ export default function HomePage({ lang }: { lang: string }) {
         {/* 3-Day Strategy Column */}
         <section className="animate-fade-in-up [animation-delay:200ms]">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl text-gray-900 dark:text-white font-black uppercase tracking-widest text-xs opacity-50 flex items-center gap-2 m-0">
+            <h2 className="text-base sm:text-xl text-gray-900 dark:text-white font-black uppercase tracking-widest opacity-50 flex items-center gap-2 m-0 break-words">
               📅 3-Day Strategy Outlook
             </h2>
           </div>
@@ -1276,7 +1277,7 @@ export default function HomePage({ lang }: { lang: string }) {
                         {condition}
                       </span>
                     </div>
-                    <p className={`m-0 text-xs font-medium italic ${isToday ? 'text-blue-100' : 'text-gray-500'}`}>
+                    <p className={`m-0 text-xs sm:text-sm font-medium italic break-words leading-relaxed ${isToday ? 'text-blue-100' : 'text-gray-500'}`}>
                       💡 {advice}
                     </p>
                   </div>
@@ -1338,14 +1339,14 @@ export default function HomePage({ lang }: { lang: string }) {
                         <span className="bg-green-600 text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest shadow-lg shadow-green-500/20">Active Field Monitor</span>
                         <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{allFields.length} Fields Tracked</span>
                       </div>
-                      <h2 className="m-0 text-3xl font-black text-gray-900 dark:text-white tracking-tighter leading-none">
+                      <h2 className="m-0 text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tighter leading-tight break-words">
                         Next Harvest: <span className="text-green-600">{nearest.crop_name}</span>
                       </h2>
                     </div>
                     <div className="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-xl flex items-center gap-4 border border-gray-100 dark:border-slate-700">
                       <div className="text-right">
                         <p className="m-0 text-[10px] font-black text-gray-400 uppercase tracking-widest">Expected Date</p>
-                        <p className="m-0 text-sm font-black text-gray-900 dark:text-white">
+                        <p className="m-0 text-xs sm:text-sm font-black text-gray-900 dark:text-white tabular-nums">
                           {nearest.harvestDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                       </div>
@@ -1422,14 +1423,14 @@ export default function HomePage({ lang }: { lang: string }) {
                             <div className="w-12 h-12 bg-gray-50 dark:bg-slate-700 rounded-2xl flex items-center justify-center text-2xl shadow-sm group-hover/item:scale-110 transition-transform">
                               {crop.emoji}
                             </div>
-                            <div className="flex flex-col flex-1">
-                               <div className="flex justify-between items-start">
-                                 <span className="text-xs font-black text-gray-900 dark:text-white uppercase truncate max-w-[80px]">{crop.crop_name}</span>
-                                 <span className="text-[10px] font-black text-green-600">{crop.progress}%</span>
+                            <div className="flex flex-col flex-1 overflow-hidden">
+                               <div className="flex justify-between items-start gap-2">
+                                 <span className="text-xs font-black text-gray-900 dark:text-white uppercase truncate break-words leading-tight">{crop.crop_name}</span>
+                                 <span className="text-[10px] font-black text-green-600 tabular-nums">{crop.progress}%</span>
                                </div>
-                               <div className="flex justify-between items-center mt-1">
-                                 <span className="text-[10px] font-bold text-gray-400">{crop.daysLeft} Days left</span>
-                                 <div className="w-12 h-1 bg-gray-200 dark:bg-slate-900 rounded-full overflow-hidden">
+                               <div className="flex justify-between items-center mt-1 gap-2">
+                                 <span className="text-[10px] font-bold text-gray-400 whitespace-nowrap tabular-nums">{crop.daysLeft} Days left</span>
+                                 <div className="w-12 h-1 bg-gray-200 dark:bg-slate-900 rounded-full overflow-hidden flex-shrink-0">
                                     <div className="h-full bg-green-500 rounded-full" style={{ width: `${crop.progress}%` }}></div>
                                  </div>
                                </div>
@@ -1583,13 +1584,13 @@ export default function HomePage({ lang }: { lang: string }) {
                         className="w-full bg-gray-50 dark:bg-slate-800 border-2 border-gray-100 dark:border-slate-700 rounded-2xl p-4 text-gray-900 dark:text-white font-bold focus:outline-none focus:border-[#16a34a] transition-all"
                       />
                       
-                      <div className="mt-8 bg-green-50 dark:bg-green-900/10 p-5 rounded-3xl border border-green-100 dark:border-green-900/30">
-                        <p className="m-0 text-[10px] font-black text-green-600 uppercase tracking-[0.2em] mb-2">Estimated Harvest Date</p>
-                        <p className="m-0 text-2xl font-black text-green-700 dark:text-green-400 tracking-tight">
-                          {getHarvestDate(addingDate, addingCropName)?.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
-                        </p>
-                        <p className="m-0 text-xs text-green-600/70 font-medium italic mt-1">Based on {addingCropName} growth cycle</p>
-                      </div>
+                       <div className="mt-8 bg-green-50 dark:bg-green-900/10 p-5 rounded-3xl border border-green-100 dark:border-green-900/30 overflow-hidden">
+                         <p className="m-0 text-[10px] font-black text-green-600 uppercase tracking-widest mb-2 break-words leading-tight">Estimated Harvest Date</p>
+                         <p className="m-0 text-xl sm:text-2xl font-black text-green-700 dark:text-green-400 tracking-tight tabular-nums">
+                           {getHarvestDate(addingDate, addingCropName)?.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+                         </p>
+                         <p className="m-0 text-xs text-green-600/70 font-medium italic mt-1 break-words leading-relaxed">Based on {addingCropName} growth cycle</p>
+                       </div>
                     </div>
 
                     <div className="flex flex-col gap-3 mt-8">

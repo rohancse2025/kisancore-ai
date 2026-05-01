@@ -134,32 +134,32 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
                  <input 
                   placeholder={t('auth_full_name')} 
                   required 
-                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-sm dark:text-white" 
+                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-slate-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500" 
                   onChange={(e) => setFormData({...formData, name: e.target.value})} 
                 />
               </div>
             )}
 
             <div>
-               <input 
-                placeholder={t('auth_phone')} 
-                type="tel"
-                required 
-                maxLength={10}
-                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-sm dark:text-white" 
-                onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/\D/g, '')})} 
-                value={formData.phone}
-              />
+                <input 
+                 placeholder={t('auth_phone')} 
+                 type="tel"
+                 required 
+                 maxLength={10}
+                 className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-slate-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500" 
+                 onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/\D/g, '')})} 
+                 value={formData.phone}
+               />
             </div>
 
             <div className="relative">
-               <input 
-                placeholder={t('auth_password')} 
-                type={showPassword ? "text" : "password"} 
-                required 
-                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-sm dark:text-white pr-12" 
-                onChange={(e) => setFormData({...formData, password: e.target.value})} 
-              />
+                <input 
+                 placeholder={t('auth_password')} 
+                 type={showPassword ? "text" : "password"} 
+                 required 
+                 className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-slate-900 dark:text-white pr-12 placeholder:text-gray-400 dark:placeholder:text-slate-500" 
+                 onChange={(e) => setFormData({...formData, password: e.target.value})} 
+               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
@@ -181,18 +181,17 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
             {isRegister && (
               <div className="space-y-4">
                 <div className="flex gap-4">
-                  <select 
-                    className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-sm dark:text-white"
-                    onChange={(e) => setFormData({...formData, location: `${e.target.value}, ${formData.location.split(', ')[1] || ''}`})}
-                    value={formData.location.split(', ')[0] || ''}
-                  >
+                     <select 
+                      className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-slate-900 dark:text-white"
+                      onChange={(e) => setFormData({...formData, location: `${e.target.value}, ${formData.location.split(', ')[1] || ''}`})}
+                      value={formData.location.split(', ')[0] || ''}
+                    >
                     <option value="">Select State</option>
                     {STATES_DATA.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
-                  
-                  <input 
+                                    <input 
                     placeholder="Enter District" 
-                    className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-sm dark:text-white" 
+                    className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-slate-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500" 
                     value={formData.location.split(', ')[1] || ''}
                     onChange={(e) => setFormData({...formData, location: `${formData.location.split(', ')[0] || ''}, ${e.target.value}`})} 
                   />
@@ -205,11 +204,10 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
                 >
                   {isDetecting ? 'Detecting...' : '📍 Auto-Detect My Location'}
                 </button>
-                
-                <input 
+                                <input 
                   placeholder={t('auth_farm_size') + " (Acres)"} 
                   type="number" step="0.1" 
-                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-sm dark:text-white" 
+                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-slate-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500" 
                   onChange={(e) => setFormData({...formData, farm_size: e.target.value})} 
                 />
               </div>

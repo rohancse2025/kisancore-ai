@@ -1,0 +1,21 @@
+@layer utilities {
+  /* Mobile-optimized text rendering */
+  .text-render-optimized {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  
+  /* Prevent text overflow */
+  .text-safe {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+  }
+  
+  /* Numbers that don't shift layout */
+  .text-number {
+    font-variant-numeric: tabular-nums;
+  }
+}

@@ -172,7 +172,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gray-50 dark:bg-slate-900 transition-colors duration-300 font-sans">
+    <div className="min-h-screen w-full bg-gray-50 dark:bg-slate-900 transition-colors duration-300 font-sans text-render-optimized antialiased">
       
       {/* 1. TOP NAVBAR */}
       {!isLoginPage && (

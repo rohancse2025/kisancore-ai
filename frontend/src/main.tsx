@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './ui/App.tsx'
 import './styles.css'
+import './styles/typography.css'
 import { SensorProvider } from './context/SensorContext'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
