@@ -213,6 +213,7 @@ async def handle_incoming_whatsapp(
             soil = iot.latest_reading.get("soil_moisture", "--")
             mode = iot.latest_reading.get("manual_override") or "AUTO"
             irr  = "ON" if iot.latest_reading.get("irrigation_needed") else "OFF"
+            last_seen = iot.latest_reading.get("timestamp", "Never")
             
             response_msg = (
                 f"🌿 Farm Status:\n"
@@ -221,6 +222,7 @@ async def handle_incoming_whatsapp(
                 f"🪴 Soil: {soil}%\n"
                 f"⚡ Pump: {irr}\n"
                 f"⚙️ Mode: {mode}\n"
+                f"🕒 Last Update: {last_seen}\n"
                 f"- KisanCore AI"
             )
 

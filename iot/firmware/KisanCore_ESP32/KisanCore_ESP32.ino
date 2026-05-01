@@ -1,31 +1,31 @@
 /**
  * KisanCore IoT — ESP32 Firmware
- * 
+ *
  * Hardware:
  * - ESP32 DevKit V1
  * - DHT22 (Temperature & Humidity)
  * - Soil Moisture Sensor (Analog)
  * - 12V Fan (via Relay)
- * 
+ *
  * Required Libraries:
  * - DHT sensor library by Adafruit
  * - ArduinoJson by Benoit Blanchon (v6.x)
  */
 
-#include <WiFi.h>
-#include <WiFiClientSecure.h>
-#include <HTTPClient.h>
-#include <DHT.h>
 #include <ArduinoJson.h>
+#include <DHT.h>
+#include <HTTPClient.h>
+#include <WiFi.h>
+#include <WiFiClientSecure.h> // Added for HTTPS support
 
 // ===== USER CONFIGURATION =====
-const char* WIFI_SSID = "YourWiFiName";
-const char* WIFI_PASSWORD = "YourWiFiPassword";
-const char* SERVER_IP = "10.17.82.36"; 
-const int SERVER_PORT = 8000;
-const int READ_INTERVAL = 30000;         // 30 seconds
-const int SOIL_DRY_THRESHOLD = 30;       // Below this = irrigation needed
-const int SOIL_WET_THRESHOLD = 60;       // Above this = safety shutoff
+const char *WIFI_SSID = "Redmi 10A";
+const char *WIFI_PASSWORD = "Rohan1234";
+const char *SERVER_IP = "kisancore-api-1.onrender.com"; // Switched to Render Cloud
+const int SERVER_PORT = 443;                           // HTTPS Port
+const int READ_INTERVAL = 30000;   // 30 seconds
+const int SOIL_DRY_THRESHOLD = 30; // Below this = irrigation needed
+const int SOIL_WET_THRESHOLD = 60; // Above this = safety shutoff
 // ==============================
 
 // HARDWARE PINS
@@ -53,13 +53,13 @@ void setup() {
   pinMode(RELAY_PIN, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW); // Start with fan OFF
-  
+
   dht.begin();
-  
+
   Serial.println("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   Serial.println("   KisanCore IoT System Starting   ");
   Serial.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  
+
   connectWiFi();
 }
 
@@ -76,7 +76,7 @@ void loop() {
   if (millis() - lastReadTime >= READ_INTERVAL || lastReadTime == 0) {
     lastReadTime = millis();
     readingCount++;
-    
+
     performCycle();
   }
 }
@@ -91,17 +91,22 @@ void performCycle() {
 
   // A. Read Sensors
   readSensors();
-  
+
   // B. Post to Backend
   String relayCommand = postToBackend();
-  
+
   // C. Control Relay
   controlRelay(relayCommand);
-  
+
   // D. Local Safety Check
   safetyCheck();
 
-  Serial.printf("WiFi: Connected (RSSI: %d dBm)\n", WiFi.RSSI());
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.printf("WiFi: Connected (RSSI: %d dBm)\n", WiFi.RSSI());
+  } else {
+    Serial.println("WiFi: DISCONNECTED");
+  }
+  
   Serial.printf("Temperature: %.1f°C\n", lastTemp);
   Serial.printf("Humidity: %.1f%%\n", lastHum);
   Serial.printf("Soil Moisture: %.1f%%\n", lastSoil);
@@ -115,25 +120,33 @@ void performCycle() {
  * Connects to WiFi with 30s timeout and fast blink status
  */
 void connectWiFi() {
-  Serial.printf("Connecting to %s...", WIFI_SSID);
+  Serial.printf("Connecting to WiFi: %s...\n", WIFI_SSID);
+
+  WiFi.disconnect(true);   
+  delay(1000);
+  WiFi.mode(WIFI_STA); 
+  delay(100);
+
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  
-  unsigned long startAttempt = millis();
-  
-  while (WiFi.status() != WL_CONNECTED && (millis() - startAttempt < 30000)) {
+
+  int retry = 0;
+  while (WiFi.status() != WL_CONNECTED && retry < 60) { // Increased to 30s (60 * 500ms)
     digitalWrite(LED_PIN, HIGH);
-    delay(100);
+    delay(250);
     digitalWrite(LED_PIN, LOW);
-    delay(100);
+    delay(250);
     Serial.print(".");
+    retry++;
   }
-  
+
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\nWiFi Connected!");
-    digitalWrite(LED_PIN, HIGH); // Solid ON when connected
+    Serial.println("\n✅ WiFi Connected!");
+    Serial.print("IP: ");
+    Serial.println(WiFi.localIP());
+    digitalWrite(LED_PIN, HIGH);
   } else {
-    Serial.println("\nWiFi Connection Failed. Retrying in 10s...");
-    delay(10000);
+    Serial.printf("\n❌ WiFi Failed! (Status: %d)\n", WiFi.status());
+    Serial.println("TIP: Check if Hotspot is set to 2.4GHz Band.");
   }
 }
 
@@ -145,7 +158,7 @@ void readSensors() {
   float h = dht.readHumidity();
   float t = dht.readTemperature();
   int retry = 0;
-  
+
   while ((isnan(h) || isnan(t)) && retry < 3) {
     Serial.println("DHT22 Read Failure! Retrying in 2s...");
     delay(2000);
@@ -164,7 +177,7 @@ void readSensors() {
   if (rawSoil == 4095) {
     Serial.println("WARNING: Soil sensor disconnected or very dry (4095)");
   }
-  
+
   // dry (4095) -> 0%, wet (0) -> 100%
   lastSoil = map(rawSoil, 4095, 0, 0, 100);
   lastSoil = constrain(lastSoil, 0, 100); // Ensure range 0-100
@@ -174,45 +187,46 @@ void readSensors() {
  * Sends JSON data to backend and receives command
  */
 String postToBackend() {
-  if (WiFi.status() != WL_CONNECTED) return "KEEP";
+  if (WiFi.status() != WL_CONNECTED)
+    return "KEEP";
 
+  String result = "KEEP"; // Declare at the top to fix scope error
   WiFiClientSecure client;
-  client.setInsecure(); // This allows connecting to Render without managing SSL certificates
+  client.setInsecure(); 
 
   HTTPClient http;
-  // Use HTTPS URL
-  String url = "http://" + String(SERVER_IP) + ":" + String(SERVER_PORT) + "/api/v1/iot/data";
+  String url = "https://" + String(SERVER_IP) + "/api/v1/iot/data";
   
-  if (http.begin(client, url)) { // Pass the secure client to http.begin
+  Serial.printf("Cloud Sync: %s\n", url.c_str());
+
+  if (http.begin(client, url)) {
     http.addHeader("Content-Type", "application/json");
-    http.setTimeout(15000); // Increased timeout for Render wake-up
+    http.setTimeout(15000); 
 
-  // Create JSON body
-  StaticJsonDocument<200> doc;
-  doc["temperature"] = lastTemp;
-  doc["humidity"] = lastHum;
-  doc["soil_moisture"] = lastSoil;
-  
-  String requestBody;
-  serializeJson(doc, requestBody);
+    StaticJsonDocument<200> doc;
+    doc["temperature"] = lastTemp;
+    doc["humidity"] = lastHum;
+    doc["soil_moisture"] = lastSoil;
 
-  int httpCode = http.POST(requestBody);
-  String result = "KEEP";
+    String requestBody;
+    serializeJson(doc, requestBody);
 
-  if (httpCode > 0) {
-    if (httpCode == HTTP_CODE_OK || httpCode == 201) {
-      String response = http.getString();
-      StaticJsonDocument<200> resDoc;
-      DeserializationError error = deserializeJson(resDoc, response);
-      
-      if (!error && resDoc.containsKey("relay_command")) {
-        result = resDoc["relay_command"].as<String>();
-        Serial.printf("Backend: relay_command = %s\n", result.c_str());
+    int httpCode = http.POST(requestBody);
+
+    if (httpCode > 0) {
+      if (httpCode == HTTP_CODE_OK || httpCode == 201) {
+        String response = http.getString();
+        StaticJsonDocument<200> resDoc;
+        DeserializationError error = deserializeJson(resDoc, response);
+
+        if (!error && resDoc.containsKey("relay_command")) {
+          result = resDoc["relay_command"].as<String>();
+          Serial.printf("Backend: relay_command = %s\n", result.c_str());
+        }
       }
+    } else {
+      Serial.printf("Backend Error: %s\n", http.errorToString(httpCode).c_str());
     }
-  } else {
-    Serial.printf("Backend Error: %s\n", http.errorToString(httpCode).c_str());
-  }
     http.end();
   }
   return result;
@@ -229,7 +243,7 @@ void controlRelay(String command) {
     relayState = LOW;
     Serial.println("Relay: OFF");
   }
-  
+
   digitalWrite(RELAY_PIN, relayState);
 }
 
@@ -241,7 +255,7 @@ void safetyCheck() {
     relayState = LOW;
     digitalWrite(RELAY_PIN, LOW);
     Serial.println("SAFETY: Auto-shutoff at 60% moisture");
-    
+
     // 5 Rapid blinks for safety event
     for (int i = 0; i < 5; i++) {
       digitalWrite(LED_PIN, HIGH);
@@ -256,7 +270,8 @@ void safetyCheck() {
  * Manages the status LED patterns without blocking
  */
 void handleStatusLED() {
-  if (WiFi.status() != WL_CONNECTED) return; // Handled in connectWiFi()
+  if (WiFi.status() != WL_CONNECTED)
+    return; // Handled in connectWiFi()
 
   // Slow blink (1s) if relay is active
   if (relayState == HIGH) {
