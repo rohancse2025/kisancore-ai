@@ -188,24 +188,23 @@ async def handle_incoming_whatsapp(
         if "PUMP ON" in text:
             duration = 60
             parts = text.split()
-            # Try to find a number in the parts for duration
             for p in parts:
                 if p.isdigit():
                     duration = int(p)
                     break
-            iot.latest_reading["manual_override"] = "ON"
-            iot.latest_reading["override_expiry_time"] = time.time() + (duration * 60)
-            response_msg = f"KisanCore: Pump activated for {duration} mins. 💧"
+            latest_reading["manual_override"] = "ON"
+            latest_reading["override_expiry_time"] = time.time() + (duration * 60)
+            response_msg = f"KisanCore [V2.3]: Pump activated for {duration} mins. 💧"
 
         elif "PUMP OFF" in text:
-            iot.latest_reading["manual_override"] = "OFF"
-            iot.latest_reading["override_expiry_time"] = time.time() + 86400
-            response_msg = "KisanCore: Pump turned OFF manually. 🛑"
+            latest_reading["manual_override"] = "OFF"
+            latest_reading["override_expiry_time"] = time.time() + 86400
+            response_msg = "KisanCore [V2.3]: Pump turned OFF manually. 🛑"
 
         elif "AUTO" in text:
-            iot.latest_reading["manual_override"] = None
-            iot.latest_reading["override_expiry_time"] = 0
-            response_msg = "KisanCore: Pump restored to Autonomous AI Mode. 🤖"
+            latest_reading["manual_override"] = None
+            latest_reading["override_expiry_time"] = 0
+            response_msg = "KisanCore [V2.3]: Pump restored to Autonomous AI Mode. 🤖"
 
         elif "STATUS" in text:
             temp = iot.latest_reading.get("temperature", "--")

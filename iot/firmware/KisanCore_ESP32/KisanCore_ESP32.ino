@@ -21,7 +21,7 @@
 // ===== USER CONFIGURATION =====
 const char *WIFI_SSID = "Redmi 10A";
 const char *WIFI_PASSWORD = "Rohan1234";
-const char *SERVER_IP = "kisancore-api-1.onrender.com"; // Switched to Render Cloud
+const char *SERVER_IP = "kisancore-ai-1.onrender.com"; // Fixed: changed 'api' to 'ai'
 const int SERVER_PORT = 443;                           // HTTPS Port
 const int READ_INTERVAL = 30000;   // 30 seconds
 const int SOIL_DRY_THRESHOLD = 30; // Below this = irrigation needed
