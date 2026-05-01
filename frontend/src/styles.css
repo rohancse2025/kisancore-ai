@@ -31,6 +31,7 @@ body {
   background-color: var(--bg-page);
   color: var(--text-main);
   transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-text-size-adjust: 100%;
 }
 
 /* AUTOMATIC THEME SWITCHING FIX */

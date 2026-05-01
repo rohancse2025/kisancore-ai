@@ -293,24 +293,24 @@ export default function ChatPage({ lang }: { lang: string }) {
       <div className="flex-1 flex flex-col bg-white dark:bg-slate-950 relative h-full">
         
         {/* Header */}
-        <div className="py-3 px-4 sm:py-5 sm:px-8 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center z-10">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center text-2xl sm:text-3xl">🤖</div>
+        <div className="py-2.5 px-4 sm:py-5 sm:px-8 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 sm:w-12 sm:h-12 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center text-xl sm:text-3xl">🤖</div>
             <div>
-              <h2 className="m-0 text-[#16a34a] text-lg font-black tracking-tight">
+              <h2 className="m-0 text-[#16a34a] text-base sm:text-lg font-black tracking-tight">
                 {t('chat_title')}
               </h2>
-              <p className="m-0 text-xs text-gray-400 dark:text-slate-500 font-bold">
-                Powered by AI — Ask anything about farming
+              <p className="m-0 text-[10px] sm:text-xs text-gray-400 dark:text-slate-500 font-bold">
+                Powered by AI — Ask anything
               </p>
             </div>
           </div>
           
-          <div className="flex gap-4 items-center">
+          <div className="flex gap-2.5 items-center">
             {isMobile && (
               <button
                 onClick={() => setShowSidebar(!showSidebar)}
-                className={`w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-sm border
+                className={`w-9 h-9 rounded-full flex items-center justify-center text-base shadow-sm border
                   ${showSidebar ? 'bg-[#16a34a] text-white border-[#16a34a]' : 'bg-gray-50 dark:bg-slate-800 text-gray-500 border-gray-100 dark:border-slate-700'}`}
               >
                 💡
@@ -322,10 +322,10 @@ export default function ChatPage({ lang }: { lang: string }) {
                 setAutoSpeak(!autoSpeak);
                 if (autoSpeak && window.speechSynthesis) window.speechSynthesis.cancel();
               }}
-              className={`flex items-center gap-2 h-10 px-5 rounded-full text-xs font-black uppercase tracking-widest cursor-pointer transition-all border shadow-sm
+              className={`flex items-center gap-1.5 h-9 px-3.5 sm:px-5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest cursor-pointer transition-all border shadow-sm
                 ${autoSpeak ? 'bg-[#16a34a] text-white border-[#16a34a]' : 'bg-white dark:bg-slate-800 text-gray-500 border-gray-100 dark:border-slate-700'}`}
             >
-              {autoSpeak ? "Auto-speak ON" : "Auto-speak OFF"}
+              <span className="hidden sm:inline">Auto-speak</span> {autoSpeak ? "ON" : "OFF"}
             </button>
           </div>
         </div>
@@ -335,8 +335,8 @@ export default function ChatPage({ lang }: { lang: string }) {
           {messages.map(msg => {
             const isUser = msg.sender === 'user';
             return (
-            <div key={msg.id} className={`flex flex-col max-w-[90%] sm:max-w-[80%] animate-fade-in-up ${isUser ? 'self-end items-end' : 'self-start items-start'}`}>
-                <div className={`px-4 py-3 sm:px-6 sm:py-4 rounded-2xl sm:rounded-3xl text-sm sm:text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap font-medium hover-lift transition-transform
+            <div key={msg.id} className={`flex flex-col max-w-[92%] sm:max-w-[80%] animate-fade-in-up ${isUser ? 'self-end items-end' : 'self-start items-start'}`}>
+                <div className={`px-3.5 py-2.5 sm:px-6 sm:py-4 rounded-2xl sm:rounded-3xl text-sm sm:text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap font-medium hover-lift transition-transform
                   ${isUser 
                     ? 'bg-[#16a34a] text-white rounded-br-none' 
                     : 'bg-green-50 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-bl-none border border-gray-100 dark:border-slate-700'}`}>
@@ -368,14 +368,14 @@ export default function ChatPage({ lang }: { lang: string }) {
           <div ref={messagesEndRef} className="h-4" />
         </div>
 
-        {/* Language Pill Selector */}
-        <div className="px-6 py-3 bg-gray-50/50 dark:bg-slate-900/50 border-t border-gray-100 dark:border-slate-800 flex gap-2 flex-wrap items-center">
-          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mr-2">Language:</span>
+        {/* Language Selector - Horizontal Scroll for Mobile */}
+        <div className="px-4 py-2.5 sm:px-6 sm:py-3 bg-gray-50/50 dark:bg-slate-900/50 border-t border-gray-100 dark:border-slate-800 flex gap-2 overflow-x-auto scrollbar-hide items-center">
+          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mr-2 flex-shrink-0">Language:</span>
           {LANG_OPTIONS.map(opt => (
             <button
               key={opt.code}
               onClick={() => handleLangChange(opt.code)}
-              className={`px-4 py-1.5 rounded-full text-[13px] font-bold transition-all border
+              className={`px-4 py-1.5 rounded-full text-[12px] sm:text-[13px] font-bold transition-all border flex-shrink-0
                 ${chatLang === opt.code 
                    ? 'bg-[#16a34a] text-white border-[#16a34a] shadow-sm' 
                    : 'bg-white dark:bg-slate-800 text-gray-500 border-gray-100 dark:border-slate-700 hover:bg-green-50'}`}
@@ -386,13 +386,13 @@ export default function ChatPage({ lang }: { lang: string }) {
         </div>
 
         {/* Input Area */}
-        <div className="p-4 sm:p-6 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 flex gap-3 sm:gap-4 items-center">
+        <div className="p-3 sm:p-6 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 flex gap-2.5 sm:gap-4 items-center">
           <button
             onClick={toggleListening}
-            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full border-none flex items-center justify-center cursor-pointer transition-all flex-shrink-0 shadow-sm ripple
+            className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full border-none flex items-center justify-center cursor-pointer transition-all flex-shrink-0 shadow-sm ripple
               ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-700'}`}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill={isListening ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill={isListening ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5">
               <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
               <line x1="12" x2="12" y1="19" y2="22"></line>
@@ -405,13 +405,13 @@ export default function ChatPage({ lang }: { lang: string }) {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={isListening ? "Listening..." : (LANG_OPTIONS.find(l => l.code === chatLang)?.hint || t('chat_placeholder'))}
-            className="flex-1 h-12 px-6 bg-gray-50 dark:bg-slate-800 border-none rounded-2xl text-[15px] outline-none text-gray-800 dark:text-white transition-all focus-ring-green font-medium"
+            className="flex-1 h-11 sm:h-12 px-4 sm:px-6 bg-gray-50 dark:bg-slate-800 border-none rounded-xl sm:rounded-2xl text-sm sm:text-[15px] outline-none text-gray-800 dark:text-white transition-all focus-ring-green font-medium"
           />
           
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className={`w-12 h-12 rounded-full text-white border-none flex items-center justify-center cursor-pointer transition-all flex-shrink-0 shadow-lg ripple
+            className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full text-white border-none flex items-center justify-center cursor-pointer transition-all flex-shrink-0 shadow-lg ripple
               ${(!input.trim() || isLoading) ? 'bg-gray-200 dark:bg-slate-800 text-gray-400 cursor-not-allowed' : 'bg-[#16a34a] hover:bg-[#15803d] active:scale-95'}`}
           >
             {isLoading ? (
