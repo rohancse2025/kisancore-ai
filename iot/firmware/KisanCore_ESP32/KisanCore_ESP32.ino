@@ -120,33 +120,34 @@ void performCycle() {
  * Connects to WiFi with 30s timeout and fast blink status
  */
 void connectWiFi() {
-  Serial.printf("Connecting to WiFi: %s...\n", WIFI_SSID);
-
-  WiFi.disconnect(true);   
+  Serial.println("\n--- WiFi Reset & Reconnect ---");
+  
+  WiFi.persistent(false); // Don't save WiFi credentials to flash
+  WiFi.disconnect(true);  // Wipe old settings
   delay(1000);
-  WiFi.mode(WIFI_STA); 
-  delay(100);
-
+  
+  WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
+  Serial.printf("Connecting to: %s\n", WIFI_SSID);
+
   int retry = 0;
-  while (WiFi.status() != WL_CONNECTED && retry < 60) { // Increased to 30s (60 * 500ms)
-    digitalWrite(LED_PIN, HIGH);
-    delay(250);
-    digitalWrite(LED_PIN, LOW);
-    delay(250);
+  // Try for 20 seconds (40 * 500ms)
+  while (WiFi.status() != WL_CONNECTED && retry < 40) {
+    delay(500);
     Serial.print(".");
+    digitalWrite(LED_PIN, !digitalRead(LED_PIN)); // Blink LED
     retry++;
   }
 
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("\n✅ WiFi Connected!");
-    Serial.print("IP: ");
+    Serial.print("Local IP: ");
     Serial.println(WiFi.localIP());
-    digitalWrite(LED_PIN, HIGH);
+    digitalWrite(LED_PIN, HIGH); // Solid ON
   } else {
-    Serial.printf("\n❌ WiFi Failed! (Status: %d)\n", WiFi.status());
-    Serial.println("TIP: Check if Hotspot is set to 2.4GHz Band.");
+    Serial.printf("\n❌ WiFi Failed (Status: %d)\n", WiFi.status());
+    Serial.println("Action: Try changing hotspot name to 'Rohan' (no spaces).");
   }
 }
 
@@ -187,17 +188,18 @@ void readSensors() {
  * Sends JSON data to backend and receives command
  */
 String postToBackend() {
-  if (WiFi.status() != WL_CONNECTED)
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Post skipped: WiFi not connected.");
     return "KEEP";
+  }
 
-  String result = "KEEP"; // Declare at the top to fix scope error
   WiFiClientSecure client;
   client.setInsecure(); 
 
   HTTPClient http;
   String url = "https://" + String(SERVER_IP) + "/api/v1/iot/data";
   
-  Serial.printf("Cloud Sync: %s\n", url.c_str());
+  Serial.printf("Cloud Syncing to: %s\n", url.c_str());
 
   if (http.begin(client, url)) {
     http.addHeader("Content-Type", "application/json");
@@ -211,25 +213,32 @@ String postToBackend() {
     String requestBody;
     serializeJson(doc, requestBody);
 
+    Serial.println("Sending POST data...");
     int httpCode = http.POST(requestBody);
 
     if (httpCode > 0) {
+      Serial.printf("Cloud Response Code: %d\n", httpCode);
       if (httpCode == HTTP_CODE_OK || httpCode == 201) {
         String response = http.getString();
+        Serial.println("Cloud Response: " + response);
         StaticJsonDocument<200> resDoc;
         DeserializationError error = deserializeJson(resDoc, response);
 
         if (!error && resDoc.containsKey("relay_command")) {
-          result = resDoc["relay_command"].as<String>();
-          Serial.printf("Backend: relay_command = %s\n", result.c_str());
+          String result = resDoc["relay_command"].as<String>();
+          Serial.printf("Backend Order: %s\n", result.c_str());
+          http.end();
+          return result;
         }
       }
     } else {
-      Serial.printf("Backend Error: %s\n", http.errorToString(httpCode).c_str());
+      Serial.printf("Cloud Connection Error: %s\n", http.errorToString(httpCode).c_str());
     }
     http.end();
+  } else {
+    Serial.println("Cloud Error: http.begin failed.");
   }
-  return result;
+  return "KEEP";
 }
 
 /**
