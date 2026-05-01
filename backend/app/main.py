@@ -33,7 +33,26 @@ def create_tables():
 
 @app.get("/")
 def root():
-    return {"message": "KisanCore API is Live!", "docs": "/docs"}
+    return {"message": "KisanCore API is Live!", "version": "V2.2"}
+
+@app.post("/api/v1/iot/data")
+@app.post("/api/v1/iot/")
+async def iot_fallback(data: dict):
+    from app.api.routes.iot import latest_reading
+    import time
+    from datetime import datetime
+    
+    now = datetime.now()
+    formatted_time = now.strftime("%I:%M %p")
+    
+    latest_reading.update({
+        "temperature": data.get("temperature", 0),
+        "humidity": data.get("humidity", 0),
+        "soil_moisture": data.get("soil_moisture", 0),
+        "timestamp": formatted_time,
+        "unix_timestamp": int(time.time() * 1000)
+    })
+    return {"status": "ok", "source": "fallback"}
 
 @app.get("/health")
 def health() -> dict:
