@@ -85,16 +85,10 @@ export default function App() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const [isMobile, setIsMobile] = useState(() => {
-    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-    return window.innerWidth < 1024 || /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
-  });
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
   useEffect(() => {
-    const handleResize = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-      setIsMobile(window.innerWidth < 1024 || /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase()));
-    };
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -178,7 +172,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-full w-full flex flex-col bg-gray-50 dark:bg-slate-900 transition-colors duration-300 font-sans text-render-optimized antialiased overflow-hidden">
+    <div className="min-h-screen w-full flex flex-col bg-gray-50 dark:bg-slate-900 transition-colors duration-300 font-sans text-render-optimized antialiased">
       
       {/* 1. TOP NAVBAR */}
       {!isLoginPage && (
@@ -387,10 +381,10 @@ export default function App() {
       )}
 
       {/* 2. MAIN CONTENT AREA */}
-      <main className="flex-1 overflow-y-auto transition-all duration-300 relative flex flex-col">
+      <main className="flex-1 transition-all duration-300 relative flex flex-col">
         <div 
           key={location.pathname}
-          className={`${(location.pathname === '/login' || location.pathname === '/chat') ? 'flex-1 flex flex-col' : 'max-w-[1200px] mx-auto px-4 md:px-12 py-4 md:py-8 min-h-full'} transition-all animate-fade-in`}
+          className={`${(location.pathname === '/login' || location.pathname === '/chat') ? 'flex-1 flex flex-col' : 'max-w-[1200px] mx-auto px-4 md:px-12 py-4 md:py-8'} transition-all animate-fade-in`}
         >
           <Routes>
             <Route path="/login" element={<LoginPage lang={lang} onLogin={(user: any) => setFarmer(user)} />} />

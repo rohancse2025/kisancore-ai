@@ -36,17 +36,11 @@ export default function ChatPage({ lang }: { lang: string }) {
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [chatLang, setChatLang] = useState('EN');
   
-  const [isMobile, setIsMobile] = useState(() => {
-    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-    return window.innerWidth < 1024 || /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
-  });
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [showSidebar, setShowSidebar] = useState(false);
 
   useEffect(() => {
-    const handleResize = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-      setIsMobile(window.innerWidth < 1024 || /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase()));
-    };
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -252,7 +246,7 @@ export default function ChatPage({ lang }: { lang: string }) {
   };
 
   return (
-    <div className="flex h-full bg-white dark:bg-slate-900 overflow-hidden w-full border-t border-gray-100 dark:border-slate-800">
+    <div className="flex h-[calc(100vh-80px)] bg-white dark:bg-slate-900 overflow-hidden w-full border-t border-gray-100 dark:border-slate-800">
       
       {/* SIDEBAR - Desktop: Side-by-side, Mobile: Overlay */}
       {(!isMobile || showSidebar) && (
