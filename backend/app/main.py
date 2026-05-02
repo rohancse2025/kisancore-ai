@@ -35,45 +35,7 @@ def create_tables():
 def root():
     return {"message": "KisanCore API is Live!", "version": "V2.2"}
 
-@app.post("/api/v1/iot/data")
-@app.post("/api/v1/iot/")
-async def iot_fallback(data: dict):
-    from app.api.routes.iot import latest_reading
-    import time
-    from datetime import datetime
-    
-    now = datetime.now()
-    formatted_time = now.strftime("%I:%M %p")
-    
-    # Update state
-    temp = data.get("temperature", 0)
-    hum = data.get("humidity", 0)
-    soil = data.get("soil_moisture", 0)
-    
-    latest_reading.update({
-        "temperature": temp,
-        "humidity": hum,
-        "soil_moisture": soil,
-        "timestamp": formatted_time,
-        "unix_timestamp": int(time.time() * 1000)
-    })
-    
-    # Calculate command
-    override = latest_reading.get("manual_override")
-    irrigation_needed = False
-    
-    if override == "ON":
-        irrigation_needed = True
-    elif override == "OFF":
-        irrigation_needed = False
-    else:
-        irrigation_needed = soil < 30 # Simple auto logic for fallback
-        
-    return {
-        "status": "ok", 
-        "source": "fallback",
-        "relay_command": "ON" if irrigation_needed else "OFF"
-    }
+# Duplicate IoT routes removed - logic is now handled in app/api/routes/iot.py
 
 @app.get("/health")
 def health() -> dict:

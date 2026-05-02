@@ -207,38 +207,50 @@ async def handle_incoming_whatsapp(
             response_msg = "KisanCore [V2.3]: Pump restored to Autonomous AI Mode. 🤖"
 
         elif "STATUS" in text:
-            temp = iot.latest_reading.get("temperature", "--")
-            hum  = iot.latest_reading.get("humidity", "--")
-            soil = iot.latest_reading.get("soil_moisture", "--")
+            temp = iot.latest_reading.get("temperature", 0)
+            hum  = iot.latest_reading.get("humidity", 0)
+            soil = iot.latest_reading.get("soil_moisture", 0)
             mode = iot.latest_reading.get("manual_override") or "AUTO"
             irr  = "ON" if iot.latest_reading.get("irrigation_needed") else "OFF"
             last_seen = iot.latest_reading.get("timestamp", "Never")
             
-            response_msg = (
-                f"🌿 Farm Status:\n"
-                f"🌡️ Temp: {temp}°C\n"
-                f"💧 Humidity: {hum}%\n"
-                f"🪴 Soil: {soil}%\n"
-                f"⚡ Pump: {irr}\n"
-                f"⚙️ Mode: {mode}\n"
-                f"🕒 Last Update: {last_seen}\n"
-                f"- KisanCore AI"
-            )
+            if last_seen == "Never":
+                response_msg = (
+                    "⚠️ Farm Status Unavailable:\n"
+                    "No data received from your farm yet. Please ensure your KisanCore device is powered on and connected to WiFi.\n"
+                    "🕒 Last Update: Never\n"
+                    "- KisanCore AI"
+                )
+            else:
+                response_msg = (
+                    f"🌿 Farm Status:\n"
+                    f"🌡️ Temp: {temp}°C\n"
+                    f"💧 Humidity: {hum}%\n"
+                    f"🪴 Soil: {soil}%\n"
+                    f"⚡ Pump: {irr}\n"
+                    f"⚙️ Mode: {mode}\n"
+                    f"🕒 Last Update: {last_seen}\n"
+                    f"- KisanCore AI"
+                )
 
         elif "DAILY" in text:
-            temp = iot.latest_reading.get("temperature", "--")
-            hum  = iot.latest_reading.get("humidity", "--")
-            soil = iot.latest_reading.get("soil_moisture", "--")
-            irr  = "ON" if iot.latest_reading.get("irrigation_needed") else "OFF"
-            mode = iot.latest_reading.get("manual_override") or "AUTO"
-            response_msg = (
-                f"📊 KisanCore Daily Report:\n"
-                f"Temp: {temp}°C | Humidity: {hum}%\n"
-                f"Soil: {soil}% | Pump: {irr}\n"
-                f"Mode: {mode}\n"
-                f"Send HELP for commands.\n"
-                f"- KisanCore AI"
-            )
+            last_seen = iot.latest_reading.get("timestamp", "Never")
+            if last_seen == "Never":
+                response_msg = "📊 Daily Report: No data has been recorded for your farm yet today. - KisanCore AI"
+            else:
+                temp = iot.latest_reading.get("temperature", 0)
+                hum  = iot.latest_reading.get("humidity", 0)
+                soil = iot.latest_reading.get("soil_moisture", 0)
+                irr  = "ON" if iot.latest_reading.get("irrigation_needed") else "OFF"
+                mode = iot.latest_reading.get("manual_override") or "AUTO"
+                response_msg = (
+                    f"📊 KisanCore Daily Report:\n"
+                    f"Temp: {temp}°C | Humidity: {hum}%\n"
+                    f"Soil: {soil}% | Pump: {irr}\n"
+                    f"Mode: {mode}\n"
+                    f"Send HELP for commands.\n"
+                    f"- KisanCore AI"
+                )
 
         elif "HELP" in text:
             response_msg = (

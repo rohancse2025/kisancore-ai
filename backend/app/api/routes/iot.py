@@ -13,7 +13,9 @@ class IOTData(BaseModel):
 
 import time
 
-# --- IN-MEMORY STORAGE ---
+# --- IN-MEMORY STORAGE & PERSISTENCE ---
+DATA_FILE = "latest_reading.json"
+
 latest_reading = {
     "temperature": 0.0,
     "humidity": 0.0,
@@ -27,6 +29,30 @@ latest_reading = {
     "farmer_sms_phone": "",
     "last_alert_time": 0
 }
+
+def save_persistence():
+    try:
+        import json
+        with open(DATA_FILE, "w") as f:
+            json.dump(latest_reading, f)
+    except Exception as e:
+        print(f"Error saving persistence: {e}")
+
+def load_persistence():
+    global latest_reading
+    try:
+        import json
+        import os
+        if os.path.exists(DATA_FILE):
+            with open(DATA_FILE, "r") as f:
+                saved_data = json.load(f)
+                latest_reading.update(saved_data)
+                print("Persistence loaded successfully.")
+    except Exception as e:
+        print(f"Error loading persistence: {e}")
+
+# Load data on startup
+load_persistence()
 
 # --- ROUTES ---
 
@@ -111,6 +137,7 @@ async def post_iot_data(data: IOTData):
         "timestamp": formatted_time,
         "unix_timestamp": int(time.time() * 1000)
     })
+    save_persistence()
     
     # --- FEATURE 1: SMART ALERTS ---
     alert_cooldown_ok = (time.time() - latest_reading["last_alert_time"]) > 60  # 1 min cooldown
@@ -177,6 +204,7 @@ async def set_override(req: OverrideRequest):
     else:
         latest_reading["override_expiry_time"] = time.time() + 86400  # Stays theoretically off for longer unless cleared
     
+    save_persistence()
     return {"status": "ok", "message": f"Pump overridden to {req.command}"}
 
 @router.delete("/override")
