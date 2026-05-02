@@ -65,8 +65,10 @@ def test_iot():
 async def post_iot_data(data: IOTData):
     print(f"IOT DEBUG: Received data -> Temp: {data.temperature}, Hum: {data.humidity}, Soil: {data.soil_moisture}")
     global latest_reading
-    # Get current time formatted as "10:30 AM"
-    now = datetime.now()
+    # Get current time in IST (UTC+5:30)
+    from datetime import timezone, timedelta
+    ist_offset = timezone(timedelta(hours=5, minutes=30))
+    now = datetime.now(ist_offset)
     formatted_time = now.strftime("%I:%M %p")
     
     # --- MANUAL OVERRIDE AND SAFETY CHECK LOGIC ---

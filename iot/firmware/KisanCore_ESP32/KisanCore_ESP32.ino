@@ -79,24 +79,27 @@ void performCycle() {
 }
 
 void connectWiFi() {
-  Serial.println("\n--- WiFi Reset & Reconnect ---");
-  WiFi.persistent(false);
-  WiFi.disconnect(true);
-  delay(1000);
+  Serial.println("\n--- WiFi Reconnect Attempt ---");
   WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false); // Prevents WiFi from going to sleep (fixes some disconnect issues)
+  
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   int retry = 0;
-  while (WiFi.status() != WL_CONNECTED && retry < 40) {
-    delay(500);
+  while (WiFi.status() != WL_CONNECTED && retry < 30) {
+    delay(1000);
     Serial.print(".");
-    digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+    digitalWrite(LED_PIN, !digitalRead(LED_PIN)); // Blink LED while connecting
     retry++;
   }
+
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("\n✅ WiFi Connected!");
+    Serial.print("IP Address: ");
+    Serial.println(WiFi.localIP());
     digitalWrite(LED_PIN, HIGH);
   } else {
-    Serial.printf("\n❌ WiFi Failed (Status: %d)\n", WiFi.status());
+    Serial.printf("\n❌ WiFi Failed (Status: %d). Retrying in 5s...\n", WiFi.status());
+    delay(5000); // Wait 5 seconds before the main loop tries again
   }
 }
 
