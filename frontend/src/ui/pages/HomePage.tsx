@@ -118,7 +118,13 @@ export default function HomePage({ lang }: { lang: string }) {
   
   // 1. Auth & Profile
   const isLoggedIn = !!localStorage.getItem('kisancore_farmer');
-  const farmer = JSON.parse(localStorage.getItem('kisancore_farmer') || 'null');
+  const farmer = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('kisancore_farmer') || 'null');
+    } catch (e) {
+      return null;
+    }
+  })();
 
   // 2. State for dashboard
   const [weatherData, setWeatherData] = useState<any>(null);

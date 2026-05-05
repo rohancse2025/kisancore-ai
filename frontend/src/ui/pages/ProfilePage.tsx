@@ -27,7 +27,13 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
   });
 
   useEffect(() => {
-    const farmer = JSON.parse(localStorage.getItem('kisancore_farmer') || 'null');
+    const farmer = (() => {
+      try {
+        return JSON.parse(localStorage.getItem('kisancore_farmer') || 'null');
+      } catch (e) {
+        return null;
+      }
+    })();
     if (!farmer) {
       setLoading(false);
       return;

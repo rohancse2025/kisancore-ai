@@ -9,9 +9,9 @@
 #include <WiFiClientSecure.h> 
 
 // ===== USER CONFIGURATION =====
-const char *WIFI_SSID = "Redmi 10A";      
+const char *WIFI_SSID = "Rohan";
 const char *WIFI_PASSWORD = "Rohan1234";
-const char *SERVER_IP = "kisancore-ai-1.onrender.com"; 
+const char *SERVER_IP = "kisancore-ai-1.onrender.com";
 const int SERVER_PORT = 443;                           
 const int READ_INTERVAL = 5000;   // SET TO 5 SECONDS FOR FAST TESTING
 const int SOIL_DRY_THRESHOLD = 30; 
@@ -20,7 +20,7 @@ const int SOIL_WET_THRESHOLD = 60;
 
 #define DHT_PIN 4
 #define SOIL_PIN 34
-#define RELAY_PIN 27
+#define RELAY_PIN 26
 #define LED_PIN 2
 #define DHTTYPE DHT22
 
@@ -38,6 +38,20 @@ void setup() {
   Serial.begin(115200);
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, HIGH); // Active-Low: HIGH = OFF
+  
+  // --- HARDWARE TEST: Blink Relay 3 times ---
+  Serial.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  Serial.println("   HARDWARE TEST: Blinking Relay   ");
+  for(int i=0; i<3; i++) {
+    digitalWrite(RELAY_PIN, HIGH);
+    Serial.println("   >>> RELAY ON (Motor should run)");
+    delay(2000);
+    digitalWrite(RELAY_PIN, LOW);
+    Serial.println("   >>> RELAY OFF (Motor should stop)");
+    delay(2000);
+  }
+  Serial.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  
   pinMode(LED_PIN, OUTPUT);
 
   dht.begin();
@@ -167,7 +181,7 @@ void controlRelay(String command) {
 void safetyCheck() {
   if (lastSoil >= SOIL_WET_THRESHOLD && relayState == HIGH) {
     relayState = LOW;
-    digitalWrite(RELAY_PIN, HIGH); // HIGH = OFF for Active-Low
+    digitalWrite(RELAY_PIN, HIGH); // Active-Low: HIGH = OFF
     Serial.println("SAFETY: Auto-shutoff triggered");
   }
 }

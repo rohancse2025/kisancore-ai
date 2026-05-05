@@ -15,7 +15,14 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [farmer, setFarmer] = useState(() => JSON.parse(localStorage.getItem('kisancore_farmer') || 'null'));
+  const [farmer, setFarmer] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('kisancore_farmer') || 'null');
+    } catch (e) {
+      console.error("Failed to parse farmer data", e);
+      return null;
+    }
+  });
   const isLoggedIn = !!farmer;
 
   const logout = () => {
@@ -134,7 +141,13 @@ export default function App() {
   const isLoginPage = location.pathname.toLowerCase().includes("/login");
 
   function RequiresAuth({ children, feature }: { children: React.ReactNode, feature: string }) {
-    const farmer = JSON.parse(localStorage.getItem('kisancore_farmer') || 'null');
+    const farmer = (() => {
+      try {
+        return JSON.parse(localStorage.getItem('kisancore_farmer') || 'null');
+      } catch (e) {
+        return null;
+      }
+    })();
     const [bypass, setBypass] = useState(
       () => sessionStorage.getItem(`bypass_${feature}`) === 'true'
     );
