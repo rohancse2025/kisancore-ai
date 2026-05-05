@@ -35,6 +35,7 @@ export default function ScanPage({ lang }: { lang: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -48,7 +49,18 @@ export default function ScanPage({ lang }: { lang: string }) {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleFile = (file: File) => {
-    if (!file.type.startsWith("image/")) return;
+    setError(null);
+    if (!file.type.startsWith("image/")) {
+      setError("Please upload a valid image file.");
+      return;
+    }
+    
+    // Check file size (4MB limit)
+    if (file.size > 4 * 1024 * 1024) {
+      setError("Image size is too large. Please upload an image smaller than 4MB.");
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => setPreview(e.target?.result as string);
     reader.readAsDataURL(file);
@@ -70,6 +82,7 @@ export default function ScanPage({ lang }: { lang: string }) {
   const clearImage = () => {
     setPreview(null);
     setResult(null);
+    setError(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -77,6 +90,7 @@ export default function ScanPage({ lang }: { lang: string }) {
     if (!preview) return;
     setIsAnalyzing(true);
     setResult(null);
+    setError(null);
 
     // 📡 Offline Detection
     if (!navigator.onLine) {
@@ -93,43 +107,60 @@ export default function ScanPage({ lang }: { lang: string }) {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout for vision
 
     try {
-      // 1. Mock the initial detection (In a real app, this would be a vision model)
-      await new Promise((res) => setTimeout(res, 2000));
-      const detectedDisease = COMMON_DISEASES[Math.floor(Math.random() * COMMON_DISEASES.length)].name;
-      
-      // 2. Fetch professional AI advice for this disease
-      const prompt = `My plant has been diagnosed with "${detectedDisease}". Give me a JSON response with: "disease" (the name), "confidence" (a number between 90-99), "severity" (Mild/Moderate/Severe), "treatment" (2 sentences of medicine/action), and "prevention" (2 sentences of future advice). Return ONLY JSON. Use English only for all text values.`;
-      
-      const res = await fetch(`${API_BASE_URL}/api/v1/chat/`, {
+      // 1. Send image to Groq Vision API for detection
+      const base64Image = preview.split(',')[1]; // Remove data:image prefix
+      const visionPrompt = `Analyze this image. First, verify if it is actually a plant or leaf.
+      If the image is NOT a plant or leaf (e.g., a person, car, or random object), you MUST return "Not a Plant" as the disease.
+      If it is a healthy plant with no spots, discoloration, or pests, return "Healthy Plant".
+      Otherwise, identify the specific plant disease.
+      Return ONLY a JSON object with this exact structure, nothing else:
+      {
+        "disease": "Specific disease name, OR 'Healthy Plant', OR 'Not a Plant'",
+        "confidence": 85-99 (number),
+        "severity": "None" or "Mild" or "Moderate" or "Severe",
+        "treatment": "Treatment advice, or 'Please upload a valid plant leaf image.' if not a plant",
+        "prevention": "Prevention advice, or 'N/A' if not a plant"
+      }
+      Do not include any markdown formatting, backticks, or extra text. Return ONLY valid JSON.`;
+
+      const visionRes = await fetch(`${API_BASE_URL}/api/v1/chat/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: prompt, history: [] }),
+        body: JSON.stringify({
+          message: visionPrompt,
+          history: [],
+          image: base64Image  // Send base64 image data
+        }),
         signal: controller.signal
       });
+
+      if (!visionRes.ok) throw new Error("Vision API request failed");
       
-      if (!res.ok) throw new Error("AI Advice failed");
-      const data = await res.json();
+      const visionData = await visionRes.json();
       
-      // Parse the JSON from the AI response (it might have triple backticks)
-      const jsonStr = data.reply.replace(/```json|```/g, "").trim();
+      // Parse AI response
+      const jsonStr = visionData.reply.replace(/```json|```|json/g, "").trim();
       const aiResult = JSON.parse(jsonStr);
       
       setResult({
-        disease: aiResult.disease || detectedDisease,
-        confidence: aiResult.confidence || 95.0,
+        disease: aiResult.disease || "Unknown Disease",
+        confidence: aiResult.confidence || 85.0,
         severity: aiResult.severity || "Moderate",
-        treatment: aiResult.treatment || "Consult an expert.",
-        prevention: aiResult.prevention || "Maintain good hygiene."
+        treatment: aiResult.treatment || "Consult an agricultural expert.",
+        prevention: aiResult.prevention || "Maintain good plant hygiene."
       });
     } catch (err: any) {
       console.error("Analysis Error:", err);
+      setError("AI analysis failed. Showing fallback result.");
+      
+      // Fallback to mock result with disclaimer
       const detectedDisease = COMMON_DISEASES[Math.floor(Math.random() * COMMON_DISEASES.length)].name;
       setResult({
         ...MOCK_RESULT,
-        disease: `${detectedDisease} (Fallback)`,
+        disease: `${detectedDisease} (AI Fallback)`,
       });
     } finally {
       clearTimeout(timeoutId);
@@ -137,10 +168,28 @@ export default function ScanPage({ lang }: { lang: string }) {
     }
   };
 
+  const handleShareWhatsApp = () => {
+    if (!result) return;
+    const formattedText = `*🌿 KisanCore AI Crop Scan*
+*Disease:* 🦠 ${result.disease}
+*Confidence:* 🎯 ${result.confidence}%
+*Severity:* ⚠️ ${result.severity}
+
+*💊 Recommended Treatment:*
+${result.treatment}
+
+*🛡️ Prevention Plan:*
+${result.prevention}
+
+_Powered by KisanCore AI - Smart Agriculture Assistant_ 👨‍🌾🚜`;
+    const text = encodeURIComponent(formattedText);
+    window.open(`whatsapp://send?text=${text}`, '_blank');
+  };
+
   const severityColor = (s: string) =>
-    s === "Severe" ? "text-red-500" : s === "Mild" ? "text-green-600" : "text-amber-500";
+    s === "Severe" ? "text-red-500" : (s === "Mild" || s === "None") ? "text-green-600" : "text-amber-500";
   const severityBg = (s: string) =>
-    s === "Severe" ? "bg-red-50" : s === "Mild" ? "bg-green-50" : "bg-amber-50";
+    s === "Severe" ? "bg-red-50" : (s === "Mild" || s === "None") ? "bg-green-50" : "bg-amber-50";
 
   return (
     <div className="pb-12 font-sans">
@@ -152,6 +201,13 @@ export default function ScanPage({ lang }: { lang: string }) {
           Upload a photo of your plant leaf to detect diseases instantly
         </p>
       </section>
+
+      {/* ERROR MESSAGE */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl mb-6 font-bold flex items-center gap-3 animate-fade-in">
+          <span>⚠️</span> {error}
+        </div>
+      )}
 
       {/* TWO-COLUMN LAYOUT */}
       <div className={`grid gap-7 mb-10 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
@@ -196,7 +252,7 @@ export default function ScanPage({ lang }: { lang: string }) {
                   Click to upload or drag &amp; drop
                 </p>
                 <p className="m-0 text-sm text-gray-400 font-medium">
-                  Supports JPG, PNG — max 5MB
+                  Supports JPG, PNG — max 4MB
                 </p>
               </>
             )}
@@ -207,7 +263,7 @@ export default function ScanPage({ lang }: { lang: string }) {
             onClick={analyzeImage}
             disabled={!preview || isAnalyzing}
             className={`w-full p-4 rounded-xl text-lg font-bold flex items-center justify-center gap-3 transition-all shadow-lg ripple
-              ${!preview || isAnalyzing ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-900 text-white cursor-pointer hover:bg-gray-800 active:scale-95'}`}
+               ${!preview || isAnalyzing ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-900 text-white cursor-pointer hover:bg-gray-800 active:scale-95'}`}
           >
             {isAnalyzing ? (
               <>
@@ -310,7 +366,7 @@ export default function ScanPage({ lang }: { lang: string }) {
               </div>
 
               {/* Action Buttons */}
-              <div className="p-8 pt-0 flex gap-4 flex-wrap">
+              <div className={`p-8 pt-0 flex gap-4 ${isMobile ? 'flex-col' : 'flex-wrap'}`}>
                 <button
                   onClick={clearImage}
                   className="flex-1 min-w-[160px] py-4 px-6 bg-white text-gray-900 border-2 border-gray-100 rounded-2xl text-sm font-black transition-all hover:border-gray-900 active:scale-95 ripple"
@@ -322,6 +378,12 @@ export default function ScanPage({ lang }: { lang: string }) {
                   className="flex-1 min-w-[160px] py-4 px-6 bg-[#16a34a] text-white border-none rounded-2xl text-sm font-black transition-all hover:bg-[#15803d] active:scale-95 shadow-lg shadow-green-600/20 ripple"
                 >
                   🤖 Talk to AI Expert
+                </button>
+                <button
+                  onClick={handleShareWhatsApp}
+                  className="flex-1 min-w-[160px] py-4 px-6 bg-[#25D366] text-white border-none rounded-2xl text-sm font-black transition-all hover:bg-[#128C7E] active:scale-95 shadow-lg shadow-green-600/20 ripple"
+                >
+                  📱 Share via WhatsApp
                 </button>
               </div>
             </div>
@@ -349,3 +411,4 @@ export default function ScanPage({ lang }: { lang: string }) {
     </div>
   );
 }
+

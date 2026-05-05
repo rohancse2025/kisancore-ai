@@ -41,7 +41,11 @@ def get_farming_tip(temp: float, humidity: int, condition: str) -> str:
 
 @router.get("", response_model=WeatherResponse)
 @router.get("/", response_model=WeatherResponse)
-async def get_weather(lat: float = Query(30.9010), lon: float = Query(75.8573)):
+async def get_weather(
+    lat: float = Query(None), 
+    lon: float = Query(None),
+    city: str = Query(None)
+):
     api_key = os.environ.get("OPENWEATHER_API_KEY", "").strip()
 
     if not api_key:
@@ -51,12 +55,24 @@ async def get_weather(lat: float = Query(30.9010), lon: float = Query(75.8573)):
             detail="OPENWEATHER_API_KEY is not set. Add it to backend/.env and restart the server."
         )
 
-    logger.info(f"Fetching weather for lat={lat}, lon={lon} (key ends with ...{api_key[-4:]})")
-
-    url = (
-        f"https://api.openweathermap.org/data/2.5/weather"
-        f"?lat={lat}&lon={lon}&appid={api_key}&units=metric"
-    )
+    if city:
+        logger.info(f"Fetching weather for city={city} (key ends with ...{api_key[-4:]})")
+        # Ensure proper URL encoding for city names with spaces
+        import urllib.parse
+        encoded_city = urllib.parse.quote(city)
+        url = (
+            f"https://api.openweathermap.org/data/2.5/weather"
+            f"?q={encoded_city}&appid={api_key}&units=metric"
+        )
+    else:
+        # Fallback to default Ludhiana if neither is provided
+        use_lat = lat if lat is not None else 30.9010
+        use_lon = lon if lon is not None else 75.8573
+        logger.info(f"Fetching weather for lat={use_lat}, lon={use_lon} (key ends with ...{api_key[-4:]})")
+        url = (
+            f"https://api.openweathermap.org/data/2.5/weather"
+            f"?lat={use_lat}&lon={use_lon}&appid={api_key}&units=metric"
+        )
 
     try:
         req = urllib.request.Request(url)

@@ -181,18 +181,21 @@ export default function HomePage({ lang }: { lang: string }) {
   
   // High Accuracy Master Location Fetch
   useEffect(() => {
+    let watchId: number;
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
+      watchId = navigator.geolocation.watchPosition(
         (pos) => setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
         () => {
-          // Fallback to Ludhiana if GPS fails
-          setCoords({ lat: 30.9010, lon: 75.8573 });
+          if (!coords) setCoords({ lat: 30.9010, lon: 75.8573 });
         },
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
     } else {
       setCoords({ lat: 30.9010, lon: 75.8573 });
     }
+    return () => {
+      if (watchId) navigator.geolocation.clearWatch(watchId);
+    };
   }, []);
 
   const [isSyncing, setIsSyncing] = useState(false);
@@ -333,13 +336,21 @@ export default function HomePage({ lang }: { lang: string }) {
     };
   }, []);
 
+  const [marketRegion, setMarketRegion] = useState<string>('');
+  const [marketDistrict, setMarketDistrict] = useState<string>('');
+  const [locationSource, setLocationSource] = useState<'GPS' | 'Profile' | 'Weather' | 'Default'>('Default');
+
   useEffect(() => {
     if (!coords) return;
     
     const fetchWeather = async () => {
       setWeatherLoading(true);
       try {
-        const res = await axios.get(`${API_BASE_URL}/api/v1/weather?lat=${coords.lat}&lon=${coords.lon}`);
+        let url = `${API_BASE_URL}/api/v1/weather?lat=${coords.lat}&lon=${coords.lon}`;
+        if (locationSource === 'Profile') {
+          url = `${API_BASE_URL}/api/v1/weather?city=${encodeURIComponent(farmer?.location || marketDistrict)}`;
+        }
+        const res = await axios.get(url);
         setWeatherData(res.data);
       } catch (err) {
         console.error("Weather fetch failed", err);
@@ -348,7 +359,7 @@ export default function HomePage({ lang }: { lang: string }) {
       }
     };
     fetchWeather();
-  }, [coords]);
+  }, [coords, locationSource, marketDistrict]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -383,13 +394,23 @@ export default function HomePage({ lang }: { lang: string }) {
   }, []);
 
 
-  const [marketRegion, setMarketRegion] = useState<string>('');
-  const [marketDistrict, setMarketDistrict] = useState<string>('');
-  const [locationSource, setLocationSource] = useState<'GPS' | 'Profile' | 'Weather' | 'Default'>('Default');
+
 
   // SMART LOCATION HIERARCHY
   useEffect(() => {
     const resolveLocation = async () => {
+      const preferred = localStorage.getItem('preferred_location_source');
+      
+      if (preferred === 'Profile' && isLoggedIn && farmer?.location) {
+         const parts = farmer.location.split(',');
+         const city = parts[0]?.trim() || 'Ludhiana';
+         const state = parts.length > 1 ? parts[1].trim() : city;
+         setMarketRegion(state);
+         setMarketDistrict(city);
+         setLocationSource('Profile');
+         return;
+      }
+
       // 1. Use Coords if available (from high-accuracy GPS)
       if (coords && (coords.lat !== 30.9010 || coords.lon !== 75.8573)) {
         try {
@@ -411,9 +432,11 @@ export default function HomePage({ lang }: { lang: string }) {
       
       // 2. Fallback to Profile or Default
       if (isLoggedIn && farmer?.location) {
-         const parts = farmer.location.split(', ');
-         setMarketRegion(parts[0] || 'Punjab');
-         setMarketDistrict(parts[1] || 'Ludhiana');
+         const parts = farmer.location.split(',');
+         const city = parts[0]?.trim() || 'Ludhiana';
+         const state = parts.length > 1 ? parts[1].trim() : city;
+         setMarketRegion(state);
+         setMarketDistrict(city);
          setLocationSource('Profile');
       } else {
         setMarketRegion('Punjab');
@@ -767,10 +790,13 @@ export default function HomePage({ lang }: { lang: string }) {
                       {locationSource === 'GPS' && (
                         <button 
                           onClick={() => {
-                            const [s, d] = (farmer?.location || 'Punjab, Ludhiana').split(', ');
-                            setMarketRegion(s);
-                            setMarketDistrict(d);
+                            const parts = (farmer?.location || 'Ludhiana, Punjab').split(',');
+                            const city = parts[0]?.trim() || 'Ludhiana';
+                            const state = parts.length > 1 ? parts[1].trim() : city;
+                            setMarketRegion(state);
+                            setMarketDistrict(city);
                             setLocationSource('Profile');
+                            localStorage.setItem('preferred_location_source', 'Profile');
                           }}
                           className="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full not-italic hover:bg-blue-200 transition-all font-black uppercase"
                         >

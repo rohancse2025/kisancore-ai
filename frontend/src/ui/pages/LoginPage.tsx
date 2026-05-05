@@ -57,7 +57,7 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
       }, () => {
         setError("Location access denied.");
         setIsDetecting(false);
-      });
+      }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
     }
   };
 

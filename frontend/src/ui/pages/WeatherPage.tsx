@@ -58,7 +58,35 @@ export default function WeatherPage() {
       return;
     }
 
+    const preferred = localStorage.getItem('preferred_location_source');
+    const farmer = (() => { try { return JSON.parse(localStorage.getItem('kisancore_farmer') || 'null'); } catch(e){return null;} })();
+
+    const fetchProfileWeather = async () => {
+       try {
+          const parts = farmer.location.split(',');
+          const city = parts[0]?.trim() || 'Ludhiana';
+          const res = await fetch(`${API_BASE_URL}/api/v1/weather?city=${encodeURIComponent(city)}`);
+          if (!res.ok) throw new Error("Weather fetch failed");
+          const data: WeatherData = await res.json();
+          setWeather(data);
+       } catch (e) {
+          const params = getDefaultWeatherParams();
+          setOfflineForecast(predictWeatherOffline(params));
+       } finally {
+          setLoading(false);
+       }
+    };
+
+    if (preferred === 'Profile' && farmer?.location) {
+      fetchProfileWeather();
+      return;
+    }
+
     if (!navigator.geolocation) {
+      if (farmer?.location) {
+        fetchProfileWeather();
+        return;
+      }
       setError("Your browser does not support location access. Please allow location to see weather.");
       setLoading(false);
       return;
@@ -81,9 +109,14 @@ export default function WeatherPage() {
         }
       },
       (_err) => {
+        if (farmer?.location) {
+          fetchProfileWeather();
+          return;
+        }
         setError("Location access denied. Please allow location in your browser to see weather.");
         setLoading(false);
-      }
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   }, []);
 

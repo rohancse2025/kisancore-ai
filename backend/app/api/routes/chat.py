@@ -5,7 +5,7 @@ import json
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import List, Any
+from typing import List, Any, Optional
 import asyncio
 from groq import Groq
 from app.core.settings import settings
@@ -15,6 +15,7 @@ router = APIRouter()
 class ChatRequest(BaseModel):
     message: str
     history: List[Any] = []
+    image: Optional[str] = None
 
 class ChatResponse(BaseModel):
     reply: str
@@ -53,16 +54,36 @@ async def chat_endpoint(request: ChatRequest):
         try:
             client = Groq(api_key=api_key)
 
-            messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-            for msg in request.history:
-                if isinstance(msg, dict) and "role" in msg and "content" in msg:
-                    messages.append({"role": msg["role"], "content": msg["content"]})
-            messages.append({"role": "user", "content": request.message})
+            messages = []
+            
+            # Use vision model if image is present
+            if request.image:
+                model = "meta-llama/llama-4-scout-17b-16e-instruct"
+                messages.append({
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": request.message},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{request.image}",
+                            },
+                        },
+                    ],
+                })
+            else:
+                model = "llama-3.3-70b-versatile"
+                messages.append({"role": "system", "content": SYSTEM_PROMPT})
+                for msg in request.history:
+                    if isinstance(msg, dict) and "role" in msg and "content" in msg:
+                        messages.append({"role": msg["role"], "content": msg["content"]})
+                messages.append({"role": "user", "content": request.message})
 
             response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model=model,
                 messages=messages,
-                max_tokens=300,
+                max_tokens=500 if request.image else 300,
+                temperature=0.0,
             )
             return ChatResponse(reply=response.choices[0].message.content)
 
