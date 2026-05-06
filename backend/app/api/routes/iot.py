@@ -152,22 +152,31 @@ async def post_iot_data(data: IOTData):
     save_persistence()
     
     # --- FEATURE 1: SMART ALERTS ---
-    alert_cooldown_ok = (time.time() - latest_reading["last_alert_time"]) > 60  # 1 min cooldown
+    # Cooldown check (increased to 1 hour to avoid spamming)
+    alert_cooldown_ok = (time.time() - latest_reading["last_alert_time"]) > 3600 
 
     if alert_cooldown_ok and data.soil_moisture < 30:
         latest_reading["last_alert_time"] = time.time()
         
-        if irrigation_needed:
-            alert_msg = (
-                f"KisanCore ALERT: Soil is STILL DRY ({data.soil_moisture}%).\n"
-                f"The pump is currently ON and watering your crops. 💧"
-            )
+        is_manual = latest_reading.get("manual_override") is not None
+        
+        if is_manual:
+            if latest_reading["manual_override"] == "ON":
+                alert_msg = (
+                    f"KisanCore ALERT: Soil is STILL DRY ({data.soil_moisture}%).\n"
+                    f"Pump is manually set to ON. 💧"
+                )
+            else:
+                alert_msg = (
+                    f"KisanCore ALERT: Soil is DRY ({data.soil_moisture}%).\n"
+                    f"Pump is currently manually OFF. Should I turn it on?\n"
+                    f"Reply 'PUMP ON 30' to water for 30 mins."
+                )
         else:
+            # AUTO MODE
             alert_msg = (
-                f"KisanCore SMART ALERT:\n"
-                f"Soil moisture is TOO DRY ({data.soil_moisture}%).\n"
-                f"Your crops may need water. Should I turn on the pump?\n"
-                f"Reply 'PUMP ON 30' to water for 30 mins."
+                f"KisanCore AUTO-ALERT: Soil is DRY ({data.soil_moisture}%).\n"
+                f"I have automatically turned the pump ON for you. 🌾💧"
             )
         broadcast_whatsapp(alert_msg)
         print(f"SMART ALERT [DRY] BROADCAST SENT | Moisture: {data.soil_moisture}%")
