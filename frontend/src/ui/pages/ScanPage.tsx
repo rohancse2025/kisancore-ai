@@ -142,8 +142,10 @@ export default function ScanPage({ lang }: { lang: string }) {
       const visionData = await visionRes.json();
       
       // Parse AI response
-      const jsonStr = visionData.reply.replace(/```json|```|json/g, "").trim();
-      const aiResult = JSON.parse(jsonStr);
+      // Improved JSON extraction: find the first { and last }
+      const match = visionData.reply.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("AI did not return a valid JSON object");
+      const aiResult = JSON.parse(match[0]);
       
       setResult({
         disease: aiResult.disease || "Unknown Disease",

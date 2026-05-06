@@ -164,7 +164,6 @@ def daily_summary(phone: str,
   return {"status": "sent" if success else "failed"}
 
 @router.post("/webhook")
-@router.post("/webhook")
 async def handle_incoming_whatsapp(
     From: str = Form(...),
     Body: str = Form("")

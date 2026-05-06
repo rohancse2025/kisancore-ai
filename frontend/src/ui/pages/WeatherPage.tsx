@@ -64,7 +64,7 @@ export default function WeatherPage() {
     const fetchProfileWeather = async () => {
        try {
           const parts = farmer.location.split(',');
-          const city = parts[0]?.trim() || 'Ludhiana';
+          const city = parts.length > 1 ? parts[1].trim() : (parts[0]?.trim() || 'Ludhiana');
           const res = await fetch(`${API_BASE_URL}/api/v1/weather?city=${encodeURIComponent(city)}`);
           if (!res.ok) throw new Error("Weather fetch failed");
           const data: WeatherData = await res.json();

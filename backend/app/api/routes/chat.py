@@ -58,7 +58,7 @@ async def chat_endpoint(request: ChatRequest):
             
             # Use vision model if image is present
             if request.image:
-                model = "meta-llama/llama-4-scout-17b-16e-instruct"
+                model = "llama-3.2-11b-vision-preview" # Reverted to stable Groq vision model
                 messages.append({
                     "role": "user",
                     "content": [

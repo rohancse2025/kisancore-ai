@@ -403,8 +403,8 @@ export default function HomePage({ lang }: { lang: string }) {
       
       if (preferred === 'Profile' && isLoggedIn && farmer?.location) {
          const parts = farmer.location.split(',');
-         const city = parts[0]?.trim() || 'Ludhiana';
-         const state = parts.length > 1 ? parts[1].trim() : city;
+         const state = parts[0]?.trim() || 'Punjab';
+         const city = parts.length > 1 ? parts[1].trim() : 'Ludhiana';
          setMarketRegion(state);
          setMarketDistrict(city);
          setLocationSource('Profile');
@@ -433,8 +433,8 @@ export default function HomePage({ lang }: { lang: string }) {
       // 2. Fallback to Profile or Default
       if (isLoggedIn && farmer?.location) {
          const parts = farmer.location.split(',');
-         const city = parts[0]?.trim() || 'Ludhiana';
-         const state = parts.length > 1 ? parts[1].trim() : city;
+         const state = parts[0]?.trim() || 'Punjab';
+         const city = parts.length > 1 ? parts[1].trim() : 'Ludhiana';
          setMarketRegion(state);
          setMarketDistrict(city);
          setLocationSource('Profile');
