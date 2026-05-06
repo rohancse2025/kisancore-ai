@@ -328,10 +328,77 @@ export default function IoTPage({ lang }: { lang: string }) {
         <div className="absolute top-0 right-0 -mr-10 -mt-10 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
       </section>
 
-      {/* SENSOR CARDS */}
-      <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-        <span className="text-green-600">📊</span> {t('home_sensor_data')}
-      </h2>
+      {/* MODE SELECTOR AT THE TOP */}
+      <div className="mt-8 flex flex-col md:flex-row items-center justify-between gap-6 bg-white border border-gray-100 rounded-[2.5rem] p-6 shadow-xl animate-fade-in">
+        <div className="flex items-center gap-4">
+          <div className={`w-14 h-14 rounded-3xl flex items-center justify-center text-2xl shadow-lg transition-all ${manual_override === null ? 'bg-blue-600 text-white animate-pulse' : 'bg-orange-500 text-white'}`}>
+            {manual_override === null ? '🤖' : '🕹️'}
+          </div>
+          <div>
+            <h3 className="text-xl font-black m-0 p-0 text-gray-900">
+              {manual_override === null ? 'Auto AI Mode' : 'Manual Control'}
+            </h3>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest m-0 mt-1">
+              {manual_override === null ? 'AI is managing your farm' : 'You are in full control'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex bg-gray-100 p-1.5 rounded-2xl w-full md:w-auto">
+          <button 
+            onClick={() => handleOverride('AUTO')}
+            className={`flex-1 md:flex-none px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${manual_override === null ? 'bg-white text-blue-600 shadow-md scale-105' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            🤖 Auto
+          </button>
+          <button 
+            onClick={() => handleOverride('OFF')} // Default to OFF when switching to Manual for safety
+            className={`flex-1 md:flex-none px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${manual_override !== null ? 'bg-white text-orange-600 shadow-md scale-105' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            🕹️ Manual
+          </button>
+        </div>
+      </div>
+
+      {/* REVEAL MANUAL CONTROLS ONLY IN MANUAL MODE */}
+      {manual_override !== null && (
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-12 gap-4 animate-slide-up">
+          <div className="md:col-span-8 bg-white border border-gray-200 rounded-[2rem] p-6 shadow-sm flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => handleOverride('ON')}
+                className={`flex-1 py-4 px-8 rounded-2xl font-black text-sm transition-all shadow-lg active:scale-95 ${manual_override === 'ON' ? 'bg-green-600 text-white ring-4 ring-green-100' : 'bg-gray-50 text-gray-400 border border-gray-200'}`}
+              >
+                {manual_override === 'ON' ? '✅ PUMP IS ON' : '⚡ TURN PUMP ON'}
+              </button>
+              <button 
+                onClick={() => handleOverride('OFF')}
+                className={`flex-1 py-4 px-8 rounded-2xl font-black text-sm transition-all shadow-lg active:scale-95 ${manual_override === 'OFF' ? 'bg-red-600 text-white ring-4 ring-red-100' : 'bg-gray-50 text-gray-400 border border-gray-200'}`}
+              >
+                {manual_override === 'OFF' ? '🚫 PUMP IS OFF' : '🛑 TURN PUMP OFF'}
+              </button>
+            </div>
+          </div>
+          
+          <div className="md:col-span-4 bg-white border border-gray-200 rounded-[2rem] p-6 shadow-sm flex flex-col justify-center">
+             <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Irrigation Timer</span>
+                <span className="text-xs font-black text-orange-500">{overrideDuration} Mins</span>
+             </div>
+             <input 
+                type="range" 
+                min="1" max="180" 
+                value={overrideDuration} 
+                onChange={(e) => setOverrideDuration(Number(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
+             />
+          </div>
+        </div>
+      )}
+
+      <div className="mt-12 flex items-center gap-3">
+        <h2 className="text-2xl font-black flex items-center gap-2 m-0">📊 {t('home_sensor_data')}</h2>
+      </div>
       {isLoading && !sensorData ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           <SkeletonCard />
@@ -442,52 +509,9 @@ export default function IoTPage({ lang }: { lang: string }) {
       )}
 
       {/* MANUAL PUMP CONTROLS */}
-      <div className="mt-8 bg-white border border-gray-200 rounded-3xl p-6 shadow-sm">
-        <h3 className="font-bold mb-4 flex items-center gap-2">🕹️ {t('iot_manual_controls')}</h3>
-        <p className="text-sm text-gray-500 mb-6">Remotely override autonomous AI decisions. Safety sensors will automatically turn off the pump if moisture reaches 60%.</p>
-        
-        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
-          <div className="flex items-center justify-between bg-gray-50 p-2 px-3 rounded-xl border border-gray-200">
-            <span className="text-xs sm:text-sm font-black text-gray-600 uppercase tracking-wider">{t('iot_timer')}:</span>
-            <div className="flex items-center gap-2">
-              <input 
-                type="number" 
-                value={overrideDuration} 
-                onChange={(e) => setOverrideDuration(Number(e.target.value))}
-                className="w-16 px-2 py-1.5 rounded-lg border border-gray-300 text-center font-bold text-sm"
-                min="1" max="180"
-              />
-              <span className="text-xs sm:text-sm font-bold text-gray-600 uppercase">{t('iot_minutes')}</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:flex gap-3 flex-1">
-            <button 
-              onClick={() => handleOverride('ON')}
-              disabled={isSendingOverride}
-              className={`font-bold py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 text-sm ${manual_override === 'ON' ? 'bg-green-600 text-white ring-4 ring-green-200 scale-105' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-            >
-              {manual_override === 'ON' ? '✅ ' : ''}{t('iot_pump_on')}
-            </button>
-            
-            <button 
-              onClick={() => handleOverride('OFF')}
-              disabled={isSendingOverride}
-              className={`font-bold py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 text-sm ${manual_override === 'OFF' ? 'bg-red-600 text-white ring-4 ring-red-200 scale-105' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-            >
-              {manual_override === 'OFF' ? '🚫 ' : ''}{t('iot_pump_off')}
-            </button>
-          </div>
-          
-          <button 
-            onClick={() => handleOverride('AUTO')}
-            disabled={isSendingOverride}
-            className={`font-bold py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 text-sm w-full sm:w-auto ${manual_override === null ? 'bg-gray-800 text-white ring-4 ring-gray-200 scale-105' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-          >
-            {manual_override === null ? '🤖 ' : ''}{t('iot_auto_mode')}
-          </button>
-        </div>
-      </div>
+    </div>
+  );
+}
 
       {/* SENSOR HEALTH */}
       <h2 className="text-xl font-bold mb-6 mt-12 flex items-center gap-2">

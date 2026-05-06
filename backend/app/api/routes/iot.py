@@ -92,9 +92,9 @@ def calculate_irrigation_status(moisture: float):
         if moisture < 30:
             irrigation_needed = True
             message = f"Moisture is low ({moisture}%). Turning pump ON."
-        elif moisture > 60:
+        elif moisture > 50:
             irrigation_needed = False
-            message = f"Moisture is high ({moisture}%). Turning pump OFF."
+            message = f"Moisture is optimal ({moisture}%). Turning pump OFF."
         else:
             irrigation_needed = latest_reading.get("irrigation_needed", False)
             message = f"Moisture is stable ({moisture}%)."

@@ -63,7 +63,13 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
           const locality = data.address.village || data.address.hamlet || data.address.suburb || data.address.town || data.address.neighbourhood || '';
           const dist = data.address.district || data.address.state_district || data.address.city || data.address.county || '';
           const city = (locality && dist && locality !== dist) ? `${locality}, ${dist}` : (locality || dist || 'Ludhiana');
-          setFormData(prev => ({ ...prev, location: `${state}, ${city}` }));
+          
+          setFormData(prev => ({ 
+            ...prev, 
+            location: `${state}, ${city}`,
+            lat: latitude,
+            lon: longitude
+          }));
         } catch (err) {
           setError("Detection failed. Please select manually.");
         } finally {
@@ -72,7 +78,7 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
       }, () => {
         setError("Location access denied.");
         setIsDetecting(false);
-      }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+      }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
     }
   };
 
@@ -163,7 +169,7 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 md:p-10 pb-20">
+          <form onSubmit={handleSubmit} className="p-6 md:p-10 pb-20" autoComplete="off">
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-2xl text-xs font-bold mb-6 text-center border border-red-100 dark:border-red-900/30">
               ⚠️ {error}
@@ -176,6 +182,7 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
                  <input 
                   placeholder={t('auth_full_name')} 
                   required 
+                  autoComplete="off"
                   className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 caret-green-600" 
                   onChange={(e) => setFormData({...formData, name: e.target.value})} 
                 />
@@ -190,6 +197,8 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
                  placeholder={t('auth_phone')} 
                  type="tel"
                  required 
+                 autoComplete="off"
+                 name="kisancore_phone_field"
                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 pl-20 pr-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 caret-green-600" 
                  onChange={(e) => {
                    let val = e.target.value.replace(/\D/g, '');
