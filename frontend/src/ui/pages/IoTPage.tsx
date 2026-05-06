@@ -479,62 +479,78 @@ export default function IoTPage({ lang }: { lang: string }) {
         </div>
       </div>
 
-      <div className="mt-12 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-3xl p-8 shadow-sm animate-fade-in">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+      {/* FULL MANUAL CONTROLS BACK AT BOTTOM */}
+      <div className="mt-12 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-6 shadow-sm animate-fade-in">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h3 className="font-black text-2xl flex items-center gap-3 m-0">🕹️ {t('iot_manual_controls')}</h3>
-            <p className="text-gray-500 dark:text-slate-400 font-bold m-0 mt-1">Full manual pump override and timer settings.</p>
+            <h3 className="font-bold text-lg flex items-center gap-2 m-0">🕹️ {t('iot_manual_controls')}</h3>
+            <p className="text-gray-500 dark:text-slate-400 text-sm m-0">Full manual pump override and timer settings.</p>
           </div>
-          <div className="flex items-center gap-4 bg-gray-50 dark:bg-slate-900/50 p-3 px-5 rounded-2xl border border-gray-100 dark:border-slate-700">
-            <span className="text-xs font-black text-gray-400 uppercase tracking-widest">{t('iot_timer')}:</span>
-            <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 bg-gray-50 dark:bg-slate-900/50 p-2 px-4 rounded-xl border border-gray-100 dark:border-slate-700">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('iot_timer')}:</span>
+            <div className="flex items-center gap-2">
               <input 
                 type="number" 
                 value={overrideDuration} 
                 onChange={(e) => setOverrideDuration(Number(e.target.value))}
-                className="w-16 px-3 py-2 rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-center font-black text-lg"
+                className="w-14 px-2 py-1 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-center font-bold text-base"
                 min="1" max="180"
               />
-              <span className="text-xs font-black text-gray-500 uppercase tracking-widest">{t('iot_minutes')}</span>
+              <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{t('iot_minutes')}</span>
             </div>
           </div>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <button 
             onClick={() => handleOverride('ON')}
             disabled={isSendingOverride}
-            className={`font-black py-5 px-6 rounded-2xl transition-all shadow-xl active:scale-95 disabled:opacity-50 text-base flex items-center justify-center gap-3 ${manual_override === 'ON' ? 'bg-green-600 text-white ring-4 ring-green-100' : 'bg-white dark:bg-slate-900 text-green-600 border-2 border-green-600 hover:bg-green-50'}`}
+            className={`font-black py-4 px-4 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 text-sm flex items-center justify-center gap-2 ${manual_override === 'ON' ? 'bg-green-600 text-white ring-4 ring-green-50' : 'bg-white dark:bg-slate-900 text-green-600 border border-green-600 hover:bg-green-50'}`}
           >
-            <span className="text-2xl">{manual_override === 'ON' ? '✅' : '⚡'}</span>
-            {t('iot_pump_on').toUpperCase()}
+            {manual_override === 'ON' ? '✅ ' : '⚡ '}{t('iot_pump_on').toUpperCase()}
           </button>
           
           <button 
             onClick={() => handleOverride('OFF')}
             disabled={isSendingOverride}
-            className={`font-black py-5 px-6 rounded-2xl transition-all shadow-xl active:scale-95 disabled:opacity-50 text-base flex items-center justify-center gap-3 ${manual_override === 'OFF' ? 'bg-red-600 text-white ring-4 ring-red-100' : 'bg-white dark:bg-slate-900 text-red-600 border-2 border-red-600 hover:bg-red-50'}`}
+            className={`font-black py-4 px-4 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 text-sm flex items-center justify-center gap-2 ${manual_override === 'OFF' ? 'bg-red-600 text-white ring-4 ring-red-50' : 'bg-white dark:bg-slate-900 text-red-600 border border-red-600 hover:bg-red-50'}`}
           >
-            <span className="text-2xl">{manual_override === 'OFF' ? '🚫' : '🛑'}</span>
-            {t('iot_pump_off').toUpperCase()}
+            {manual_override === 'OFF' ? '🚫 ' : '🛑 '}{t('iot_pump_off').toUpperCase()}
           </button>
-        </div>
 
-        <div className="mt-8 pt-8 border-t border-gray-100 dark:border-slate-700 flex justify-center">
-           <button 
+          <button 
             onClick={() => handleOverride('AUTO')}
             disabled={isSendingOverride}
-            className={`font-black py-4 px-12 rounded-2xl transition-all shadow-lg active:scale-95 disabled:opacity-50 text-sm flex items-center justify-center gap-3 ${manual_override === null ? 'bg-gray-900 text-white ring-4 ring-gray-100' : 'bg-white dark:bg-slate-900 text-gray-900 border-2 border-gray-900 hover:bg-gray-100'}`}
+            className={`font-black py-4 px-4 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 text-sm flex items-center justify-center gap-2 ${manual_override === null ? 'bg-gray-900 text-white ring-4 ring-gray-100' : 'bg-white dark:bg-slate-900 text-gray-900 border border-gray-900 hover:bg-gray-50'}`}
           >
-            <span className="text-xl">🤖</span>
-            {t('iot_auto_mode').toUpperCase()}
+            {manual_override === null ? '🤖 ' : '🔄 '}{t('iot_auto_mode').toUpperCase()}
           </button>
         </div>
       </div>
-
-      <footer className="mt-20 py-10 border-t border-gray-100 text-center">
-        <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">© 2026 KisanCore AI</p>
-      </footer>
+      {/* SENSOR HEALTH - RESTORED & TIGHTENED */}
+      <h2 className="text-lg font-bold mb-4 mt-8 flex items-center gap-2">
+        <span className="text-blue-500">🔧</span> {t('iot_sensor_health')}
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-700 flex items-center gap-4">
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${isOnline ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+            📡
+          </div>
+          <div>
+            <h4 className="m-0 font-bold text-sm">{t('iot_esp_offline_title')}</h4>
+            <p className="m-0 text-[10px] text-gray-500 font-bold uppercase tracking-widest">{isOnline ? "Signal Strength: Excellent" : t('iot_esp_offline_desc')}</p>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-700 flex items-center gap-4">
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${sensorData?.soil_moisture !== -999 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+            🌱
+          </div>
+          <div>
+            <h4 className="m-0 font-bold text-sm">{t('iot_soil_disconnected_title')}</h4>
+            <p className="m-0 text-[10px] text-gray-500 font-bold uppercase tracking-widest">{sensorData?.soil_moisture !== -999 ? "Sensor probe active" : t('iot_soil_disconnected_desc')}</p>
+          </div>
+        </div>
+      </div>
       </div>
     </div>
   );
