@@ -214,6 +214,12 @@ async def clear_override():
 async def get_latest_data():
     return latest_reading
 
+@router.get("/test-alert")
+async def test_alert():
+    msg = "KisanCore Test: Your WhatsApp Alert System is working! 🚀🌾"
+    broadcast_whatsapp(msg)
+    return {"status": "test_triggered", "targets": list(set(latest_reading.get("farmer_phones", [])))}
+
 @router.delete("/clear")
 async def clear_iot_data():
     global latest_reading

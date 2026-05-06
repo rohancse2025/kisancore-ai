@@ -777,7 +777,22 @@ export default function HomePage({ lang }: { lang: string }) {
 
       {/* 2. WEATHER CARD */}
       <section className="bg-blue-50 dark:bg-blue-900/10 rounded-2xl p-5 md:p-8 mb-10 shadow-sm border border-blue-200 dark:border-blue-800 animate-fade-in-up hover-lift overflow-hidden">
-        <h2 className="text-base sm:text-xl text-gray-900 dark:text-white m-0 mb-6 font-black flex items-center gap-2 uppercase tracking-widest opacity-50 break-words">🌤️ {t('home_weather')}</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-base sm:text-xl text-gray-900 dark:text-white m-0 font-black flex items-center gap-2 uppercase tracking-widest opacity-50 break-words">🌤️ {t('home_weather')}</h2>
+          <button 
+            onClick={async () => {
+              try {
+                const res = await axios.get(`${API_BASE_URL}/api/v1/iot/test-alert`);
+                alert("Test alert triggered! Check your WhatsApp.");
+              } catch (e) {
+                alert("Failed to trigger test. Ensure backend is running.");
+              }
+            }}
+            className="text-[10px] font-black bg-green-600 text-white px-3 py-1.5 rounded-lg shadow-md hover:bg-green-700 transition-all active:scale-95"
+          >
+            📲 TEST WHATSAPP
+          </button>
+        </div>
         
         <div className="flex gap-8 items-center flex-wrap mb-6">
           <div className="min-w-[200px]">
