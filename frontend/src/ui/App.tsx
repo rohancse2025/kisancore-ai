@@ -169,15 +169,6 @@ export default function App() {
             >
               Login Now 👨‍🌾
             </button>
-            <button
-              onClick={() => { 
-                sessionStorage.setItem(`bypass_${feature}`, 'true');
-                setBypass(true);
-              }}
-              className="w-full py-3 text-gray-400 font-bold text-sm uppercase tracking-widest"
-            >
-              Continue without login →
-            </button>
           </div>
         </div>
       </div>

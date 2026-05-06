@@ -269,7 +269,7 @@ export default function IoTPage({ lang }: { lang: string }) {
 
   return (
     <div className="min-h-screen pb-20 font-sans text-gray-900 bg-gray-50/30 dark:bg-slate-900/10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-10">
+      <div className="pt-6 sm:pt-10">
       <style>{`
         @keyframes pulse-green {
           0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7); }
@@ -534,11 +534,7 @@ export default function IoTPage({ lang }: { lang: string }) {
 
       <footer className="mt-20 py-10 border-t border-gray-100 text-center">
         <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">© 2026 KisanCore AI</p>
-        <p className="text-gray-300 text-[10px] max-w-md mx-auto italic">
-          Connect ESP32 hardware to get real sensor readings from your farm.
-        </p>
       </footer>
-      </div>
     </div>
   );
 }
