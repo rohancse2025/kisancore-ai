@@ -152,10 +152,15 @@ async def post_iot_data(data: IOTData):
     save_persistence()
     
     # --- FEATURE 1: SMART ALERTS ---
-    # Cooldown check (set to 5 minutes as requested)
-    alert_cooldown_ok = (time.time() - latest_reading["last_alert_time"]) > 300 
+    # Cooldown check (3 minutes)
+    time_since_last = time.time() - latest_reading["last_alert_time"]
+    alert_cooldown_ok = time_since_last > 180 
+    
+    if data.soil_moisture < 30 and not alert_cooldown_ok:
+        print(f"⏳ Alert cooldown active: {int(180 - time_since_last)}s remaining until next alert.")
 
     if alert_cooldown_ok and data.soil_moisture < 30:
+        print(f"🚨 DRY ALERT TRIGGERED! Moisture: {data.soil_moisture}%")
         latest_reading["last_alert_time"] = time.time()
         
         # Always ask for permission/confirmation as requested, regardless of mode
@@ -215,10 +220,11 @@ async def clear_override():
 
 @router.get("/latest")
 async def get_latest_data():
-    # Check for timer expiry even on GET requests for better responsiveness
+    # 2. Check for timer expiry
     if latest_reading["manual_override"] is not None:
         if time.time() > latest_reading["override_expiry_time"]:
-            latest_reading["manual_override"] = None
+            print("⏰ Timer Expired! Forcing pump to OFF to prevent immediate Auto-restart.")
+            latest_reading["manual_override"] = "OFF"
             save_persistence()
             
     return latest_reading
