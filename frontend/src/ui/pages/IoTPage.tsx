@@ -501,7 +501,7 @@ export default function IoTPage({ lang }: { lang: string }) {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <button 
             onClick={() => handleOverride('ON')}
             disabled={isSendingOverride}

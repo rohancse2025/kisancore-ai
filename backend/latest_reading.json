@@ -1,1 +1,1 @@
-{"temperature": 0.0, "humidity": 0.0, "soil_moisture": 0.0, "irrigation_needed": true, "suggestion": "Moisture is low (0.0%). Turning pump ON.", "timestamp": "Never", "unix_timestamp": 0, "manual_override": null, "override_expiry_time": 0, "farmer_phones": [], "last_alert_time": 0}
+{"temperature": 0.0, "humidity": 0.0, "soil_moisture": 0.0, "irrigation_needed": false, "suggestion": "Manual Override: Pump is OFF.", "timestamp": "Never", "unix_timestamp": 0, "manual_override": "OFF", "override_expiry_time": 1778183972.0974612, "farmer_phones": [], "last_alert_time": 0}

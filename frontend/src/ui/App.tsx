@@ -165,7 +165,7 @@ export default function App() {
           <div className="flex flex-col gap-4">
             <button 
               onClick={() => navigate('/login')}
-              className="w-full bg-green-600 text-white py-4 rounded-xl font-black text-lg hover:bg-green-700 transition-all active:scale-95"
+              className="w-full bg-green-600 text-white py-4 rounded-xl font-black text-lg hover:bg-green-700 active:scale-95"
             >
               Login Now 👨‍🌾
             </button>
@@ -176,11 +176,11 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen w-full flex flex-col bg-gray-50 dark:bg-slate-900 transition-colors duration-300 font-sans text-render-optimized antialiased">
+    <div className="min-h-screen w-full flex flex-col bg-gray-50 dark:bg-slate-900 duration-300 font-sans text-render-optimized antialiased">
       
       {/* 1. TOP NAVBAR */}
       {!isLoginPage && (
-        <nav className={`flex-shrink-0 z-[100] h-20 px-4 md:px-12 flex items-center justify-between transition-all duration-300 animate-slide-down ${scrolled ? 'bg-white/80 dark:bg-slate-800/80 backdrop-blur-md shadow-md border-b border-gray-100 dark:border-slate-700' : 'bg-transparent border-transparent'}`}>
+        <nav className={`flex-shrink-0 z-[100] h-20 px-4 md:px-12 flex items-center justify-between duration-300 animate-slide-down ${scrolled ? 'bg-white/80 dark:bg-slate-800/80 backdrop-blur-md shadow-md border-b border-gray-100 dark:border-slate-700' : 'bg-transparent border-transparent'}`}>
         {/* LEFT: LOGO */}
         <Link 
           to="/" 
@@ -388,7 +388,7 @@ export default function App() {
       <main className={`flex-1 transition-all duration-300 relative flex flex-col ${(location.pathname === '/login' || location.pathname === '/chat') ? 'overflow-hidden' : 'overflow-y-auto'}`}>
         <div 
           key={location.pathname}
-          className={`${(location.pathname === '/login' || location.pathname === '/chat') ? 'flex-1 flex flex-col' : 'max-w-[1200px] mx-auto px-4 md:px-12 py-4 md:py-8'} transition-all animate-fade-in`}
+          className={`${(location.pathname === '/login' || location.pathname === '/chat') ? 'flex-1 flex flex-col' : 'max-w-[1200px] mx-auto px-4 md:px-12 py-4 md:py-8'} animate-fade-in`}
         >
           <Routes>
             <Route path="/login" element={<LoginPage lang={lang} onLogin={(user: any) => setFarmer(user)} />} />
