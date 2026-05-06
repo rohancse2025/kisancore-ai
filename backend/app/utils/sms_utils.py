@@ -47,11 +47,25 @@ def send_whatsapp_message(to: str, message: str) -> bool:
   elif len(clean) == 10:
     clean = "91" + clean
   to_whatsapp = "whatsapp:+" + clean
-  
   try:
-    client = Client(account_sid, auth_token)
-    client.messages.create(body=message, from_=from_whatsapp, to=to_whatsapp)
-    return True
+      if not account_sid or not auth_token:
+          logger.error("❌ TWILIO ERROR: ACCOUNT_SID or AUTH_TOKEN is missing in .env")
+          return False
+
+      client = Client(account_sid, auth_token)
+      
+      # Log attempt
+      logger.info(f"📤 Attempting WhatsApp to {to} from {from_whatsapp}...")
+      
+      message_obj = client.messages.create(body=message, from_=from_whatsapp, to=to)
+      
+      logger.info(f"✅ SUCCESS: WhatsApp Message SID: {message_obj.sid}")
+      return True
   except Exception as e:
-    logger.error(f"WhatsApp send failed: {e}")
-    return False
+      logger.error(f"❌ TWILIO FAILED for {to}: {str(e)}")
+      # Specific help for common errors
+      if "21608" in str(e):
+          logger.error("👉 FIX: This phone number has not 'Joined' the Twilio Sandbox. Send 'join tent-with' from your phone.")
+      elif "Authenticate" in str(e) or "401" in str(e):
+          logger.error("👉 FIX: Your TWILIO_ACCOUNT_SID or AUTH_TOKEN is incorrect in .env.")
+      return False

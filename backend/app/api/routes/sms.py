@@ -256,16 +256,19 @@ def sms_status():
     # Import iot dynamically to get current state
     import app.api.routes.iot as iot_module
     
+@router.get("/status")
+async def sms_status():
+    account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+    auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+    whatsapp_from = os.getenv("TWILIO_WHATSAPP_FROM")
+    
     return {
-        "configured": configured,
-        "sid_set": bool(sid and not sid.startswith("ACxx")),
-        "token_set": bool(token and token != "your_auth_token_here"),
-        "from_number": from_num if from_num else "NOT SET",
-        "registered_farm_phone": iot_module.latest_reading.get("farmer_sms_phone", "None registered"),
-        "instructions": "Fill TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_SMS_FROM in backend/.env" if not configured else "Ready to send SMS",
-        "whatsapp_configured": bool(os.getenv("TWILIO_WHATSAPP_FROM", "").startswith("whatsapp:")),
-        "whatsapp_from": os.getenv("TWILIO_WHATSAPP_FROM", "NOT SET"),
-        "whatsapp_setup": "1. twilio.com → Messaging → WhatsApp sandbox 2. Farmer sends 'join tent-with' to +14155238886 3. Set webhook to YOUR_RENDER_URL/api/v1/sms/webhook 4. Add TWILIO_WHATSAPP_FROM=whatsapp:+14155238886 to .env"
+        "configured": bool(account_sid and auth_token),
+        "account_sid_present": bool(account_sid),
+        "auth_token_present": bool(auth_token),
+        "whatsapp_from_present": bool(whatsapp_from),
+        "whatsapp_from": whatsapp_from or "NOT SET",
+        "instructions": "If any 'present' is false, add them to Render Dashboard -> Environment Variables"
     }
 
 @router.get("/test")
