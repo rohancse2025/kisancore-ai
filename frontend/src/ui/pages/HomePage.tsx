@@ -347,13 +347,27 @@ export default function HomePage({ lang }: { lang: string }) {
       setWeatherLoading(true);
       try {
         let url = `${API_BASE_URL}/api/v1/weather?lat=${coords.lat}&lon=${coords.lon}`;
-        if (locationSource === 'Profile') {
-          url = `${API_BASE_URL}/api/v1/weather?city=${encodeURIComponent(farmer?.location || marketDistrict)}`;
+        
+        // If we have a profile location or specific district, try city-based weather
+        const locationToTry = farmer?.location || marketDistrict;
+        
+        if (locationSource === 'Profile' || (locationSource === 'GPS' && locationToTry)) {
+          // Clean the city name: take the first part of "City, District" for better OWM compatibility
+          const cleanCity = locationToTry.split(',')[0].trim();
+          url = `${API_BASE_URL}/api/v1/weather?city=${encodeURIComponent(cleanCity)}`;
         }
+        
         const res = await axios.get(url);
         setWeatherData(res.data);
       } catch (err) {
-        console.error("Weather fetch failed", err);
+        console.error("Weather fetch failed, falling back to coordinates", err);
+        // Final fallback: use raw GPS coordinates if city-based failed
+        try {
+          const res = await axios.get(`${API_BASE_URL}/api/v1/weather?lat=${coords.lat}&lon=${coords.lon}`);
+          setWeatherData(res.data);
+        } catch (e) {
+          console.error("Final weather fallback failed", e);
+        }
       } finally {
         setWeatherLoading(false);
       }

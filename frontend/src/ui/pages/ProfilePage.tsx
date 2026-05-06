@@ -401,14 +401,26 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
             </div>
             {formData.sms_alerts_enabled === 'true' && (
               <div className="animate-fade-in">
-                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-wider">Alert Phone (e.g. 9876543210)</label>
                 <input 
                   type="text"
                   placeholder="10-digit mobile number"
                   value={formData.sms_phone}
-                  onChange={(e) => setFormData({...formData, sms_phone: e.target.value})}
+                  onChange={(e) => setFormData({...formData, sms_phone: e.target.value.replace(/\D/g, '').slice(0, 10)})}
                   className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-green-500/20"
                 />
+                <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/10 rounded-2xl border border-green-100 dark:border-green-900/30 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">💬</span>
+                    <p className="text-xs font-bold text-green-800 dark:text-green-200 m-0">Chat with AI on WhatsApp</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => window.open(`https://wa.me/14155238886?text=join%20tent-with`, '_blank')}
+                    className="bg-[#25D366] text-white text-[10px] font-black px-4 py-2 rounded-lg shadow-sm hover:bg-[#128C7E] transition-all"
+                  >
+                    OPEN CHAT
+                  </button>
+                </div>
               </div>
             )}
           </div>

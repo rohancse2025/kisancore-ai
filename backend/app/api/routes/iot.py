@@ -26,7 +26,7 @@ latest_reading = {
     "unix_timestamp": 0,
     "manual_override": None, # "ON", "OFF", or None
     "override_expiry_time": 0,
-    "farmer_sms_phone": "",
+    "farmer_phones": [], # List of whatsapp: numbers
     "last_alert_time": 0
 }
 
@@ -53,6 +53,27 @@ def load_persistence():
 
 # Load data on startup
 load_persistence()
+
+def broadcast_whatsapp(message: str):
+    """Send a message to all registered farmers and the environment fallback phone."""
+    import os
+    from app.utils.sms_utils import send_whatsapp_message
+    
+    # 1. Collect all targets (List + Env Fallback)
+    targets = set(latest_reading.get("farmer_phones", []))
+    env_phone = os.getenv("FARMER_PHONE")
+    if env_phone:
+        if not env_phone.startswith("whatsapp:"):
+            # Normalize env phone
+            clean = "".join(filter(str.isdigit, env_phone))
+            if len(clean) == 10: clean = "91" + clean
+            env_phone = f"whatsapp:+{clean}"
+        targets.add(env_phone)
+    
+    # 2. Send to everyone
+    for phone in targets:
+        if phone:
+            send_whatsapp_message(phone, message)
 
 # --- ROUTES ---
 
@@ -83,13 +104,8 @@ async def post_iot_data(data: IOTData):
                 f"Pump is now in AUTO mode. "
                 f"Send STATUS to check soil moisture. -KisanCore AI"
             )
-            phone_to_alert = latest_reading.get("farmer_sms_phone")
-            if not phone_to_alert:
-                import os
-                phone_to_alert = os.getenv("FARMER_PHONE")
-            if phone_to_alert:
-                from app.api.routes.sms import send_whatsapp_message
-                send_whatsapp_message(phone_to_alert, timer_msg)
+            phone_to_alert = latest_reading.get("farmer_phones")
+            broadcast_whatsapp(timer_msg)
             
     # 2. Safety Autoshutoff (if moisture >= 60% and we are manually pumping)
     if data.soil_moisture >= 60 and latest_reading["manual_override"] == "ON":
@@ -102,13 +118,7 @@ async def post_iot_data(data: IOTData):
             f"Soil moisture reached {data.soil_moisture}% — waterlogging prevented. "
             f"Send STATUS to check farm. -KisanCore AI"
         )
-        phone_to_alert = latest_reading.get("farmer_sms_phone")
-        if not phone_to_alert:
-            import os
-            phone_to_alert = os.getenv("FARMER_PHONE")
-        if phone_to_alert:
-            from app.api.routes.sms import send_whatsapp_message
-            send_whatsapp_message(phone_to_alert, safety_msg)
+        broadcast_whatsapp(safety_msg)
     
     # 3. Apply Override OR Fallback to Auto
     if latest_reading["manual_override"] == "ON":
@@ -152,16 +162,8 @@ async def post_iot_data(data: IOTData):
             f"Your crops may need water. Should I turn on the pump?\n"
             f"Reply 'PUMP ON 30' to water for 30 mins."
         )
-        phone_to_alert = latest_reading.get("farmer_sms_phone")
-        if not phone_to_alert:
-            import os
-            phone_to_alert = os.getenv("FARMER_PHONE")
-        if phone_to_alert:
-            from app.api.routes.sms import send_whatsapp_message
-            send_whatsapp_message(phone_to_alert, alert_msg)
-            print(f"SMART ALERT [DRY] SENT to {phone_to_alert} | Moisture: {data.soil_moisture}%")
-        else:
-            print("SMART ALERT [DRY] TRIGGERED but no phone registered.")
+        broadcast_whatsapp(alert_msg)
+        print(f"SMART ALERT [DRY] BROADCAST SENT | Moisture: {data.soil_moisture}%")
 
     elif alert_cooldown_ok and data.soil_moisture > 70:
         latest_reading["last_alert_time"] = time.time()
@@ -171,16 +173,8 @@ async def post_iot_data(data: IOTData):
             f"Stop irrigation and check drainage to prevent waterlogging.\n"
             f"Reply 'PUMP OFF' to stop the pump."
         )
-        phone_to_alert = latest_reading.get("farmer_sms_phone")
-        if not phone_to_alert:
-            import os
-            phone_to_alert = os.getenv("FARMER_PHONE")
-        if phone_to_alert:
-            from app.api.routes.sms import send_whatsapp_message
-            send_whatsapp_message(phone_to_alert, alert_msg)
-            print(f"SMART ALERT [WET] SENT to {phone_to_alert} | Moisture: {data.soil_moisture}%")
-        else:
-            print("SMART ALERT [WET] TRIGGERED but no phone registered.")
+        broadcast_whatsapp(alert_msg)
+        print(f"SMART ALERT [WET] BROADCAST SENT | Moisture: {data.soil_moisture}%")
 
     return {
         "status": "ok", 

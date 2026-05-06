@@ -7,7 +7,7 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
   const [isRegister, setIsRegister] = useState(false);
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: '', phone: '', password: '', location: '', farm_size: '0'
+    name: '', phone: '', password: '', location: '', farm_size: '0', whatsapp_enabled: true
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -26,6 +26,21 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
   });
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const phoneParam = params.get('phone');
+    const isRegParam = params.get('register');
+    const whatsappParam = params.get('whatsapp');
+    
+    if (phoneParam) {
+      setFormData(prev => ({ ...prev, phone: phoneParam }));
+    }
+    if (isRegParam === 'true') {
+      setIsRegister(true);
+    }
+    if (whatsappParam === 'true') {
+      setFormData(prev => ({ ...prev, whatsapp_enabled: true }));
+    }
+
     const handleResize = () => {
       const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
       const isSmallScreen = window.innerWidth < 1024;
@@ -66,10 +81,10 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
     setIsLoading(true);
     setError('');
     
-    const cleanPhone = formData.phone.trim().replace(/^(\+91|91|0)/, '').replace(/\s/g, '');
+    const cleanPhone = formData.phone.trim().replace(/\D/g, ''); // Strip all non-digits
     
-    if (cleanPhone.length !== 10) {
-      setError("Please enter a valid 10-digit phone number.");
+    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+      setError("Please enter a valid 10-digit Indian phone number starting with 6-9.");
       setIsLoading(false);
       return;
     }
@@ -97,7 +112,16 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
       localStorage.setItem('kisancore_farmer', JSON.stringify(data.farmer));
       
       if (onLogin) onLogin(data.farmer);
-      navigate('/');
+
+      if (isRegister && formData.whatsapp_enabled) {
+        // Automatically open WhatsApp to "Verify" and "Join" the sandbox in one go
+        window.open(`https://wa.me/14155238886?text=join%20tent-with`, '_blank');
+        
+        // Brief delay before redirecting to dashboard so they can see the WhatsApp popup
+        setTimeout(() => navigate('/'), 1000);
+      } else {
+        navigate('/');
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -158,16 +182,26 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
               </div>
             )}
 
-            <div>
+            <div className="relative group">
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+                  <span className="text-gray-400 font-bold text-sm border-r border-gray-200 dark:border-slate-700 pr-3">+91</span>
+                </div>
                 <input 
                  placeholder={t('auth_phone')} 
                  type="tel"
                  required 
-                 maxLength={10}
-                 className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 caret-green-600" 
-                 onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/\D/g, '')})} 
+                 className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 pl-20 pr-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 caret-green-600" 
+                 onChange={(e) => {
+                   let val = e.target.value.replace(/\D/g, '');
+                   if (val.startsWith('91') && val.length > 10) val = val.substring(2);
+                   if (val.length > 10) val = val.substring(0, 10);
+                   setFormData({...formData, phone: val});
+                 }} 
                  value={formData.phone}
                />
+               <span className={`absolute right-4 top-1/2 -translate-y-1/2 text-xl transition-all ${/^[6-9]\d{9}$/.test(formData.phone) ? 'opacity-100' : 'opacity-20 grayscale'}`}>
+                  {/^[6-9]\d{9}$/.test(formData.phone) ? '✅' : '🟢'}
+               </span>
             </div>
 
             <div className="relative">
@@ -222,8 +256,25 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
                 >
                   {isDetecting ? 'Detecting...' : '📍 Auto-Detect My Location'}
                 </button>
-                                <input 
-                  placeholder={t('auth_farm_size') + " (Acres)"} 
+                <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/10 p-4 rounded-xl border border-green-100 dark:border-green-800">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">🟢</span>
+                    <div>
+                      <p className="text-[10px] font-black text-green-700 dark:text-green-400 uppercase tracking-wider m-0">WhatsApp Alerts</p>
+                      <p className="text-[9px] text-green-600/70 dark:text-green-500/70 font-bold m-0 italic">Enable AI Chat & IoT Alerts</p>
+                    </div>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setFormData({...formData, whatsapp_enabled: !formData.whatsapp_enabled})}
+                    className={`w-12 h-6 rounded-full transition-all relative ${formData.whatsapp_enabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-slate-700'}`}
+                  >
+                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all shadow-sm ${formData.whatsapp_enabled ? 'left-6.5' : 'left-0.5'}`}></div>
+                  </button>
+                </div>
+
+                <input 
+                  placeholder={t('auth_farm_size')} 
                   type="number" step="0.1" 
                   className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 caret-green-600" 
                   onChange={(e) => setFormData({...formData, farm_size: e.target.value})} 
@@ -234,7 +285,7 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
 
           <button 
             disabled={isLoading}
-            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-black py-5 rounded-[1.5rem] shadow-xl shadow-green-600/20 shadow-green-600-30 transition-all active:scale-[0.98] mt-8 text-sm uppercase tracking-widest flex items-center justify-center gap-2"
+            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-black py-5 rounded-[1.5rem] shadow-xl shadow-green-600/30 transition-all active:scale-[0.98] mt-8 text-sm uppercase tracking-widest flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

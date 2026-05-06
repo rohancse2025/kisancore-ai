@@ -27,57 +27,7 @@ class SMSRequest(BaseModel):
   message_type: str
   data: dict
 
-def send_sms_twilio(phone: str, message: str) -> tuple[bool, str]:
-  account_sid = os.getenv("TWILIO_ACCOUNT_SID")
-  auth_token = os.getenv("TWILIO_AUTH_TOKEN")
-  from_number = os.getenv("TWILIO_SMS_FROM")
-  
-  if not account_sid or not auth_token or not from_number:
-    # Diagnostic print if fails (visible in uvicorn logs)
-    return False, "Twilio credentials not configured in .env"
-  
-  # Normalize Indian phone number
-  clean = phone.replace("+", "").replace(" ", "").replace("-", "")
-  if clean.startswith("91") and len(clean) == 12:
-    clean = clean  # already has country code
-  elif len(clean) == 10:
-    clean = "91" + clean
-  to_number = "+" + clean
-  
-  try:
-    client = Client(account_sid, auth_token)
-    msg = client.messages.create(body=message, from_=from_number, to=to_number)
-    return True, f"Sent: {msg.sid}"
-  except TwilioRestException as e:
-    if "unverified" in str(e).lower():
-      return False, "Phone not verified in Twilio trial. Add it at twilio.com/console"
-    return False, str(e)
-  except Exception as e:
-    return False, str(e)
-
-def send_whatsapp_message(to: str, message: str) -> bool:
-  account_sid = os.getenv("TWILIO_ACCOUNT_SID")
-  auth_token = os.getenv("TWILIO_AUTH_TOKEN")
-  from_whatsapp = os.getenv("TWILIO_WHATSAPP_FROM", "whatsapp:+14155238886")
-  
-  if not account_sid or not auth_token:
-    return False
-  
-  # Normalize phone
-  clean = to.replace("+", "").replace(" ", "").replace("-", "").replace("whatsapp:", "")
-  if clean.startswith("91") and len(clean) == 12:
-    clean = clean
-  elif len(clean) == 10:
-    clean = "91" + clean
-  to_whatsapp = "whatsapp:+" + clean
-  
-  try:
-    client = Client(account_sid, auth_token)
-    client.messages.create(body=message, from_=from_whatsapp, to=to_whatsapp)
-    return True
-  except Exception as e:
-    logger.error(f"WhatsApp send failed: {e}")
-    return False
+from app.utils.sms_utils import send_sms_twilio, send_whatsapp_message
 
 def send_sms(to: str, message: str) -> bool:
   success, _ = send_sms_twilio(to, message)
@@ -179,7 +129,10 @@ async def handle_incoming_whatsapp(
         logger.info(f"[V2] RECEIVED WHATSAPP: From={sender}, Body='{text}'")
 
         # AUTO-REGISTER this number for smart alerts
-        latest_reading["farmer_sms_phone"] = sender
+        if "farmer_phones" not in latest_reading:
+            latest_reading["farmer_phones"] = []
+        if sender not in latest_reading["farmer_phones"]:
+            latest_reading["farmer_phones"].append(sender)
         
         response_msg = ""
 
@@ -262,8 +215,19 @@ async def handle_incoming_whatsapp(
                 "• DAILY - Summary"
             )
 
+        elif "START" in text or "REGISTER" in text or "HELLO" in text:
+            # Generate a deep link to the registration page with the phone pre-filled
+            clean_sender = sender.replace("whatsapp:+", "")
+            reg_link = f"https://kisancore-ai.vercel.app/login?register=true&phone={clean_sender}&whatsapp=true"
+            response_msg = (
+                f"👋 Welcome to KisanCore AI!\n\n"
+                f"To finish setting up your smart farm dashboard, please click the link below:\n"
+                f"{reg_link}\n\n"
+                f"Once registered, you can send 'STATUS' here anytime. 🌾"
+            )
+
         else:
-            response_msg = "❓ Unknown command. Send HELP for list. - KisanCore AI"
+            response_msg = "❓ Unknown command. Send HELP for list, or START to register. - KisanCore AI"
 
         # Construct TwiML
         xml_response = f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -301,7 +265,7 @@ def sms_status():
         "instructions": "Fill TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_SMS_FROM in backend/.env" if not configured else "Ready to send SMS",
         "whatsapp_configured": bool(os.getenv("TWILIO_WHATSAPP_FROM", "").startswith("whatsapp:")),
         "whatsapp_from": os.getenv("TWILIO_WHATSAPP_FROM", "NOT SET"),
-        "whatsapp_setup": "1. twilio.com → Messaging → WhatsApp sandbox 2. Farmer sends 'join <keyword>' to +14155238886 3. Set webhook to YOUR_NGROK_URL/api/v1/sms/webhook 4. Add TWILIO_WHATSAPP_FROM=whatsapp:+14155238886 to .env"
+        "whatsapp_setup": "1. twilio.com → Messaging → WhatsApp sandbox 2. Farmer sends 'join tent-with' to +14155238886 3. Set webhook to YOUR_RENDER_URL/api/v1/sms/webhook 4. Add TWILIO_WHATSAPP_FROM=whatsapp:+14155238886 to .env"
     }
 
 @router.get("/test")

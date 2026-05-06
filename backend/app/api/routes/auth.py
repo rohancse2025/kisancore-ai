@@ -85,7 +85,14 @@ def get_current_phone(authorization: str = Header(None)) -> str:
 
 @router.post("/register")
 def register(req: RegisterRequest, db: Session = Depends(get_db)):
-    existing = db.query(Farmer).filter(Farmer.phone == req.phone).first()
+    import re
+    clean_phone = re.sub(r'\D', '', req.phone.strip())
+    if clean_phone.startswith('91') and len(clean_phone) > 10: clean_phone = clean_phone[2:]
+    
+    if not re.match(r'^[6-9]\d{9}$', clean_phone):
+        raise HTTPException(400, detail="Invalid Indian phone number. Please enter a 10-digit number.")
+    
+    existing = db.query(Farmer).filter(Farmer.phone == clean_phone).first()
     if existing:
         raise HTTPException(400, detail="Phone already registered")
     
@@ -99,6 +106,30 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     db.add(farmer)
     db.commit()
     db.refresh(farmer)
+    
+    # --- AUTO-REGISTER FOR WHATSAPP ALERTS ---
+    try:
+        from app.utils.sms_utils import send_whatsapp_message
+        import app.api.routes.iot as iot
+        
+        # 1. Update IoT alert recipient list
+        whatsapp_phone = f"whatsapp:+91{clean_phone}"
+        if "farmer_phones" not in iot.latest_reading:
+            iot.latest_reading["farmer_phones"] = []
+        if whatsapp_phone not in iot.latest_reading["farmer_phones"]:
+            iot.latest_reading["farmer_phones"].append(whatsapp_phone)
+        
+        # 2. Send Welcome Message
+        welcome_msg = (
+            f"🌿 Welcome to KisanCore AI, {req.name}!\n\n"
+            f"Your account is now active. You will receive smart alerts here for your farm.\n"
+            f"Send 'STATUS' anytime to get live data from your sensors.\n\n"
+            f"Happy Farming! 👨‍🌾🚜"
+        )
+        send_whatsapp_message(whatsapp_phone, welcome_msg)
+    except Exception as e:
+        # Don't fail registration if SMS fails, just log it
+        print(f"WhatsApp Welcome Error: {e}")
     
     return {
         "token": create_token(req.phone),
