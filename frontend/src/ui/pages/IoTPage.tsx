@@ -267,7 +267,8 @@ export default function IoTPage({ lang }: { lang: string }) {
 
 
   return (
-    <div className="pb-20 font-sans text-gray-900">
+    <div className="min-h-screen pb-20 font-sans text-gray-900 bg-gray-50/30 dark:bg-slate-900/10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-10">
       <style>{`
         @keyframes pulse-green {
           0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7); }
@@ -464,26 +465,26 @@ export default function IoTPage({ lang }: { lang: string }) {
             <button 
               onClick={() => handleOverride('ON')}
               disabled={isSendingOverride}
-              className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 text-sm"
+              className={`font-bold py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 text-sm ${manual_override === 'ON' ? 'bg-green-600 text-white ring-4 ring-green-200 scale-105' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             >
-              {t('iot_pump_on')}
+              {manual_override === 'ON' ? '✅ ' : ''}{t('iot_pump_on')}
             </button>
             
             <button 
               onClick={() => handleOverride('OFF')}
               disabled={isSendingOverride}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 text-sm"
+              className={`font-bold py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 text-sm ${manual_override === 'OFF' ? 'bg-red-600 text-white ring-4 ring-red-200 scale-105' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             >
-              {t('iot_pump_off')}
+              {manual_override === 'OFF' ? '🚫 ' : ''}{t('iot_pump_off')}
             </button>
           </div>
           
           <button 
             onClick={() => handleOverride('AUTO')}
             disabled={isSendingOverride}
-            className="bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 text-sm w-full sm:w-auto"
+            className={`font-bold py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 text-sm w-full sm:w-auto ${manual_override === null ? 'bg-gray-800 text-white ring-4 ring-gray-200 scale-105' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
           >
-            {t('iot_auto_mode')}
+            {manual_override === null ? '🤖 ' : ''}{t('iot_auto_mode')}
           </button>
         </div>
       </div>
@@ -512,6 +513,7 @@ export default function IoTPage({ lang }: { lang: string }) {
           Connect ESP32 hardware to get real sensor readings from your farm.
         </p>
       </footer>
+      </div>
     </div>
   );
 }
