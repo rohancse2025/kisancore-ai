@@ -535,6 +535,7 @@ export default function IoTPage({ lang }: { lang: string }) {
       <footer className="mt-20 py-10 border-t border-gray-100 text-center">
         <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">© 2026 KisanCore AI</p>
       </footer>
+      </div>
     </div>
   );
 }
