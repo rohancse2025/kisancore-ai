@@ -215,6 +215,12 @@ async def clear_override():
 
 @router.get("/latest")
 async def get_latest_data():
+    # Check for timer expiry even on GET requests for better responsiveness
+    if latest_reading["manual_override"] is not None:
+        if time.time() > latest_reading["override_expiry_time"]:
+            latest_reading["manual_override"] = None
+            save_persistence()
+            
     return latest_reading
 
 @router.get("/test-alert")

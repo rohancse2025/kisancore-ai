@@ -206,25 +206,31 @@ export default function IoTPage({ lang }: { lang: string }) {
       );
     }
 
+    const { irrigation_needed, manual_override } = useSensor();
+
     let bg = "bg-white border-gray-100";
-    let status = "OFF";
-    let message = "No irrigation needed";
-    let icon = "🚿";
+    let status = irrigation_needed ? "ON" : "OFF";
+    let message = irrigation_needed ? "Pump is active" : "No irrigation needed";
+    let icon = irrigation_needed ? "💧" : "🚿";
 
     // AI-like synchronized sentences
-    if (moist < 30) {
+    if (manual_override === "ON") {
+      bg = "bg-blue-50 border-blue-200 text-blue-900";
+      message = "Manual Override: Pump is forced ON.";
+      icon = "🕹️";
+    } else if (manual_override === "OFF") {
+      bg = "bg-slate-50 border-slate-200 text-slate-900";
+      message = "Manual Override: Pump is forced OFF.";
+      icon = "🚫";
+    } else if (moist < 30) {
       bg = "bg-red-50 border-red-200 text-red-900";
-      status = "ON";
       message = t('iot_msg_low', { moist });
       icon = "⚠️";
     } else if (moist <= 60) {
       bg = "bg-orange-50 border-orange-200 text-orange-900";
-      status = "MODERATE";
       message = t('iot_msg_moderate', { moist });
-      icon = "💧";
     } else {
       bg = "bg-green-50 border-green-200 text-green-900";
-      status = "OFF";
       message = t('iot_msg_optimal', { moist });
       icon = "✅";
     }

@@ -6,6 +6,8 @@ interface SensorData {
   humidity: number | null;
   soil_moisture: number | null;
   timestamp: string | null;
+  irrigation_needed: boolean;
+  manual_override: string | null;
   isOnline: boolean;
   lastUpdateDate: number | null;
   clearSensorData: () => Promise<void>;
@@ -22,6 +24,8 @@ export const SensorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     humidity: null,
     soil_moisture: null,
     timestamp: null,
+    irrigation_needed: false,
+    manual_override: null,
     isOnline: false,
     lastUpdateDate: null,
   });
@@ -116,6 +120,8 @@ export const SensorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             temperature: data.temperature,
             humidity: data.humidity,
             soil_moisture: data.soil_moisture,
+            irrigation_needed: data.irrigation_needed,
+            manual_override: data.manual_override,
             timestamp: data.timestamp,
             lastUpdateDate: data.unix_timestamp > 0 ? data.unix_timestamp : null,
           }));
