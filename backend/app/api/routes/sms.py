@@ -136,27 +136,46 @@ async def handle_incoming_whatsapp(
         
         response_msg = ""
 
-        # Using 'IN' instead of '==' to handle hidden spaces or "Menu" text
         if "PUMP ON" in text:
-            duration = 60
-            parts = text.split()
-            for p in parts:
-                if p.isdigit():
-                    duration = int(p)
-                    break
-            latest_reading["manual_override"] = "ON"
-            latest_reading["override_expiry_time"] = time.time() + (duration * 60)
-            response_msg = f"KisanCore [V2.3]: Pump activated for {duration} mins. 💧"
+            last_seen = iot.latest_reading.get("timestamp", "Never")
+            soil = iot.latest_reading.get("soil_moisture", 0)
+            if last_seen == "Never":
+                response_msg = "⚠️ Cannot activate pump. No data received from your farm yet. Please check your device connection. - KisanCore AI"
+            elif soil == 0.0:
+                response_msg = "⚠️ Cannot activate pump. Soil sensor is disconnected. Pump is disabled for safety. - KisanCore AI"
+            else:
+                duration = 60
+                parts = text.split()
+                for p in parts:
+                    if p.isdigit():
+                        duration = int(p)
+                        break
+                latest_reading["manual_override"] = "ON"
+                latest_reading["override_expiry_time"] = time.time() + (duration * 60)
+                response_msg = f"KisanCore [V2.3]: Pump activated for {duration} mins. 💧"
 
         elif "PUMP OFF" in text:
-            latest_reading["manual_override"] = "OFF"
-            latest_reading["override_expiry_time"] = time.time() + 86400
-            response_msg = "KisanCore [V2.3]: Pump turned OFF manually. 🛑"
+            last_seen = iot.latest_reading.get("timestamp", "Never")
+            soil = iot.latest_reading.get("soil_moisture", 0)
+            if last_seen == "Never":
+                response_msg = "⚠️ Cannot communicate with pump. No data received from your farm yet. - KisanCore AI"
+            elif soil == 0.0:
+                latest_reading["manual_override"] = "OFF"
+                latest_reading["override_expiry_time"] = time.time() + 86400
+                response_msg = "KisanCore [V2.3]: Pump is already disabled due to disconnected sensor, but manual OFF state is saved. 🛑"
+            else:
+                latest_reading["manual_override"] = "OFF"
+                latest_reading["override_expiry_time"] = time.time() + 86400
+                response_msg = "KisanCore [V2.3]: Pump turned OFF manually. 🛑"
 
         elif "AUTO" in text:
-            latest_reading["manual_override"] = None
-            latest_reading["override_expiry_time"] = 0
-            response_msg = "KisanCore [V2.3]: Pump restored to Autonomous AI Mode. 🤖"
+            last_seen = iot.latest_reading.get("timestamp", "Never")
+            if last_seen == "Never":
+                response_msg = "⚠️ Cannot change mode. No data received from your farm yet. - KisanCore AI"
+            else:
+                latest_reading["manual_override"] = None
+                latest_reading["override_expiry_time"] = 0
+                response_msg = "KisanCore [V2.3]: Pump restored to Autonomous AI Mode. 🤖"
 
         elif "STATUS" in text:
             temp = iot.latest_reading.get("temperature", 0)
