@@ -84,6 +84,10 @@ def calculate_irrigation_status(moisture: float):
     if latest_reading.get("unix_timestamp", 0) == 0:
         return False, "Waiting for sensor data..."
 
+    # 0b. If moisture reads exactly 0.0, treat as sensor disconnected
+    if moisture == 0.0:
+        return False, "Soil sensor disconnected or no data."
+
     # 1. Manual Override takes precedence
     if latest_reading["manual_override"] == "ON":
         irrigation_needed = True
@@ -141,10 +145,11 @@ async def post_iot_data(data: IOTData):
     save_persistence()
     
     # 4. Alerts (3-min cooldown)
+    # Skip alert entirely if soil sensor reads 0.0 (sensor disconnected)
     time_since_last = time.time() - latest_reading["last_alert_time"]
     alert_cooldown_ok = time_since_last > 180 
     
-    if data.soil_moisture < 30:
+    if data.soil_moisture > 0.0 and data.soil_moisture < 30:
         if not alert_cooldown_ok:
             print(f"⏳ Alert cooldown active: {int(180 - time_since_last)}s remaining.")
         else:

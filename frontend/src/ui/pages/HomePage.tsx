@@ -1280,7 +1280,7 @@ export default function HomePage({ lang }: { lang: string }) {
       {/* 5. SMART GUIDANCE: AI DRIVEN TIPS */}
       <section className="mb-12">
         <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-base sm:text-xl text-gray-900 dark:text-white font-black uppercase tracking-widest opacity-50 m-0 break-words">💡 {t('home_smart_guidance') || 'Smart Guidance'}</h2>
+          <h2 className="text-base sm:text-xl text-gray-900 dark:text-white font-black m-0 break-words"><span className="uppercase tracking-widest">💡 Smart Guidance</span></h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {getSmartTips(
