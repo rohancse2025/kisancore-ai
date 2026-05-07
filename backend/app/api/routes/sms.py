@@ -165,13 +165,27 @@ async def handle_incoming_whatsapp(
             mode = iot.latest_reading.get("manual_override") or "AUTO"
             irr  = "ON" if iot.latest_reading.get("irrigation_needed") else "OFF"
             last_seen = iot.latest_reading.get("timestamp", "Never")
-            
+            suggestion = iot.latest_reading.get("suggestion", "")
+            sensor_ok = soil > 0.0
+
             if last_seen == "Never":
                 response_msg = (
                     "⚠️ Farm Status Unavailable:\n"
                     "No data received from your farm yet. Please ensure your KisanCore device is powered on and connected to WiFi.\n"
                     "🕒 Last Update: Never\n"
                     "- KisanCore AI"
+                )
+            elif not sensor_ok:
+                response_msg = (
+                    f"⚠️ Farm Status (Partial):\n"
+                    f"🌡️ Temp: {temp}°C\n"
+                    f"💧 Humidity: {hum}%\n"
+                    f"🪴 Soil Sensor: DISCONNECTED\n"
+                    f"⚡ Pump: OFF (auto-disabled - no soil data)\n"
+                    f"⚙️ Mode: {mode}\n"
+                    f"🕒 Last Update: {last_seen}\n"
+                    f"⚠️ Please reconnect your soil sensor cable to GPIO 34.\n"
+                    f"- KisanCore AI"
                 )
             else:
                 response_msg = (
@@ -195,10 +209,13 @@ async def handle_incoming_whatsapp(
                 soil = iot.latest_reading.get("soil_moisture", 0)
                 irr  = "ON" if iot.latest_reading.get("irrigation_needed") else "OFF"
                 mode = iot.latest_reading.get("manual_override") or "AUTO"
+                sensor_ok = soil > 0.0
+                soil_display = f"{soil}%" if sensor_ok else "DISCONNECTED"
+                irr_display = irr if sensor_ok else "OFF (no soil data)"
                 response_msg = (
                     f"📊 KisanCore Daily Report:\n"
                     f"Temp: {temp}°C | Humidity: {hum}%\n"
-                    f"Soil: {soil}% | Pump: {irr}\n"
+                    f"Soil: {soil_display} | Pump: {irr_display}\n"
                     f"Mode: {mode}\n"
                     f"Send HELP for commands.\n"
                     f"- KisanCore AI"
