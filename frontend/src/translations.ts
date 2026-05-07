@@ -130,7 +130,12 @@ export const translations: Record<string, Record<string, string>> = {
     "crops_get_recommendation": "Get Fertilizer Advice",
     "crops_analyzing": "Analyzing Soil...",
     "crops_fert_result_title": "Fertilizer Application Plan",
-    "app_continue_as_guest": "Continue as Guest"
+    "app_continue_as_guest": "Continue as Guest",
+    "home_farm_profile": "My Farm Profile",
+    "home_soil_type": "Soil Type",
+    "home_nutrients": "Default Nutrients",
+    "home_profile_hint": "These values are used for AI recommendations when sensors are offline.",
+    "home_smart_guidance": "Smart Guidance"
   },
   "HI": {
     "home_welcome": "वापसी पर स्वागत है",
@@ -263,7 +268,12 @@ export const translations: Record<string, Record<string, string>> = {
     "crops_get_recommendation": "उर्वरक सलाह प्राप्त करें",
     "crops_analyzing": "मिट्टी का विश्लेषण...",
     "crops_fert_result_title": "उर्वरक अनुप्रयोग योजना",
-    "app_continue_as_guest": "अतिथि के रूप में जारी रखें"
+    "app_continue_as_guest": "अतिथि के रूप में जारी रखें",
+    "home_farm_profile": "मेरा फार्म प्रोफाइल",
+    "home_soil_type": "मिट्टी का प्रकार",
+    "home_nutrients": "डिफ़ॉल्ट पोषक तत्व",
+    "home_profile_hint": "जब सेंसर ऑफलाइन होते हैं तो इन मानों का उपयोग एआई सिफारिशों के लिए किया जाता है।",
+    "home_smart_guidance": "स्मार्ट मार्गदर्शन"
   },
   "MR": {
     "home_welcome": "परत स्वागत आहे",
@@ -396,7 +406,12 @@ export const translations: Record<string, Record<string, string>> = {
     "crops_get_recommendation": "खताचा सल्ला मिळवा",
     "crops_analyzing": "मातीचे विश्लेषण...",
     "crops_fert_result_title": "खत वापर योजना",
-    "app_continue_as_guest": "पाहुणे म्हणून पुढे जा"
+    "app_continue_as_guest": "पाहुणे म्हणून पुढे जा",
+    "home_farm_profile": "माझे फार्म प्रोफाइल",
+    "home_soil_type": "मातीचा प्रकार",
+    "home_nutrients": "डीफॉल्ट पोषक तत्वे",
+    "home_profile_hint": "सेन्सर ऑफलाइन असताना एआय शिफारसींसाठी ही मूल्ये वापरली जातात.",
+    "home_smart_guidance": "स्मार्ट मार्गदर्शन"
   },
   "KN": {
     "home_welcome": "ಮರಳಿ ಸ್ವಾಗತ",
@@ -456,7 +471,7 @@ export const translations: Record<string, Record<string, string>> = {
     "app_login": "ಲಾಗಿನ್",
     "app_logout": "ಲಾಗ್ ಔಟ್",
     "app_profile": "ಪ್ರೊಫೈಲ್",
-    "iot_msg_low": "ಗಮನಿಸಿ: ತೇವಾಂಶದ ಮಟ್ಟವು {moist}% ನಲ್ಲಿದೆ. ಮಣ್ಣು ತುಂಬಾ ಒಣಗಿದೆ, ಇದರಿಂದ ಸಸ್ಯಗಳಿಗೆ ಒತ್ತಡವಾಗುತ್ತಿದೆ. ನಾನು ಈಗಲೇ ನೀರாவರಿ ಪ್ರಾರಂಭಿಸಲು ಶಿಫಾರಸು ಮಾಡುತ್ತೇನೆ.",
+    "iot_msg_low": "ಗಮನಿಸಿ: ತೇವಾಂಶದ ಮಟ್ಟವು {moist}% ನಲ್ಲಿದೆ. ಮಣ್ಣು ತುಂಬಾ ಒಣಗಿದೆ, ಇದರಿಂದ ಸಸ್ಯಗಳಿಗೆ ಒತ್ತಡವಾಗುತ್ತಿದೆ. ನಾನು ಈಗಲೇ ನೀರಾವರಿ ಪ್ರಾರಂಭಿಸಲು ಶಿಫಾರಸು ಮಾಡುತ್ತೇನೆ.",
     "iot_msg_moderate": "ವ್ಯವಸ್ಥೆಯ ಸ್ಥಿತಿ ಸಾಮಾನ್ಯವಾಗಿದೆ: ಮಣ್ಣಿನ ತೇವಾಂಶವು {moist}% ನಲ್ಲಿದೆ. ಮಧ್ಯಮ ನೀರಾವರಿ ಶಿಫಾರಸು ಮಾಡಲಾಗಿದೆ.",
     "iot_msg_optimal": "ಸ್ಥಿತಿ ತಪಾಸಣೆ ಪೂರ್ಣಗೊಂಡಿದೆ: ಮಣ್ಣಿನ ತೇವಾಂಶವು {moist}% ನಲ್ಲಿ ಹೆಚ್ಚಿದೆ. ಹೆಚ್ಚಿನ ನೀರಾವರಿಯ ಅಗತ್ಯವಿಲ್ಲ.",
     "iot_esp_offline_title": "ESP32 ಆಫ್‌ಲೈನ್",
@@ -529,7 +544,12 @@ export const translations: Record<string, Record<string, string>> = {
     "crops_get_recommendation": "ರಸಗೊಬ್ಬರ ಸಲಹೆ ಪಡೆಯಿರಿ",
     "crops_analyzing": "ಮಣ್ಣಿನ ವಿಶ್ಲೇಷಣೆ...",
     "crops_fert_result_title": "ರಸಗೊಬ್ಬರ ಅನ್ವಯಿಕೆ ಯೋಜನೆ",
-    "app_continue_as_guest": "ಅತಿಥಿಯಾಗಿ ಮುಂದುವರಿಯಿರಿ"
+    "app_continue_as_guest": "ಅತಿಥಿಯಾಗಿ ಮುಂದುವರಿಯಿರಿ",
+    "home_farm_profile": "ನನ್ನ ಫಾರ್ಮ್ ಪ್ರೊಫೈಲ್",
+    "home_soil_type": "ಮಣ್ಣಿನ ವಿಧ",
+    "home_nutrients": "ಡಿಫಾಲ್ಟ್ ಪೋಷಕಾಂಶಗಳು",
+    "home_profile_hint": "ಸೆನ್ಸರ್‌ಗಳು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿರುವಾಗ ಈ ಮೌಲ್ಯಗಳನ್ನು ಎಐ ಶಿಫಾರಸುಗಳಿಗಾಗಿ ಬಳಸಲಾಗುತ್ತದೆ.",
+    "home_smart_guidance": "ಸ್ಮಾರ್ಟ್ ಮಾರ್ಗದರ್ಶನ"
   },
   "TA": {
     "home_welcome": "மீண்டும் வரவேற்கிறோம்",
@@ -662,6 +682,16 @@ export const translations: Record<string, Record<string, string>> = {
     "crops_get_recommendation": "உர ஆலோசனையைப் பெறுங்கள்",
     "crops_analyzing": "மண் பகுப்பாய்வு செய்கிறது...",
     "crops_fert_result_title": "உர பயன்பாட்டு திட்டம்",
-    "app_continue_as_guest": "விருந்தினராக தொடரவும்"
+    "app_continue_as_guest": "விருந்தினராக தொடரவும்",
+    "home_farm_profile": "என் பண்ணை விவரம்",
+    "home_soil_type": "மண் வகை",
+    "home_nutrients": "இயல்புநிலை ஊட்டச்சத்துக்கள்",
+    "home_profile_hint": "சென்சார்கள் ஆஃப்லைனில் இருக்கும்போது இந்த மதிப்புகள் AI பரிந்துரைகளுக்குப் பயன்படுத்தப்படுகின்றன.",
+    "home_smart_guidance": "ஸ்மார்ட் வழிகாட்டுதல்",
+    "farm_profile_title": "பண்ணை விவரக்குறிப்பு",
+    "farm_profile_soil": "மண் வகை",
+    "farm_profile_size": "நிலத்தின் அளவு",
+    "farm_profile_location": "இடம்",
+    "farm_profile_nutrients": "ஊட்டச்சத்துக்கள்"
   }
 };

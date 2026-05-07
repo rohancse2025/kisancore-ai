@@ -100,10 +100,10 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
         }
       } else {
         const result = await res.json();
-        alert(result.detail || "Failed to delete account");
+        alert(`⚠️ ${result.detail || "Failed to delete account"}`);
       }
-    } catch (err) {
-      alert("Error deleting account. Please try again.");
+    } catch (err: any) {
+      alert(`❌ Error deleting account: ${err.message || "Please check your internet and try again."}`);
     } finally {
       setSaving(false);
     }

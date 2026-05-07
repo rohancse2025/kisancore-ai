@@ -103,6 +103,11 @@ const ALL_TIPS = [
   { icon: "📦", text: "Proper storage in gunny bags at cool dry place extends shelf life", type: "info", condition: "any" },
   { icon: "🔄", text: "Good conditions — ideal time to apply fertilizers for better absorption", type: "good", condition: "any" },
   { icon: "🌈", text: "Cloudy day — good time to transplant seedlings or apply foliar spray", type: "info", condition: "cloudy" },
+  // Profile-based
+  { icon: "🏜️", text: "Sandy soil drains fast — consider more frequent, shorter irrigation", type: "info", condition: "sandy" },
+  { icon: "🧱", text: "Clayey soil retains water — avoid over-irrigation to prevent root rot", type: "info", condition: "clayey" },
+  { icon: "🧪", text: "Soil pH is low (Acidic) — consider adding lime to neutralize", type: "warning", condition: "low_ph" },
+  { icon: "🧪", text: "Soil pH is high (Alkaline) — consider adding gypsum or sulfur", type: "warning", condition: "high_ph" },
 ];
 
 export default function HomePage({ lang }: { lang: string }) {
@@ -641,7 +646,7 @@ export default function HomePage({ lang }: { lang: string }) {
     return () => clearInterval(timer);
   }, []);
 
-  const getSmartTips = (temp: number, hum: number, moist: number, condition: string, offset: number) => {
+  const getSmartTips = (temp: number, hum: number, moist: number, condition: string, offset: number, farmer: any) => {
     const c = condition.toLowerCase();
     // Priority tips based on current conditions
     const priority: typeof ALL_TIPS = [];
@@ -654,6 +659,14 @@ export default function HomePage({ lang }: { lang: string }) {
     if (c.includes('cloud')) priority.push(...ALL_TIPS.filter(t => t.condition === 'cloudy'));
     if (c.includes('sun') || c.includes('clear')) priority.push(...ALL_TIPS.filter(t => t.condition === 'sunny'));
     
+    // Add Profile-based tips
+    if (farmer) {
+      if (farmer.soil_type === 'Sandy') priority.push(...ALL_TIPS.filter(t => t.condition === 'sandy'));
+      if (farmer.soil_type === 'Clayey') priority.push(...ALL_TIPS.filter(t => t.condition === 'clayey'));
+      if (farmer.soil_ph < 6.0) priority.push(...ALL_TIPS.filter(t => t.condition === 'low_ph'));
+      if (farmer.soil_ph > 7.5) priority.push(...ALL_TIPS.filter(t => t.condition === 'high_ph'));
+    }
+
     // Fill with general tips using offset for rotation
     const general = ALL_TIPS.filter(t => t.condition === 'any');
     const rotated = [...general.slice(offset % general.length), ...general.slice(0, offset % general.length)];
@@ -667,7 +680,6 @@ export default function HomePage({ lang }: { lang: string }) {
   return (
     <div className="font-sans">
       
-      {/* Offline Banner */}
       {/* Offline Banner */}
       {!isPageOnline && (
         <div className="bg-amber-50 border-b-2 border-amber-500/30 py-3 px-6 text-amber-900 text-center font-black text-[10px] uppercase tracking-widest animate-pulse flex items-center justify-center gap-3 shadow-lg z-[200] sticky top-0 backdrop-blur-md">
@@ -875,7 +887,73 @@ export default function HomePage({ lang }: { lang: string }) {
         </div>
       </section>
 
-      {/* 3. FARMER STATS + LIVE FARM DATA */}
+      {/* 3. MY FARM PROFILE SECTION (New) */}
+      {isLoggedIn && farmer && (
+        <section className="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 mb-10 shadow-sm border border-gray-100 dark:border-slate-700 hover-lift transition-all">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-base sm:text-xl text-gray-900 dark:text-white m-0 font-black flex items-center gap-2 uppercase tracking-widest opacity-50">
+              🚜 {t('home_farm_profile')}
+            </h2>
+            <Link 
+              to="/profile" 
+              className="text-xs font-black text-green-600 hover:underline flex items-center gap-1"
+            >
+              {t('nav_profile')} →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="bg-gray-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-gray-100 dark:border-slate-700/50">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">{t('home_soil_type')}</p>
+              <p className="text-lg font-black text-gray-700 dark:text-gray-200 m-0">
+                {farmer.soil_type || 'Not Set'}
+              </p>
+              <div className="mt-2 text-[10px] text-green-600 font-bold bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full inline-block">
+                {farmer.soil_type === 'Sandy' ? 'Fast Drainage' : farmer.soil_type === 'Clayey' ? 'High Retention' : 'General'}
+              </div>
+            </div>
+
+            <div className="bg-gray-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-gray-100 dark:border-slate-700/50">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">Farm Size</p>
+              <p className="text-lg font-black text-gray-700 dark:text-gray-200 m-0">
+                {farmer.farm_size} <span className="text-sm text-gray-400 font-bold">{farmer.farm_size_unit || 'Acres'}</span>
+              </p>
+            </div>
+
+            <div className="bg-gray-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-gray-100 dark:border-slate-700/50">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">Location</p>
+              <p className="text-sm font-black text-gray-700 dark:text-gray-200 m-0 truncate">
+                {farmer.location || 'Unknown'}
+              </p>
+              <p className="text-[10px] text-gray-400 font-bold mt-1 uppercase">{locationSource} SOURCE</p>
+            </div>
+
+            <div className="bg-green-50/50 dark:bg-green-900/10 p-5 rounded-2xl border border-green-100/50 dark:border-green-900/30">
+              <p className="text-[10px] font-black text-green-700 dark:text-green-400 uppercase tracking-wider mb-2">{t('home_nutrients')}</p>
+              <div className="flex gap-3 items-end">
+                <div>
+                  <span className="text-[10px] font-black text-gray-400">N:</span>
+                  <span className="text-sm font-black ml-1">{farmer.nitrogen}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-black text-gray-400">P:</span>
+                  <span className="text-sm font-black ml-1">40</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-black text-gray-400">K:</span>
+                  <span className="text-sm font-black ml-1">{farmer.potassium}</span>
+                </div>
+              </div>
+              <p className="text-[9px] text-gray-400 font-medium mt-2 italic leading-tight">
+                {t('home_profile_hint')}
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
+
+      {/* 4. SENSOR DATA SECTION */}
       <section className="mb-14">
         <div className="flex items-center gap-3 mb-6">
           <h2 className="text-base sm:text-xl text-gray-900 dark:text-white font-black uppercase tracking-widest opacity-50 m-0 break-words">{t('home_sensor_data')}</h2>
@@ -1199,7 +1277,40 @@ export default function HomePage({ lang }: { lang: string }) {
         </div>
       </section>
 
-      {/* 5. STRATEGIC COMMAND CENTER: MARKET WATCH & FORECAST */}
+      {/* 5. SMART GUIDANCE: AI DRIVEN TIPS */}
+      <section className="mb-12">
+        <div className="flex items-center gap-3 mb-6">
+          <h2 className="text-base sm:text-xl text-gray-900 dark:text-white font-black uppercase tracking-widest opacity-50 m-0 break-words">💡 {t('home_smart_guidance') || 'Smart Guidance'}</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {getSmartTips(
+            currentSensorData.temperature, 
+            currentSensorData.humidity, 
+            currentSensorData.soil_moisture, 
+            weatherData?.condition || '', 
+            tipOffset,
+            farmer
+          ).map((tip, idx) => (
+            <div key={idx} className="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-gray-100 dark:border-slate-700 shadow-sm flex items-start gap-4 hover-lift">
+              <div className="text-3xl">{tip.icon}</div>
+              <div>
+                <p className="m-0 text-sm font-bold text-gray-700 dark:text-gray-200 leading-snug">
+                  {tip.text}
+                </p>
+                <span className={`text-[9px] font-black uppercase tracking-widest mt-2 inline-block px-2 py-0.5 rounded ${
+                  tip.type === 'warning' ? 'bg-red-50 text-red-500' : 
+                  tip.type === 'good' ? 'bg-green-50 text-green-500' : 
+                  'bg-blue-50 text-blue-500'
+                }`}>
+                  {tip.type}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 6. STRATEGIC COMMAND CENTER: MARKET WATCH & FORECAST */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 anim-fade-in">
         {/* Market Hub Column */}
         <section className="animate-fade-in-up">

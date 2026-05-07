@@ -188,17 +188,21 @@ def delete_profile(phone: str = Depends(get_current_phone), db: Session = Depend
     if not farmer:
         raise HTTPException(404, detail="Farmer not found")
         
-    # 1. Delete Crop Records
-    db.query(CropRecord).filter(CropRecord.farmer_id == farmer.id).delete()
-    
-    # 2. Delete Farmer History
-    db.query(FarmerHistory).filter(FarmerHistory.farmer_id == farmer.id).delete()
-    
-    # 3. Delete Farmer
-    db.delete(farmer)
-    db.commit()
-    
-    return {"status": "deleted"}
+    try:
+        # 1. Delete Crop Records
+        db.query(CropRecord).filter(CropRecord.farmer_id == farmer.id).delete(synchronize_session=False)
+        
+        # 2. Delete Farmer History
+        db.query(FarmerHistory).filter(FarmerHistory.farmer_id == farmer.id).delete(synchronize_session=False)
+        
+        # 3. Delete Farmer
+        db.delete(farmer)
+        db.commit()
+        return {"status": "deleted"}
+    except Exception as e:
+        db.rollback()
+        print(f"Error during account deletion: {e}")
+        raise HTTPException(500, detail=f"Database error during deletion: {str(e)}")
 
 @router.post("/history")
 def save_history(farmer_id: int, type: str, data: str, current_farmer: Farmer = Depends(get_current_farmer), db: Session = Depends(get_db)):
