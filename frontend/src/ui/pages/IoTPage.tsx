@@ -210,7 +210,7 @@ export default function IoTPage({ lang }: { lang: string }) {
 
 
     let bg = "bg-white border-gray-100";
-    let status = irrigation_needed ? "ON" : "OFF";
+    let status = !lastUpdateDate ? "WAITING" : (irrigation_needed ? "ON" : "OFF");
     let message = irrigation_needed ? "Pump is active" : "No irrigation needed";
     let icon = irrigation_needed ? "💧" : "🚿";
 
@@ -368,7 +368,7 @@ export default function IoTPage({ lang }: { lang: string }) {
               {getTempBadge(sensorData?.temperature || null)}
             </div>
             <h3 className="m-0 text-4xl font-black text-gray-900 flex items-center gap-3">
-              {sensorData?.temperature !== undefined && sensorData?.temperature !== null ? <CountUp end={sensorData.temperature} decimals={1} /> : "--"}°C
+              {lastUpdateDate && sensorData?.temperature !== undefined && sensorData?.temperature !== null ? <CountUp end={sensorData.temperature} decimals={1} /> : "--"}°C
               {sensorData?.temperature !== undefined && sensorData?.temperature !== null && (
                 <SpeakButton text={`Temperature is ${sensorData.temperature} degrees celsius`} lang={lang} />
               )}
@@ -389,7 +389,7 @@ export default function IoTPage({ lang }: { lang: string }) {
               {getHumidityBadge(sensorData?.humidity || null)}
             </div>
             <h3 className="m-0 text-4xl font-black text-gray-900 flex items-center gap-3">
-              {sensorData?.humidity !== undefined && sensorData?.humidity !== null ? <CountUp end={sensorData.humidity} /> : "--"}%
+              {lastUpdateDate && sensorData?.humidity !== undefined && sensorData?.humidity !== null ? <CountUp end={sensorData.humidity} /> : "--"}%
               {sensorData?.humidity !== undefined && sensorData?.humidity !== null && (
                 <SpeakButton text={`Humidity is ${sensorData.humidity} percent`} lang={lang} />
               )}
@@ -410,7 +410,7 @@ export default function IoTPage({ lang }: { lang: string }) {
               {getMoistureBadge(sensorData?.soil_moisture ?? null)}
             </div>
             <h3 className="m-0 text-4xl font-black text-gray-900 flex items-center gap-3">
-              {sensorData?.soil_moisture !== undefined && sensorData?.soil_moisture !== null && sensorData.soil_moisture !== -999 ? <CountUp end={sensorData.soil_moisture} /> : "--"}%
+              {lastUpdateDate && sensorData?.soil_moisture !== undefined && sensorData?.soil_moisture !== null && sensorData.soil_moisture !== -999 ? <CountUp end={sensorData.soil_moisture} /> : "--"}%
               {sensorData?.soil_moisture !== undefined && sensorData?.soil_moisture !== null && sensorData.soil_moisture !== -999 && (
                 <SpeakButton 
                   text={`Soil moisture is ${sensorData.soil_moisture} percent. ${sensorData.soil_moisture < 30 ? 'Irrigation needed urgently.' : sensorData.soil_moisture > 70 ? 'Soil is well watered.' : 'Soil moisture is optimal.'}`} 

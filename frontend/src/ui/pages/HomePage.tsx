@@ -898,7 +898,7 @@ export default function HomePage({ lang }: { lang: string }) {
                 {isLoading ? <Skeleton className="h-9 w-24" /> : (
                   <>
                     <Text variant="number" className="m-0 mb-1 text-3xl sm:text-4xl font-black tracking-tighter text-gray-900 dark:text-white leading-none block tabular-nums">
-                      {currentSensorData?.temperature || 0}°C
+                      {lastUpdated ? `${currentSensorData?.temperature || 0}°C` : "---"}
                     </Text>
                     <span className={`text-xl font-black tabular-nums ${getTrend(currentSensorData?.temperature || 25, 'temp') === '↑' ? 'text-red-500' : 'text-blue-500'}`}>
                       {getTrend(currentSensorData?.temperature || 25, 'temp')}
@@ -920,7 +920,7 @@ export default function HomePage({ lang }: { lang: string }) {
                 {isLoading ? <Skeleton className="h-9 w-24" /> : (
                   <>
                     <h3 className="m-0 mb-1 text-3xl sm:text-4xl font-black tracking-tighter text-gray-900 dark:text-white leading-none tabular-nums">
-                      {currentSensorData?.humidity || 0}%
+                      {lastUpdated ? `${currentSensorData?.humidity || 0}%` : "---"}
                     </h3>
                     <span className="text-xl font-black text-blue-500 tabular-nums">{getTrend(currentSensorData?.humidity || 50, 'hum')}</span>
                   </>
@@ -940,7 +940,7 @@ export default function HomePage({ lang }: { lang: string }) {
                 {isLoading ? <Skeleton className="h-9 w-24" /> : (
                   <>
                     <h3 className="m-0 mb-1 text-3xl sm:text-4xl font-black tracking-tighter text-gray-900 dark:text-white leading-none tabular-nums">
-                      {currentSensorData?.soil_moisture || 0}%
+                      {lastUpdated ? `${currentSensorData?.soil_moisture || 0}%` : "---"}
                     </h3>
                     <span className="text-xl font-black text-green-500 tabular-nums">{getTrend(currentSensorData?.soil_moisture || 50, 'moist')}</span>
                   </>
@@ -959,11 +959,11 @@ export default function HomePage({ lang }: { lang: string }) {
               <div className="min-h-[44px]">
                 {isLoading ? <Skeleton className="h-9 w-24" /> : (
                   <h3 className={`m-0 mb-1 text-3xl sm:text-4xl font-black tracking-tighter leading-none ${
-                    !isPageOnline ? 'text-gray-400' :
+                    !isPageOnline || !lastUpdated ? 'text-gray-400' :
                     irrigation?.needed ? "text-red-500" :
                     "text-green-600"
                   }`}>
-                    {!isPageOnline ? "---" : (irrigation?.needed ? "ON" : "OFF")}
+                    {!isPageOnline || !lastUpdated ? "---" : (irrigation?.needed ? "ON" : "OFF")}
                   </h3>
                 )}
               </div>

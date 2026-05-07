@@ -80,6 +80,10 @@ def calculate_irrigation_status(moisture: float):
     irrigation_needed = False
     message = "Soil moisture is optimal."
     
+    # 0. Check if we have any data at all
+    if latest_reading.get("unix_timestamp", 0) == 0:
+        return False, "Waiting for sensor data..."
+
     # 1. Manual Override takes precedence
     if latest_reading["manual_override"] == "ON":
         irrigation_needed = True

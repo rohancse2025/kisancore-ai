@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
+import { API_BASE_URL } from '../../config';
 
 export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout?: () => void }) {
   const { t } = useTranslation(lang);
@@ -42,7 +43,7 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem('kisancore_token');
-        const res = await fetch('/api/v1/auth/profile', {
+        const res = await fetch(`${API_BASE_URL}/api/v1/auth/profile`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -84,7 +85,7 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
     setSaving(true);
     try {
       const token = localStorage.getItem('kisancore_token');
-      const res = await fetch('/api/v1/auth/profile', {
+      const res = await fetch(`${API_BASE_URL}/api/v1/auth/profile`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -132,7 +133,7 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
 
     try {
       const token = localStorage.getItem('kisancore_token');
-      const res = await fetch('/api/v1/auth/profile', {
+      const res = await fetch(`${API_BASE_URL}/api/v1/auth/profile`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',

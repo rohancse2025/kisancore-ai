@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
+import { API_BASE_URL } from '../../config';
 
 export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (user: any) => void }) {
   const { t } = useTranslation(lang);
@@ -97,8 +98,7 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
 
     const cleanPassword = formData.password.trim();
 
-    const baseUrl = import.meta.env.VITE_API_URL || '';
-    const endpoint = isRegister ? `${baseUrl}/api/v1/auth/register` : `${baseUrl}/api/v1/auth/login`;
+    const endpoint = isRegister ? `${API_BASE_URL}/api/v1/auth/register` : `${API_BASE_URL}/api/v1/auth/login`;
 
     try {
       const res = await fetch(endpoint, {
