@@ -23,11 +23,12 @@ if cors_origins:
     )
 
 app.include_router(api_router, prefix=settings.api_v1_prefix)
-from app.database import Base, engine
+from app.database import engine, Base
 
 @app.on_event("startup")
 def create_tables():
     Base.metadata.create_all(bind=engine)
+    print("✅ Database tables created/verified")
 
 
 
