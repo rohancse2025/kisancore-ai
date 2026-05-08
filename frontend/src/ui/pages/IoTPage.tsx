@@ -182,8 +182,8 @@ export default function IoTPage({ lang }: { lang: string }) {
           <div className="flex items-center gap-4">
             <span className="text-4xl">📡</span>
             <div>
-              <h2 className="text-2xl font-black mb-1 m-0 text-gray-700">{t('iot_esp_offline_title')}</h2>
-              <p className="m-0 text-sm font-bold uppercase tracking-widest opacity-60">
+              <h2 className="text-2xl font-black mb-1 m-0 text-gray-700 break-words">{t('iot_esp_offline_title')}</h2>
+              <p className="m-0 text-sm font-bold uppercase tracking-widest opacity-60 break-words">
                 {isStale ? `${t('iot_status_stale')} — ${minsAgo} min ago` : t('iot_esp_offline_desc')}
               </p>
             </div>
@@ -199,8 +199,8 @@ export default function IoTPage({ lang }: { lang: string }) {
           <div className="flex items-center gap-4">
             <span className="text-4xl">⚠️</span>
             <div>
-              <h2 className="text-2xl font-black mb-1 m-0">{t('iot_soil_disconnected_title')}</h2>
-              <p className="m-0 text-sm opacity-70 font-bold uppercase tracking-widest">{t('iot_soil_disconnected_desc')}</p>
+              <h2 className="text-2xl font-black mb-1 m-0 break-words">{t('iot_soil_disconnected_title')}</h2>
+              <p className="m-0 text-sm opacity-70 font-bold uppercase tracking-widest break-words">{t('iot_soil_disconnected_desc')}</p>
             </div>
           </div>
         </div>
@@ -242,8 +242,8 @@ export default function IoTPage({ lang }: { lang: string }) {
           <div className="flex items-center gap-4">
             <span className="text-4xl">{icon}</span>
             <div>
-              <h2 className="text-2xl font-black mb-1 m-0">{t('home_irrigation').toUpperCase()}: {status}</h2>
-              <p className="m-0 text-sm opacity-70 font-bold uppercase tracking-widest text-[#16a34a] flex items-center gap-1.5"><span className="text-base">🤖</span> Local AI Analysis Engine</p>
+              <h2 className="text-2xl font-black mb-1 m-0 break-words">{t('home_irrigation').toUpperCase()}: {status}</h2>
+              <p className="m-0 text-sm opacity-70 font-bold uppercase tracking-widest text-[#16a34a] flex items-center gap-1.5 break-words"><span className="text-base flex-shrink-0">🤖</span> Local AI Analysis Engine</p>
             </div>
           </div>
 
@@ -255,8 +255,8 @@ export default function IoTPage({ lang }: { lang: string }) {
           </button>
         </div>
 
-        <div className="mt-6 p-4 sm:p-5 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 text-base sm:text-[17px] font-bold text-gray-800 leading-relaxed italic shadow-sm flex items-center justify-between">
-          <span>"{message}"</span>
+        <div className="mt-6 p-4 sm:p-5 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 text-base sm:text-lg font-bold text-gray-800 leading-relaxed italic shadow-sm flex items-center justify-between break-words gap-4">
+          <span className="break-words flex-1">"{message}"</span>
           <SpeakButton text={message} lang={lang} className="flex-shrink-0 ml-2" />
         </div>
 

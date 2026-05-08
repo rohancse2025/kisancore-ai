@@ -123,8 +123,8 @@ export default function MarketPage({ lang }: { lang: string }) {
 
       {/* 2. SEARCH SECTION */}
       <section className="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 mb-10 shadow-sm border border-gray-200 dark:border-slate-700">
-        <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 items-stretch sm:items-end">
-          <div className="flex-1">
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 items-stretch sm:items-end mb-6">
+          <div className="w-full sm:flex-1 sm:min-w-[200px]">
             <label className="block mb-2 font-black text-gray-400 uppercase tracking-widest text-[10px]">{t('market_commodity')}</label>
             <CropSearchInput 
               value={commodity}
@@ -132,7 +132,7 @@ export default function MarketPage({ lang }: { lang: string }) {
               placeholder="Search commodity..."
             />
           </div>
-          <div className="flex-1">
+          <div className="w-full sm:flex-1 sm:min-w-[200px]">
             <label className="block mb-2 font-black text-gray-400 uppercase tracking-widest text-[10px]">{t('market_state')}</label>
             <select 
               value={state} 
@@ -145,7 +145,7 @@ export default function MarketPage({ lang }: { lang: string }) {
           <button 
             onClick={() => fetchPrices()}
             disabled={isLoading}
-            className={`py-4 px-7 rounded-xl text-white text-base font-black uppercase tracking-widest transition-all active:scale-95 whitespace-nowrap shadow-lg ripple
+            className={`w-full sm:w-auto py-4 px-7 rounded-xl text-white text-base font-black uppercase tracking-widest transition-all active:scale-95 whitespace-nowrap shadow-lg ripple
               ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 cursor-pointer hover:bg-green-700'}`}
           >
             {isLoading ? "..." : "Check Prices"}
@@ -294,7 +294,9 @@ export default function MarketPage({ lang }: { lang: string }) {
 
           {/* Price Table - Desktop View */}
           <div className="hidden md:block bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm border border-gray-200 dark:border-slate-700 mb-2.5">
-            <table className="w-full border-collapse">
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+                <table className="min-w-[600px] w-full border-collapse">
               <thead>
                 <tr className="bg-gray-50 dark:bg-slate-900 border-b-2 border-gray-100 dark:border-slate-800">
                   <th className="text-left py-4 px-5 text-gray-500 text-sm font-bold uppercase tracking-wider">Market</th>
@@ -308,21 +310,23 @@ export default function MarketPage({ lang }: { lang: string }) {
               <tbody>
                 {prices.map((p, i) => (
                   <tr key={i} className={`border-b dark:border-slate-800 transition-colors hover:bg-gray-50 dark:hover:bg-slate-700/50 ${i % 2 === 0 ? 'bg-white dark:bg-slate-800' : 'bg-gray-50/30 dark:bg-slate-900/30'}`}>
-                    <td className="py-4 px-5 text-[15px] text-gray-700 dark:text-slate-200">{p.market}</td>
-                    <td className="py-4 px-5 text-[15px] text-gray-700 dark:text-slate-200">{p.variety}</td>
-                    <td className="py-4 px-5 text-[15px] text-gray-700 dark:text-slate-200 font-medium">₹{p.min_price}</td>
-                    <td className="py-4 px-5 text-[15px] text-gray-700 dark:text-slate-200 font-medium">₹{p.max_price}</td>
-                    <td className="py-4 px-5 text-[15px] font-black text-green-600 flex items-center gap-2">
+                    <td className="py-4 px-5 text-sm text-gray-700 dark:text-slate-200">{p.market}</td>
+                    <td className="py-4 px-5 text-sm text-gray-700 dark:text-slate-200">{p.variety}</td>
+                    <td className="py-4 px-5 text-sm text-gray-700 dark:text-slate-200 font-medium">₹{p.min_price}</td>
+                    <td className="py-4 px-5 text-sm text-gray-700 dark:text-slate-200 font-medium">₹{p.max_price}</td>
+                    <td className="py-4 px-5 text-sm font-black text-green-600 flex items-center gap-2">
                       <span className={`mr-2 ${getTrendIcon(p.modal_price).color}`}>
                         {getTrendIcon(p.modal_price).icon}
                       </span>
                       ₹{p.modal_price}
                     </td>
-                    <td className="py-4 px-5 text-[15px] text-gray-500">{p.date}</td>
+                    <td className="py-4 px-5 text-sm text-gray-500">{p.date}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
+            </div>
           </div>
 
           {/* Price List - Mobile View (Cards) */}

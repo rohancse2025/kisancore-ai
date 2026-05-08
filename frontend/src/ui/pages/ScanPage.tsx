@@ -353,7 +353,7 @@ _Powered by KisanCore AI - Smart Agriculture Assistant_ 👨‍🌾🚜`;
                     </div>
                     <SpeakButton text={`Treatment Plan: ${result.treatment}`} lang={lang} />
                   </h4>
-                  <p className="m-0 text-gray-700 text-[15px] leading-relaxed font-medium italic">"{result.treatment}"</p>
+                  <p className="m-0 text-gray-700 text-sm sm:text-base leading-relaxed font-medium italic">"{result.treatment}"</p>
                 </div>
 
                 <div className="bg-blue-50/50 rounded-2xl p-6 border border-blue-100/50 hover-lift transition-all">
@@ -363,7 +363,7 @@ _Powered by KisanCore AI - Smart Agriculture Assistant_ 👨‍🌾🚜`;
                     </div>
                     <SpeakButton text={`Prevention Strategy: ${result.prevention}`} lang={lang} />
                   </h4>
-                  <p className="m-0 text-gray-700 text-[15px] leading-relaxed font-medium italic">"{result.prevention}"</p>
+                  <p className="m-0 text-gray-700 text-sm sm:text-base leading-relaxed font-medium italic">"{result.prevention}"</p>
                 </div>
               </div>
 
@@ -402,7 +402,7 @@ _Powered by KisanCore AI - Smart Agriculture Assistant_ 👨‍🌾🚜`;
           {COMMON_DISEASES.map((d) => (
             <div key={d.name} className="bg-white rounded-2xl p-6 text-center shadow-sm border border-gray-100 border-t-4 border-t-green-600 transition-all hover:-translate-y-1 hover:shadow-md">
               <span className="text-4xl block mb-3">{d.emoji}</span>
-              <p className="m-0 font-bold text-gray-800 text-[15px] leading-snug mb-2">{d.name}</p>
+              <p className="m-0 font-bold text-gray-800 text-sm sm:text-base leading-snug mb-2">{d.name}</p>
               <span className="bg-orange-50 text-orange-700 py-1 px-3 rounded-full text-xs font-black uppercase tracking-widest">
                 {d.type}
               </span>

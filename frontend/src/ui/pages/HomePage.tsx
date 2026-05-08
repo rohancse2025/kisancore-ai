@@ -711,7 +711,7 @@ export default function HomePage({ lang }: { lang: string }) {
                 AI Powered Farming
               </div>
               
-              <h1 className="text-white text-3xl sm:text-4xl md:text-6xl font-black leading-tight mb-6 tracking-tight drop-shadow-md animate-fade-in-up [animation-delay:300ms] break-words">
+              <h1 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight mb-6 tracking-tight drop-shadow-md animate-fade-in-up [animation-delay:300ms] break-words">
                 Empowering Farmers with <br />
                 <span className="text-[#4ade80]">Next-Gen AI & IoT</span>
               </h1>
@@ -755,7 +755,7 @@ export default function HomePage({ lang }: { lang: string }) {
                 KisanCore AI V2.0
               </div>
               
-              <h1 className="text-white text-3xl sm:text-4xl md:text-6xl font-black leading-tight mb-6 tracking-tight drop-shadow-md animate-fade-in-up [animation-delay:300ms] break-words">
+              <h1 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight mb-6 tracking-tight drop-shadow-md animate-fade-in-up [animation-delay:300ms] break-words">
                 Welcome back, <span className="text-[#4ade80]">{farmer.name}!</span> 👨‍🌾
               </h1>
               
@@ -802,8 +802,8 @@ export default function HomePage({ lang }: { lang: string }) {
           </button>
         </div>
         
-        <div className="flex gap-8 items-center flex-wrap mb-6">
-          <div className="min-w-[200px]">
+        <div className="flex gap-4 sm:gap-8 items-center flex-wrap mb-6 w-full">
+          <div className="w-full sm:min-w-[200px] sm:w-auto flex-shrink-0">
             <div className="flex flex-col gap-2">
               {weatherLoading ? (
                 <>
@@ -961,7 +961,7 @@ export default function HomePage({ lang }: { lang: string }) {
             <span className="bg-gray-100 text-gray-500 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-gray-200 tracking-widest uppercase">NO DATA</span>
           )}
         </div>
-        <div className={`grid gap-6 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           {/* TEMPERATURE */}
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-7 min-h-[160px] shadow-sm border border-gray-100 dark:border-slate-700 border-t-4 border-t-[#ef4444] flex flex-col justify-between hover-lift overflow-hidden">
             <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-50 dark:bg-red-900/20 rounded-full flex justify-center items-center font-bold text-xl">
@@ -1050,7 +1050,7 @@ export default function HomePage({ lang }: { lang: string }) {
 
         {/* 4. FARMER STATS ROW */}
         {/* 4. SMART INTERACTIVE ACTION CARDS */}
-        <div className={`grid gap-4 mt-6 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
           {/* CARD 1: MY CROPS */}
           <div 
             onClick={() => {

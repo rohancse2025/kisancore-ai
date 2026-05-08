@@ -180,9 +180,10 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
             {isRegister && (
               <div>
                  <input 
+                  type="text"
                   placeholder={t('auth_full_name')} 
                   required 
-                  autoComplete="off"
+                  autoComplete="name"
                   className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 caret-green-600" 
                   onChange={(e) => setFormData({...formData, name: e.target.value})} 
                 />
@@ -196,8 +197,10 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
                 <input 
                  placeholder={t('auth_phone')} 
                  type="tel"
+                 inputMode="numeric"
+                 pattern="[0-9]*"
                  required 
-                 autoComplete="off"
+                 autoComplete="tel"
                  name="kisancore_phone_field"
                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 pl-20 pr-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 caret-green-600" 
                  onChange={(e) => {
@@ -218,6 +221,7 @@ export default function LoginPage({ lang, onLogin }: { lang: string, onLogin?: (
                  placeholder={t('auth_password')} 
                  type={showPassword ? "text" : "password"} 
                  required 
+                 autoComplete="current-password"
                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-5 py-4 rounded-xl font-bold focus:border-green-500 outline-none transition-all text-base text-gray-900 dark:text-white pr-12 placeholder:text-gray-400 dark:placeholder:text-slate-500 caret-green-600" 
                  onChange={(e) => setFormData({...formData, password: e.target.value})} 
                />

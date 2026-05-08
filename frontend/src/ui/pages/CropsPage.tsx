@@ -338,7 +338,7 @@ export default function CropsPage({ lang }: { lang: string }) {
       {activeTab === 'crop' && (
         <div className="animate-fade-in">
           {/* HERO HEADER */}
-          <section className={`bg-gradient-to-br from-green-800 to-green-600 rounded-2xl p-6 sm:p-8 md:p-10 text-white mb-8 shadow-lg shadow-green-700/20 ${isMobile ? 'text-center' : 'text-left'}`}>
+          <section className="bg-gradient-to-br from-green-800 to-green-600 rounded-2xl p-6 sm:p-8 md:p-10 text-white mb-8 shadow-lg shadow-green-700/20 text-center md:text-left">
             <h1 className="m-0 mb-2.5 text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight">🌾 {t('crops_title')}</h1>
             <p className="m-0 text-sm sm:text-base md:text-lg opacity-90 font-medium">{t('crops_subtitle')}</p>
           </section>
@@ -354,7 +354,7 @@ export default function CropsPage({ lang }: { lang: string }) {
                 ℹ️ <strong>{t('crops_soil_note_title')}:</strong> {t('crops_soil_note_desc')}
               </div>
               
-              <div className={`grid gap-6 md:gap-x-10 mb-8 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-x-10 mb-8">
                 {sliders.map(slider => {
                   const currentValue = inputs[slider.name as keyof typeof inputs];
                   return (
@@ -365,17 +365,17 @@ export default function CropsPage({ lang }: { lang: string }) {
                             {slider.label}
                             {(slider.name === "temperature" || slider.name === "humidity") && (
                               isOnline ? (
-                                <span className="ml-2 text-green-600 text-[10px] font-black uppercase flex items-center gap-1 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
-                                  <span className="text-[8px] animate-pulse">🔴</span> {t('crops_live')}
+                                <span className="ml-2 text-green-600 text-xs font-black uppercase flex items-center gap-1 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                                  <span className="text-xs animate-pulse">🔴</span> {t('crops_live')}
                                 </span>
                               ) : (
-                                <span className="ml-2 text-orange-600 text-[10px] font-black uppercase flex items-center gap-1 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">
+                                <span className="ml-2 text-orange-600 text-xs font-black uppercase flex items-center gap-1 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">
                                   {t('crops_offline')}
                                 </span>
                               )
                             )}
                           </label>
-                          <p className="text-[11px] text-gray-400 italic mt-0.5 font-medium">{slider.hint}</p>
+                          <p className="text-xs text-gray-400 italic mt-0.5 font-medium">{slider.hint}</p>
                         </div>
                         <span className="font-black text-green-700 text-xl">{currentValue}</span>
                       </div>
@@ -386,13 +386,13 @@ export default function CropsPage({ lang }: { lang: string }) {
                         className="w-full accent-green-600 cursor-pointer h-1.5 rounded-full mb-1"
                       />
                       
-                      <div className="flex justify-between text-[10px] text-gray-300 font-black uppercase tracking-tighter">
+                      <div className="flex justify-between text-xs text-gray-300 font-black uppercase tracking-tighter">
                         <span>{t('crops_min')} {slider.min}</span>
                         <span>{t('crops_max')} {slider.max}</span>
                       </div>
                       
                       {getSliderHint(slider.name, currentValue) && (
-                        <p className="text-[11px] text-amber-600 mt-2 font-bold italic">{getSliderHint(slider.name, currentValue)}</p>
+                        <p className="text-xs text-amber-600 mt-2 font-bold italic">{getSliderHint(slider.name, currentValue)}</p>
                       )}
                     </div>
                   );
@@ -449,22 +449,22 @@ export default function CropsPage({ lang }: { lang: string }) {
                           </div>
                           <h3 className={`text-xl sm:text-2xl font-black ${c.t} tracking-tight m-0`}>{crop.name}</h3>
                           {crop.offline && (
-                            <div className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-black uppercase self-center border border-amber-200">
+                            <div className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-black uppercase self-center border border-amber-200">
                               📡 Offline Mode
                             </div>
                           )}
                           <p className="text-sm text-gray-500 italic m-0 leading-relaxed font-medium">{crop.reason}</p>
                           
                           <div className="flex flex-col gap-3 mt-4 text-left border-t border-gray-50 pt-5">
-                            <div className="flex items-center gap-2.5 text-[15px] font-medium text-gray-700">
+                            <div className="flex items-center gap-2.5 text-sm sm:text-base font-medium text-gray-700">
                               <span>💧</span> <span className="text-gray-400 font-bold">{t('crops_water')}:</span> {crop.water_needed}
                             </div>
-                            <div className="flex items-center gap-2.5 text-[15px] font-medium text-gray-700">
+                            <div className="flex items-center gap-2.5 text-sm sm:text-base font-medium text-gray-700">
                               <span>📅</span> <span className="text-gray-400 font-bold">{t('crops_season')}:</span> {crop.best_season}
                             </div>
-                            <div className="flex items-center gap-2.5 text-[15px] font-medium text-gray-700">
+                            <div className="flex items-center gap-2.5 text-sm sm:text-base font-medium text-gray-700">
                               <span>💰</span> <span className="text-gray-400 font-bold">{t('crops_profit')}:</span> 
-                              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider ${profit}`}>
+                              <span className={`px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider ${profit}`}>
                                 {crop.profit_potential}
                               </span>
                             </div>
@@ -591,7 +591,7 @@ export default function CropsPage({ lang }: { lang: string }) {
                       <div key={idx} className="flex gap-3 items-start bg-green-100/30 p-4 rounded-xl border-l-4 border-green-600 animate-fade-in">
                         <span className="text-green-600 font-bold mt-1">●</span>
                         <p className="m-0 text-gray-700 dark:text-slate-300 text-lg font-medium leading-relaxed">
-                          <span className="font-black text-gray-900 dark:text-white uppercase text-[15px]">{head}</span> {tail}{!sentence.endsWith(".") && "."}
+                          <span className="font-black text-gray-900 dark:text-white uppercase text-sm sm:text-base">{head}</span> {tail}{!sentence.endsWith(".") && "."}
                         </p>
                       </div>
                     );
@@ -722,7 +722,7 @@ export default function CropsPage({ lang }: { lang: string }) {
                 </div>
 
                 {/* Breakdown */}
-                <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
                   {[
                     { label: 'pH', val: soilInputs.ph, ok: soilInputs.ph >= 6 && soilInputs.ph <= 7.5 },
                     { label: 'Nitrogen', val: `${soilInputs.nitrogen} mg`, ok: soilInputs.nitrogen >= 30 && soilInputs.nitrogen <= 80 },
@@ -733,7 +733,7 @@ export default function CropsPage({ lang }: { lang: string }) {
                     }`}>
                       <p className="m-0 text-xs font-black uppercase tracking-wider opacity-60 mb-1">{item.label}</p>
                       <p className="m-0 text-lg font-black">{item.val}</p>
-                      <p className="m-0 text-[10px] font-bold mt-1">{item.ok ? '✓ Optimal' : '⚠ Adjust'}</p>
+                      <p className="m-0 text-xs font-bold mt-1">{item.ok ? '✓ Optimal' : '⚠ Adjust'}</p>
                     </div>
                   ))}
                 </div>

@@ -135,7 +135,7 @@ export default function WeatherPage() {
 
   if (error) return (
     <div className="flex items-center justify-center h-[60vh]">
-      <div className="bg-white rounded-2xl p-10 text-center max-w-[480px] shadow-xl shadow-gray-200/50 border border-gray-200">
+      <div className="bg-white rounded-2xl p-10 text-center max-w-md w-full mx-4 shadow-xl shadow-gray-200/50 border border-gray-200">
         <div className="text-5xl mb-4">⚠️</div>
         <h2 className="text-gray-900 mb-3 text-2xl font-bold">Weather Unavailable</h2>
         <p className="text-gray-500 leading-relaxed">{error}</p>
@@ -145,7 +145,7 @@ export default function WeatherPage() {
 
   // ── OFFLINE FORECAST UI ──────────────────────────────────
   if (offlineForecast && !weather) return (
-    <div className="max-w-[900px] mx-auto flex flex-col gap-6 font-sans">
+    <div className="max-w-4xl w-full px-4 sm:px-6 mx-auto flex flex-col gap-6 font-sans">
       <div>
         <h1 className="m-0 mb-1 text-2xl text-gray-900 font-bold">🌦️ Weather & Farm Advisor</h1>
         <p className="m-0 text-gray-500 text-sm">
@@ -225,7 +225,7 @@ export default function WeatherPage() {
   const tipEmoji = getTipEmoji(weather.farming_tip);
 
   return (
-    <div className="max-w-[900px] mx-auto flex flex-col gap-6 font-sans">
+    <div className="max-w-4xl w-full px-4 sm:px-6 mx-auto flex flex-col gap-6 font-sans">
 
       {/* Header */}
       <div>
@@ -238,7 +238,7 @@ export default function WeatherPage() {
         <div className="text-center md:text-left mb-6 md:mb-0">
           <p className="m-0 mb-1.5 text-sm sm:text-base opacity-85 font-semibold">📍 {weather.city}</p>
           <div className="flex items-baseline justify-center md:justify-start gap-2 sm:gap-3">
-            <span className="text-6xl sm:text-[72px] font-bold leading-none">{Math.round(weather.temperature)}°</span>
+            <span className="text-6xl sm:text-7xl font-bold leading-none">{Math.round(weather.temperature)}°</span>
             <span className="text-xl sm:text-2xl mb-2 sm:mb-2.5 opacity-90">C</span>
           </div>
           <p className="m-0 mt-2 text-lg sm:text-xl opacity-95 font-semibold capitalize">

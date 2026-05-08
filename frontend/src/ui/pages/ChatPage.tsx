@@ -281,7 +281,7 @@ export default function ChatPage({ lang }: { lang: string }) {
                   <div 
                     key={idx}
                     onClick={() => { setInput(q); if (isMobile) setShowSidebar(false); }}
-                    className="group py-4 px-5 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 border-l-4 border-l-[#16a34a] rounded-xl cursor-pointer text-[14px] text-gray-700 dark:text-slate-300 shadow-sm transition-all hover:bg-green-50/50 dark:hover:bg-green-900/10 hover-lift ripple font-bold"
+                    className="group py-4 px-5 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 border-l-4 border-l-[#16a34a] rounded-xl cursor-pointer text-sm text-gray-700 dark:text-slate-300 shadow-sm transition-all hover:bg-green-50/50 dark:hover:bg-green-900/10 hover-lift ripple font-bold"
                   >
                     {q}
                   </div>
@@ -289,7 +289,7 @@ export default function ChatPage({ lang }: { lang: string }) {
               </div>
 
               <div className="border-t border-gray-100 dark:border-slate-800 pt-8 mt-4.5">
-                <h3 className="text-[12px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-6">
+                <h3 className="text-xs font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-6">
                   TIPS FOR BETTER ANSWERS
                 </h3>
                 <ul className="list-none p-0 m-0 flex flex-col gap-4">
@@ -298,7 +298,7 @@ export default function ChatPage({ lang }: { lang: string }) {
                     "Include your location",
                     "Describe the problem clearly"
                   ].map((tip, idx) => (
-                    <li key={idx} className="flex items-start gap-3 text-[14px] text-gray-600 dark:text-slate-400 font-bold">
+                    <li key={idx} className="flex items-start gap-3 text-sm text-gray-600 dark:text-slate-400 font-bold">
                       <span className="text-[#16a34a] text-lg">✓</span>
                       {tip}
                     </li>
@@ -363,7 +363,7 @@ export default function ChatPage({ lang }: { lang: string }) {
             const isUser = msg.sender === 'user';
             return (
             <div key={msg.id} className={`flex flex-col max-w-[92%] sm:max-w-[80%] animate-fade-in-up ${isUser ? 'self-end items-end' : 'self-start items-start'}`}>
-                <div className={`px-3.5 py-2.5 sm:px-6 sm:py-4 rounded-2xl sm:rounded-3xl text-sm sm:text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap font-medium hover-lift transition-transform
+                <div className={`px-3.5 py-2.5 sm:px-6 sm:py-4 rounded-2xl sm:rounded-3xl text-sm sm:text-base leading-relaxed shadow-sm whitespace-pre-wrap font-medium hover-lift transition-transform
                   ${isUser 
                     ? 'bg-[#16a34a] text-white rounded-br-none' 
                     : 'bg-green-50 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-bl-none border border-gray-100 dark:border-slate-700'}`}>
@@ -402,7 +402,7 @@ export default function ChatPage({ lang }: { lang: string }) {
             <button
               key={opt.code}
               onClick={() => handleLangChange(opt.code)}
-              className={`px-4 py-1.5 rounded-full text-[12px] sm:text-[13px] font-bold transition-all border flex-shrink-0
+              className={`px-4 py-1.5 rounded-full text-xs sm:text-[13px] font-bold transition-all border flex-shrink-0
                 ${chatLang === opt.code 
                    ? 'bg-[#16a34a] text-white border-[#16a34a] shadow-sm' 
                    : 'bg-white dark:bg-slate-800 text-gray-500 border-gray-100 dark:border-slate-700 hover:bg-green-50'}`}
@@ -432,7 +432,7 @@ export default function ChatPage({ lang }: { lang: string }) {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={isListening ? "Listening..." : (LANG_OPTIONS.find(l => l.code === chatLang)?.hint || t('chat_placeholder'))}
-            className="flex-1 h-11 sm:h-12 px-4 sm:px-6 bg-gray-50 dark:bg-slate-800 border-none rounded-xl sm:rounded-2xl text-sm sm:text-[15px] outline-none text-gray-800 dark:text-white transition-all focus-ring-green font-medium"
+            className="flex-1 h-11 sm:h-12 px-4 sm:px-6 bg-gray-50 dark:bg-slate-800 border-none rounded-xl sm:rounded-2xl text-base outline-none text-gray-800 dark:text-white transition-all focus-ring-green font-medium"
           />
           
           <button

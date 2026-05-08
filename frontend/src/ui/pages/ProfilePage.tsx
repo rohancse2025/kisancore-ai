@@ -266,7 +266,7 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-green-500/20"
+                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3.5 rounded-xl text-base font-bold outline-none focus:ring-2 focus:ring-green-500/20"
                 required
               />
             </div>
@@ -275,7 +275,7 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
               <input 
                 type="text"
                 value={formData.phone}
-                className="w-full bg-gray-100 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3.5 rounded-xl text-sm font-bold outline-none opacity-60 cursor-not-allowed"
+                className="w-full bg-gray-100 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3.5 rounded-xl text-base font-bold outline-none opacity-60 cursor-not-allowed"
                 disabled
               />
             </div>
@@ -285,7 +285,7 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
                 type="text"
                 value={formData.location}
                 onChange={(e) => setFormData({...formData, location: e.target.value})}
-                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-green-500/20"
+                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3.5 rounded-xl text-base font-bold outline-none focus:ring-2 focus:ring-green-500/20"
               />
             </div>
           </div>
@@ -295,7 +295,7 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
         <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-gray-100 dark:border-slate-700 shadow-sm">
           <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Farm Details</h3>
           <div className="space-y-5">
-            <div className="flex gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex-1">
                 <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-wider">Farm Size</label>
                 <input 
@@ -303,7 +303,7 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
                   step="0.1"
                   value={formData.farm_size}
                   onChange={(e) => setFormData({...formData, farm_size: parseFloat(e.target.value) || 0})}
-                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-green-500/20"
+                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3.5 rounded-xl text-base font-bold outline-none focus:ring-2 focus:ring-green-500/20"
                 />
               </div>
               <div className="flex-1">
@@ -311,7 +311,7 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
                 <select 
                   value={formData.farm_size_unit}
                   onChange={(e) => setFormData({...formData, farm_size_unit: e.target.value})}
-                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-green-500/20"
+                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3.5 rounded-xl text-base font-bold outline-none focus:ring-2 focus:ring-green-500/20"
                 >
                   <option value="acres">Acres</option>
                   <option value="hectares">Hectares</option>
@@ -324,7 +324,7 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
               <select 
                 value={formData.soil_type}
                 onChange={(e) => setFormData({...formData, soil_type: e.target.value})}
-                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-green-500/20"
+                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3.5 rounded-xl text-base font-bold outline-none focus:ring-2 focus:ring-green-500/20"
               >
                 <option value="">Select Soil Type</option>
                 <option value="Alluvial">Alluvial</option>
@@ -342,7 +342,7 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
                 placeholder="e.g. Rice, Wheat"
                 value={formData.primary_crop}
                 onChange={(e) => setFormData({...formData, primary_crop: e.target.value})}
-                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-green-500/20"
+                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3.5 rounded-xl text-base font-bold outline-none focus:ring-2 focus:ring-green-500/20"
               />
             </div>
           </div>
@@ -358,7 +358,7 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
                 type="number" step="0.1"
                 value={formData.soil_ph}
                 onChange={(e) => setFormData({...formData, soil_ph: parseFloat(e.target.value) || 0})}
-                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3 rounded-xl text-xs font-bold outline-none"
+                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3 rounded-xl text-base font-bold outline-none"
               />
             </div>
             <div>
@@ -367,7 +367,7 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
                 type="number"
                 value={formData.nitrogen}
                 onChange={(e) => setFormData({...formData, nitrogen: parseFloat(e.target.value) || 0})}
-                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3 rounded-xl text-xs font-bold outline-none"
+                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3 rounded-xl text-base font-bold outline-none"
               />
             </div>
             <div>
@@ -376,7 +376,7 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
                 type="number"
                 value={formData.potassium}
                 onChange={(e) => setFormData({...formData, potassium: parseFloat(e.target.value) || 0})}
-                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3 rounded-xl text-xs font-bold outline-none"
+                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3 rounded-xl text-base font-bold outline-none"
               />
             </div>
           </div>
@@ -407,7 +407,7 @@ export default function ProfilePage({ lang, onLogout }: { lang: string, onLogout
                   placeholder="10-digit mobile number"
                   value={formData.sms_phone}
                   onChange={(e) => setFormData({...formData, sms_phone: e.target.value.replace(/\D/g, '').slice(0, 10)})}
-                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-green-500/20"
+                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3.5 rounded-xl text-base font-bold outline-none focus:ring-2 focus:ring-green-500/20"
                 />
                 <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/10 rounded-2xl border border-green-100 dark:border-green-900/30 flex items-center justify-between">
                   <div className="flex items-center gap-3">
