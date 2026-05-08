@@ -186,21 +186,17 @@ export default function HomePage({ lang }: { lang: string }) {
   
   // High Accuracy Master Location Fetch
   useEffect(() => {
-    let watchId: number;
     if (navigator.geolocation) {
-      watchId = navigator.geolocation.watchPosition(
+      navigator.geolocation.getCurrentPosition(
         (pos) => setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
         () => {
           if (!coords) setCoords({ lat: 30.9010, lon: 75.8573 });
         },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
       );
     } else {
       setCoords({ lat: 30.9010, lon: 75.8573 });
     }
-    return () => {
-      if (watchId) navigator.geolocation.clearWatch(watchId);
-    };
   }, []);
 
   const [isSyncing, setIsSyncing] = useState(false);
