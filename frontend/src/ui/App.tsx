@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Routes, Route, useNavigate, useLocation, Link } from "react-router-dom";
+import axios from "axios";
 import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
 import CropsPage from "./pages/CropsPage";
@@ -34,6 +35,49 @@ export default function App() {
 
   // BACKGROUND SYNC NOTIFICATION
   const [syncToast, setSyncToast] = useState<{ show: boolean, count: number }>({ show: false, count: 0 });
+
+  // SERVER COLD START WAKE UP DETECTOR
+  const [isWakingUp, setIsWakingUp] = useState(false);
+
+  useEffect(() => {
+    let timeoutId: any;
+    let activeRequests = 0;
+
+    const reqInterceptor = axios.interceptors.request.use((config) => {
+      activeRequests++;
+      if (activeRequests === 1) {
+        timeoutId = setTimeout(() => {
+          setIsWakingUp(true);
+        }, 3500); // Trigger message if request takes > 3.5s
+      }
+      return config;
+    });
+
+    const resInterceptor = axios.interceptors.response.use(
+      (response) => {
+        activeRequests = Math.max(0, activeRequests - 1);
+        if (activeRequests === 0) {
+          clearTimeout(timeoutId);
+          setIsWakingUp(false);
+        }
+        return response;
+      },
+      (error) => {
+        activeRequests = Math.max(0, activeRequests - 1);
+        if (activeRequests === 0) {
+          clearTimeout(timeoutId);
+          setIsWakingUp(false);
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.request.eject(reqInterceptor);
+      axios.interceptors.response.eject(resInterceptor);
+      clearTimeout(timeoutId);
+    };
+  }, []);
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
@@ -458,6 +502,14 @@ export default function App() {
               ✕
             </button>
           </div>
+        </div>
+      )}
+
+      {/* 7. WAKING UP TOAST (COLD START) */}
+      {isWakingUp && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[2000] bg-blue-600 text-white py-3 px-6 rounded-full font-bold shadow-2xl animate-fade-in flex items-center gap-3 border border-white/20">
+          <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
+          <span className="text-sm whitespace-nowrap">Backend waking up (takes up to 50s)...</span>
         </div>
       )}
 
