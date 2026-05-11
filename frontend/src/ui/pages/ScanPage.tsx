@@ -107,7 +107,7 @@ export default function ScanPage({ lang }: { lang: string }) {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout for vision
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // Increased to 60s for vision
 
     try {
       // 1. Send image to Groq Vision API for detection
@@ -137,12 +137,14 @@ export default function ScanPage({ lang }: { lang: string }) {
         signal: controller.signal
       });
 
-      if (!visionRes.ok) throw new Error("Vision API request failed");
+      if (!visionRes.ok) {
+        const errData = await visionRes.json().catch(() => ({ detail: "Vision API request failed" }));
+        throw new Error(errData.detail || "Vision API request failed");
+      }
       
       const visionData = await visionRes.json();
       
       // Parse AI response
-      // Improved JSON extraction: find the first { and last }
       const match = visionData.reply.match(/\{[\s\S]*\}/);
       if (!match) throw new Error("AI did not return a valid JSON object");
       const aiResult = JSON.parse(match[0]);
@@ -156,7 +158,11 @@ export default function ScanPage({ lang }: { lang: string }) {
       });
     } catch (err: any) {
       console.error("Analysis Error:", err);
-      setError("AI analysis failed. Showing fallback result.");
+      const userFriendlyError = err.name === 'AbortError' 
+        ? "Analysis timed out. Please try again." 
+        : `AI analysis failed: ${err.message}. Showing fallback.`;
+      
+      setError(userFriendlyError);
       
       // Fallback to mock result with disclaimer
       const detectedDisease = COMMON_DISEASES[Math.floor(Math.random() * COMMON_DISEASES.length)].name;

@@ -58,7 +58,8 @@ async def chat_endpoint(request: ChatRequest):
             
             # Use vision model if image is present
             if request.image:
-                model = "llama-3.2-11b-vision-preview" # Reverted to stable Groq vision model
+                # Try 11b first, fallback to 90b if needed
+                model = "llama-3.2-11b-vision-preview" if attempt == 0 else "llama-3.2-90b-vision-preview"
                 messages.append({
                     "role": "user",
                     "content": [
