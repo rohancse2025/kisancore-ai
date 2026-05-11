@@ -32,8 +32,8 @@ latest_reading = {
     "suggestion": "No data",
     "timestamp": "Never",
     "unix_timestamp": 0,
-    "manual_override": None, # "ON", "OFF", or None
-    "override_expiry_time": 0,
+    "manual_override": "OFF", # Default to Manual OFF for safety
+    "override_expiry_time": int(time.time() + 86400), 
     "farmer_phones": [], # List of whatsapp: numbers
     "last_alert_time": 0
 }
@@ -119,6 +119,9 @@ def test_iot():
 @router.post("/")
 async def post_iot_data(data: IOTData):
     global latest_reading
+    # Ensure we have the latest state from other workers/sessions
+    load_persistence()
+    
     print(f"IOT DEBUG: Received data -> Temp: {data.temperature}, Hum: {data.humidity}, Soil: {data.soil_moisture}")
     
     # 1. Check for timer expiry
@@ -205,6 +208,9 @@ async def clear_override():
 
 @router.get("/latest")
 async def get_latest_data():
+    # Ensure we have the latest state from other workers/sessions
+    load_persistence()
+    
     if latest_reading["manual_override"] is not None:
         if time.time() > latest_reading["override_expiry_time"]:
             print("⏰ TIMER EXPIRED: Forcing pump to OFF mode.")
@@ -236,7 +242,7 @@ async def clear_iot_data():
         "timestamp": "Never",
         "unix_timestamp": 0,
         "last_alert_time": 0,
-        "manual_override": None
+        "manual_override": "OFF"
     })
     save_persistence()
     return {"status": "cleared"}

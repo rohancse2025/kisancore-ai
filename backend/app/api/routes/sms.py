@@ -120,8 +120,10 @@ async def handle_incoming_whatsapp(
 ):
     try:
         import app.api.routes.iot as iot
-        from app.api.routes.iot import latest_reading
         import time
+        
+        # Ensure we have the latest state from other workers/sessions before processing
+        iot.load_persistence()
 
         sender = From.strip()
         text = Body.strip().upper()
@@ -129,14 +131,19 @@ async def handle_incoming_whatsapp(
         logger.info(f"[V2] RECEIVED WHATSAPP: From={sender}, Body='{text}'")
 
         # AUTO-REGISTER this number for smart alerts
-        if "farmer_phones" not in latest_reading:
-            latest_reading["farmer_phones"] = []
-        if sender not in latest_reading["farmer_phones"]:
-            latest_reading["farmer_phones"].append(sender)
+        if "farmer_phones" not in iot.latest_reading:
+            iot.latest_reading["farmer_phones"] = []
+        if sender not in iot.latest_reading["farmer_phones"]:
+            iot.latest_reading["farmer_phones"].append(sender)
+            iot.save_persistence()
         
         response_msg = ""
 
-        if "PUMP ON" in text:
+        # Robust command matching
+        is_pump_on = "PUMP ON" in text or (("PUMP" in text or "MOTOR" in text) and "ON" in text and "OFF" not in text)
+        is_pump_off = "PUMP OFF" in text or (("PUMP" in text or "MOTOR" in text) and "OFF" in text)
+
+        if is_pump_on:
             last_seen = iot.latest_reading.get("timestamp", "Never")
             soil = iot.latest_reading.get("soil_moisture", 0)
             if last_seen == "Never":
@@ -150,22 +157,25 @@ async def handle_incoming_whatsapp(
                     if p.isdigit():
                         duration = int(p)
                         break
-                latest_reading["manual_override"] = "ON"
-                latest_reading["override_expiry_time"] = time.time() + (duration * 60)
+                iot.latest_reading["manual_override"] = "ON"
+                iot.latest_reading["override_expiry_time"] = time.time() + (duration * 60)
+                iot.save_persistence() # CRITICAL: Save to disk for other workers
                 response_msg = f"KisanCore [V2.3]: Pump activated for {duration} mins. 💧"
 
-        elif "PUMP OFF" in text:
+        elif is_pump_off:
             last_seen = iot.latest_reading.get("timestamp", "Never")
             soil = iot.latest_reading.get("soil_moisture", 0)
             if last_seen == "Never":
                 response_msg = "⚠️ Cannot communicate with pump. No data received from your farm yet. - KisanCore AI"
             elif soil == 0.0:
-                latest_reading["manual_override"] = "OFF"
-                latest_reading["override_expiry_time"] = time.time() + 86400
+                iot.latest_reading["manual_override"] = "OFF"
+                iot.latest_reading["override_expiry_time"] = time.time() + 86400
+                iot.save_persistence() # CRITICAL: Save to disk for other workers
                 response_msg = "KisanCore [V2.3]: Pump is already disabled due to disconnected sensor, but manual OFF state is saved. 🛑"
             else:
-                latest_reading["manual_override"] = "OFF"
-                latest_reading["override_expiry_time"] = time.time() + 86400
+                iot.latest_reading["manual_override"] = "OFF"
+                iot.latest_reading["override_expiry_time"] = time.time() + 86400
+                iot.save_persistence() # CRITICAL: Save to disk for other workers
                 response_msg = "KisanCore [V2.3]: Pump turned OFF manually. 🛑"
 
         elif "AUTO" in text:
@@ -173,8 +183,9 @@ async def handle_incoming_whatsapp(
             if last_seen == "Never":
                 response_msg = "⚠️ Cannot change mode. No data received from your farm yet. - KisanCore AI"
             else:
-                latest_reading["manual_override"] = None
-                latest_reading["override_expiry_time"] = 0
+                iot.latest_reading["manual_override"] = None
+                iot.latest_reading["override_expiry_time"] = 0
+                iot.save_persistence()
                 response_msg = "KisanCore [V2.3]: Pump restored to Autonomous AI Mode. 🤖"
 
         elif "STATUS" in text:
