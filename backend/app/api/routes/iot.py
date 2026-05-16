@@ -20,6 +20,7 @@ class IOTData(BaseModel):
 class OverrideRequest(BaseModel):
     command: str  # "ON", "OFF"
     duration_minutes: Optional[int] = 60
+    duration_seconds: Optional[int] = 0
 
 # --- IN-MEMORY STORAGE & PERSISTENCE ---
 DATA_FILE = "latest_reading.json"
@@ -182,7 +183,8 @@ async def set_override(req: OverrideRequest):
     
     latest_reading["manual_override"] = req.command
     if req.command == "ON":
-        latest_reading["override_expiry_time"] = time.time() + (req.duration_minutes * 60)
+        total_seconds = (req.duration_minutes * 60) + req.duration_seconds
+        latest_reading["override_expiry_time"] = time.time() + total_seconds
     else:
         latest_reading["override_expiry_time"] = time.time() + 86400 
     

@@ -12,7 +12,7 @@ interface SensorData {
   lastUpdateDate: number | null;
   clearSensorData: () => Promise<void>;
   refreshSensorData: () => Promise<void>;
-  queueCommand: (command: string, duration?: number) => void;
+  queueCommand: (command: string, minutes?: number, seconds?: number) => void;
   pendingCommandsCount: number;
 }
 
@@ -25,7 +25,7 @@ export const SensorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     soil_moisture: null,
     timestamp: null,
     irrigation_needed: false,
-    manual_override: null,
+    manual_override: "OFF",
     isOnline: false,
     lastUpdateDate: null,
   });
@@ -43,7 +43,7 @@ export const SensorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       }
 
-      let queue: { command: string, duration?: number, id: string }[] = JSON.parse(queueJson);
+      let queue: { command: string, minutes?: number, seconds?: number, id: string }[] = JSON.parse(queueJson);
       if (queue.length === 0) {
         setPendingCommandsCount(0);
         return;
@@ -60,7 +60,11 @@ export const SensorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             await fetch(`${API_BASE_URL}/api/v1/iot/override`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ command: item.command, duration_minutes: item.duration || 60 })
+              body: JSON.stringify({ 
+                command: item.command, 
+                duration_minutes: item.minutes || 0,
+                duration_seconds: item.seconds || 0 
+              })
             });
           }
           // Success -> remove from remaining
@@ -81,11 +85,11 @@ export const SensorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => clearInterval(interval);
   }, []);
 
-  const queueCommand = (command: string, duration?: number) => {
+  const queueCommand = (command: string, minutes?: number, seconds?: number) => {
     const queueJson = localStorage.getItem('iot_command_queue');
     const queue = queueJson ? JSON.parse(queueJson) : [];
     
-    queue.push({ command, duration, id: Date.now().toString() });
+    queue.push({ command, minutes, seconds, id: Date.now().toString() });
     localStorage.setItem('iot_command_queue', JSON.stringify(queue));
     setPendingCommandsCount(queue.length);
     

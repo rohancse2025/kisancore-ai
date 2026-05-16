@@ -34,6 +34,7 @@ const getSliderHint = (name: string, value: number) => {
   return null;
 };
 
+
 export default function CropsPage({ lang }: { lang: string }) {
   const { t } = useTranslation(lang);
   const [activeTab, setActiveTab] = useState<'crop' | 'fertilizer' | 'soil'>('crop');
@@ -307,6 +308,8 @@ export default function CropsPage({ lang }: { lang: string }) {
     }
   };
 
+
+
   return (
     <div className="font-sans pb-4">
       
@@ -333,6 +336,7 @@ export default function CropsPage({ lang }: { lang: string }) {
         >
           🔬 Soil Analysis
         </button>
+
       </div>
 
       {activeTab === 'crop' && (
@@ -750,6 +754,7 @@ export default function CropsPage({ lang }: { lang: string }) {
           </div>
         </div>
       )}
+
     </div>
   );
 }

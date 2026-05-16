@@ -99,6 +99,7 @@ export default function IoTPage({ lang }: { lang: string }) {
   };
 
   const [overrideDuration, setOverrideDuration] = useState(60);
+  const [overrideSeconds, setOverrideSeconds] = useState(0);
   const [isSendingOverride, setIsSendingOverride] = useState(false);
 
   const handleOverride = async (command: string) => {
@@ -106,7 +107,7 @@ export default function IoTPage({ lang }: { lang: string }) {
 
     if (!navigator.onLine) {
       // Offline: Add to queue
-      queueCommand(command, command === 'AUTO' ? undefined : overrideDuration);
+      queueCommand(command, command === 'AUTO' ? undefined : overrideDuration, command === 'AUTO' ? undefined : overrideSeconds);
       setTimeout(() => setIsSendingOverride(false), 500);
       return;
     }
@@ -118,14 +119,18 @@ export default function IoTPage({ lang }: { lang: string }) {
         await fetch(`${API_BASE_URL}/api/v1/iot/override`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ command, duration_minutes: overrideDuration })
+          body: JSON.stringify({ 
+            command, 
+            duration_minutes: overrideDuration,
+            duration_seconds: overrideSeconds 
+          })
         });
       }
       setTimeout(() => handleRefresh(), 800); // refresh UI to pull new override state
     } catch (e) {
       console.error(e);
       // Fallback to queue if fetch fails
-      queueCommand(command, command === 'AUTO' ? undefined : overrideDuration);
+      queueCommand(command, command === 'AUTO' ? undefined : overrideDuration, command === 'AUTO' ? undefined : overrideSeconds);
     }
     setIsSendingOverride(false);
   };
@@ -210,7 +215,7 @@ export default function IoTPage({ lang }: { lang: string }) {
 
 
     let bg = "bg-white border-gray-100";
-    let status = !lastUpdateDate ? "WAITING" : (irrigation_needed ? "ON" : "OFF");
+    let status = !lastUpdateDate ? "WAITING" : (manual_override || (irrigation_needed ? "ON" : "OFF"));
     let message = irrigation_needed ? "Pump is active" : "No irrigation needed";
     let icon = irrigation_needed ? "💧" : "🚿";
 
@@ -331,16 +336,16 @@ export default function IoTPage({ lang }: { lang: string }) {
 
       {/* COMPACT MODE TOGGLE - THE SMALL BUTTON REQUESTED */}
       <div className="mt-4 flex justify-center sm:justify-start">
-        <div className="flex bg-white/80 dark:bg-slate-800/80 p-1 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm backdrop-blur-md">
+        <div className="flex bg-white/80 dark:bg-slate-800/80 p-1.5 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm backdrop-blur-md">
           <button 
             onClick={() => handleOverride('AUTO')}
-            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${manual_override === null ? 'bg-green-600 text-white shadow-lg scale-105' : 'text-gray-400 hover:text-green-600'}`}
+            className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 min-w-[120px] justify-center ${manual_override === null ? 'bg-green-600 text-white shadow-lg' : 'text-gray-400 hover:text-green-600'}`}
           >
             🤖 {t('iot_auto_mode')}
           </button>
           <button 
             onClick={() => handleOverride('OFF')} 
-            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${manual_override !== null ? 'bg-gray-800 text-white shadow-lg scale-105' : 'text-gray-400 hover:text-gray-800'}`}
+            className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 min-w-[120px] justify-center ${manual_override !== null ? 'bg-gray-800 text-white shadow-lg' : 'text-gray-400 hover:text-gray-800'}`}
           >
             🕹️ Manual
           </button>
@@ -494,9 +499,20 @@ export default function IoTPage({ lang }: { lang: string }) {
                 value={overrideDuration} 
                 onChange={(e) => setOverrideDuration(Number(e.target.value))}
                 className="w-14 px-2 py-1 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-center font-bold text-base"
-                min="1" max="180"
+                min="0" max="180"
               />
               <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{t('iot_minutes')}</span>
+              
+              <div className="w-px h-4 bg-gray-200 dark:bg-slate-700 mx-1" />
+              
+              <input 
+                type="number" 
+                value={overrideSeconds} 
+                onChange={(e) => setOverrideSeconds(Number(e.target.value))}
+                className="w-14 px-2 py-1 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-center font-bold text-base"
+                min="0" max="59"
+              />
+              <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{t('iot_seconds')}</span>
             </div>
           </div>
         </div>
