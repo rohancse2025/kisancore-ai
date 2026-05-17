@@ -116,7 +116,13 @@ def get_market_prices(
                     "modal_price": record.get("modal_price"),
                     "date": record.get("arrival_date")
                 })
-            return formatted_data
+            return {
+                "data": formatted_data,
+                "source": "live",
+                "api_source": "data.gov.in",
+                "dataset": "Agmarknet 9ef84268",
+                "ministry": "Ministry of Agriculture, Govt. of India"
+            }
 
     except Exception as e:
         print(f"Error fetching market prices: {e}")
@@ -154,4 +160,8 @@ def get_mock_data(commodity: str, state: str):
             "date": today
         })
         
-    return mock_results
+    return {
+        "data": mock_results,
+        "source": "mock",
+        "note": "Live API unavailable. Showing estimated prices."
+    }
