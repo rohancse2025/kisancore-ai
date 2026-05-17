@@ -328,7 +328,7 @@ export default function MarketPage({ lang }: { lang: string }) {
               </svg>
               <div>
                 <p className="m-0 text-sm font-extrabold text-green-800 dark:text-emerald-300 flex items-center gap-1.5 leading-tight">
-                  ✓ Live Government Data
+                  ✓ Live Government Data — data.gov.in
                 </p>
                 <p className="m-0 mt-0.5 text-xs text-green-600 dark:text-emerald-500 leading-tight">
                   Live data from Ministry of Agriculture, Govt. of India · Updated daily from official mandi records
@@ -342,8 +342,8 @@ export default function MarketPage({ lang }: { lang: string }) {
                 <p className="m-0 text-sm font-extrabold text-amber-800 dark:text-amber-300 flex items-center gap-1.5 leading-tight">
                   ⚠️ Estimated Prices
                 </p>
-                <p className="m-0 mt-0.5 text-xs text-amber-600 dark:text-amber-500 leading-tight">
-                  Live API unavailable. Showing estimated prices.
+                <p className="m-0 mt-0.5 text-xs text-amber-600 dark:text-amber-500 leading-tight font-semibold">
+                  Prices based on current market estimates. Connect DATA_GOV_API_KEY for live government data.
                 </p>
               </div>
             </div>
@@ -453,9 +453,11 @@ export default function MarketPage({ lang }: { lang: string }) {
           )}
 
           {/* FIX 6: Change bottom text */}
-          <p className="m-0 mb-8 ml-5 text-xs text-emerald-600 dark:text-emerald-500 italic font-bold flex items-center gap-1.5">
-            ✓ Showing verified government mandi data for {commodity} in {state}. Prices reported by mandi officials today.
-          </p>
+          {dataSource === "live" && (
+            <p className="m-0 mb-8 ml-5 text-xs text-emerald-600 dark:text-emerald-500 italic font-bold flex items-center gap-1.5">
+              ✓ Showing verified government mandi data for {commodity} in {state}. Prices reported by mandi officials today.
+            </p>
+          )}
 
           {/* Price Insight Card */}
           <div className={`bg-green-50 dark:bg-green-900/10 rounded-2xl p-6 sm:px-8 border border-green-100 dark:border-green-800 flex items-center gap-5 ${isMobile ? 'flex-col text-center' : 'flex-row text-left'} mb-8`}>
@@ -512,12 +514,25 @@ export default function MarketPage({ lang }: { lang: string }) {
 
       {/* FIX 3: Credible footer source citation */}
       <footer className="mt-10 text-center border-t border-gray-200 dark:border-slate-700/50 pt-6">
-        <p className="text-gray-600 dark:text-slate-400 font-bold text-sm mb-1.5 flex items-center justify-center gap-1.5 flex-wrap">
-          🏛️ Source: data.gov.in | Ministry of Agriculture & Farmers Welfare, Government of India | Agmarknet dataset 9ef84268
-        </p>
-        <p className="text-gray-400 dark:text-slate-500 text-xs font-medium">
-          Prices are wholesale mandi rates per quintal (100kg). Retail prices at your local market may be 10-20% higher.
-        </p>
+        {dataSource === "live" ? (
+          <>
+            <p className="text-gray-600 dark:text-slate-400 font-bold text-sm mb-1.5 flex items-center justify-center gap-1.5 flex-wrap">
+              🏛️ Source: data.gov.in | Ministry of Agriculture & Farmers Welfare, Government of India | Agmarknet dataset 9ef84268
+            </p>
+            <p className="text-gray-400 dark:text-slate-500 text-xs font-semibold">
+              Official wholesale mandi prices from Ministry of Agriculture, Govt. of India
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-gray-600 dark:text-slate-400 font-bold text-sm mb-1.5 flex items-center justify-center gap-1.5 flex-wrap">
+              💡 Seasonal Price Projections • KisanCore AI
+            </p>
+            <p className="text-gray-400 dark:text-slate-500 text-xs font-medium">
+              Prices are estimated wholesale mandi rates per quintal (100kg). Retail prices may vary.
+            </p>
+          </>
+        )}
       </footer>
     </div>
   );

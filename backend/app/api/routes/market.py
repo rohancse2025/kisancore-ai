@@ -3,7 +3,8 @@ import json
 import urllib.request
 import urllib.parse
 import random
-from datetime import datetime
+import datetime
+from datetime import datetime as dt_class
 from fastapi import APIRouter, Query
 from dotenv import load_dotenv
 
@@ -131,8 +132,9 @@ def get_market_prices(
 def get_mock_data(commodity: str, state: str):
     """
     Return realistic mock data for demo if API fails or key is missing.
+    Seeded with the current date to guarantee stable daily prices.
     """
-    today = datetime.now().strftime("%d/%m/%Y")
+    today = dt_class.now().strftime("%d/%m/%Y")
     
     # Get base prices for commodity, fallback to Tomato if not found
     base = COMMODITY_PRICES.get(commodity, COMMODITY_PRICES["Tomato"])
@@ -140,15 +142,29 @@ def get_mock_data(commodity: str, state: str):
     # Get markets for state, fallback to Karnataka if not found
     markets = STATE_MARKETS.get(state, STATE_MARKETS["Karnataka"])
     
+    # FIX 1: Seed random dynamically using today's date + commodity & state features to avoid uniform values
+    seed_str = datetime.date.today().strftime("%Y%m%d")
+    seed = int(seed_str) + sum(ord(c) for c in commodity + state)
+    rng = random.Random(seed)
+    
     mock_results = []
     for market in markets:
-        # Create small random variation (±10% to 15%)
-        # Here we use a random multiplier between 0.85 and 1.15
-        variation = random.uniform(0.85, 1.15)
+        # FIX 2: Smaller, realistic variation (±8% max variation)
+        variation = rng.uniform(0.92, 1.08)
         
-        min_p = int(base["min"] * variation)
-        max_p = int(base["max"] * variation)
-        modal_p = int(base["modal"] * variation)
+        # FIX 3: Logical price ordering (Bangalore/metro +3%, Hubli/Dharwad/rural -3%)
+        market_multiplier = 1.0
+        
+        # Check for major metropolitan markets
+        if market in ["Bangalore", "Mumbai", "Delhi", "Kolkata", "Chennai", "Hyderabad", "Ahmedabad"]:
+            market_multiplier = 1.03
+        # Check for smaller/rural markets
+        elif market in ["Hubli", "Dharwad", "Belgaum"] or "Rural" in market:
+            market_multiplier = 0.97
+            
+        min_p = int(base["min"] * variation * market_multiplier)
+        max_p = int(base["max"] * variation * market_multiplier)
+        modal_p = int(base["modal"] * variation * market_multiplier)
         
         mock_results.append({
             "market": market,
