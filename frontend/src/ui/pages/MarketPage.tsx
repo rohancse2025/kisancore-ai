@@ -343,7 +343,7 @@ export default function MarketPage({ lang }: { lang: string }) {
                   ⚠️ Estimated Prices
                 </p>
                 <p className="m-0 mt-0.5 text-xs text-amber-600 dark:text-amber-500 leading-tight font-semibold">
-                  Prices based on current market estimates. Connect DATA_GOV_API_KEY for live government data.
+                  Prices based on current market estimates. Connect to Live Government API for real-time data.
                 </p>
               </div>
             </div>
